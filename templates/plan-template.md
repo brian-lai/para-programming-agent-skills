@@ -1,0 +1,102 @@
+# Plan: {TASK_NAME}
+
+**Date:** {DATE}
+**Status:** In Review
+
+---
+
+## Objective
+
+[Clear statement of what needs to be accomplished]
+
+## Approach
+
+[Step-by-step methodology for implementation]
+
+1. [First major step]
+2. [Second major step]
+3. [Third major step]
+
+## Risks & Edge Cases
+
+[Potential issues to watch out for]
+
+- **Risk 1:** [Description and mitigation]
+- **Risk 2:** [Description and mitigation]
+
+## Data Sources
+
+[Required files, APIs, or external data]
+
+- [Source 1]: [Purpose]
+- [Source 2]: [Purpose]
+
+## MCP Tools
+
+[Preprocessing tools to be used]
+
+- `context/servers/{tool}.ts` - [Purpose]
+
+## Success Criteria
+
+[Measurable outcomes that define completion]
+
+- [ ] [Criterion 1]
+- [ ] [Criterion 2]
+- [ ] [Criterion 3]
+- [ ] Tests written and passing for all implementation steps
+
+## Testing Strategy
+
+### Unit Tests
+
+[What unit tests need to be written]
+
+- [Test category 1]
+- [Test category 2]
+
+### Integration Tests
+
+[What integration tests need to be written]
+
+- [Test scenario 1]
+- [Test scenario 2]
+
+### Manual Verification
+
+[Manual steps to verify correctness]
+
+1. [Step 1]
+2. [Step 2]
+
+## Implementation Steps
+
+[Detailed breakdown of execution]
+
+1. **[Step 1 Name]**
+   - [Sub-task]
+   - [Sub-task]
+   - **Tests:** [What tests to write for this step]
+
+2. **[Step 2 Name]**
+   - [Sub-task]
+   - [Sub-task]
+   - **Tests:** [What tests to write for this step]
+
+3. **[Step 3 Name]**
+   - [Sub-task]
+   - [Sub-task]
+   - **Tests:** [What tests to write for this step]
+
+## Review Checklist
+
+- [ ] Does this approach align with project architecture?
+- [ ] Are all edge cases considered?
+- [ ] Are the right MCP tools specified?
+- [ ] Is the scope appropriate (not too large)?
+- [ ] Are success criteria measurable?
+- [ ] Does each implementation step have associated tests defined?
+
+---
+
+**Next Step:** Please review this plan. When you're ready, run `/para-execute` to begin implementation.
