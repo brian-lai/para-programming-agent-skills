@@ -1,0 +1,37 @@
+{
+  "name": "para-programming",
+  "version": "0.1.0",
+  "description": "PARA-Programming methodology for Codex - structured context, persistent memory, and intelligent execution",
+  "author": {
+    "name": "PARA-Programming Community",
+    "email": "hello@para-programming.dev",
+    "url": "https://github.com/brian-lai/para-programming-codex-plugin"
+  },
+  "homepage": "https://github.com/brian-lai/para-programming-codex-plugin",
+  "repository": "https://github.com/brian-lai/para-programming-codex-plugin",
+  "license": "MIT",
+  "keywords": [
+    "para",
+    "methodology",
+    "workflow",
+    "context",
+    "planning",
+    "ai-assisted-development",
+    "pair-programming",
+    "persistent-memory"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "PARA-Programming",
+    "shortDescription": "Structured AI-assisted development workflow",
+    "longDescription": "Plan, Review, Execute, Summarize, and Archive your development work with structured context management, git worktree isolation, and phased execution support.",
+    "developerName": "PARA-Programming Community",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/brian-lai/para-programming-codex-plugin"
+  }
+}
