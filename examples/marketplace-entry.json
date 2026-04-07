@@ -1,0 +1,20 @@
+{
+  "name": "para-programming-plugins",
+  "interface": {
+    "displayName": "PARA-Programming Plugins"
+  },
+  "plugins": [
+    {
+      "name": "para-programming",
+      "source": {
+        "source": "local",
+        "path": "./plugins/para-programming"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
