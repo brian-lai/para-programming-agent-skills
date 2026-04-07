@@ -74,6 +74,7 @@ fi
 # Add plugin entry
 echo "Adding '$PLUGIN_NAME' to $MARKETPLACE_FILE..."
 TEMP_FILE=$(mktemp)
+trap 'rm -f "$TEMP_FILE"' EXIT
 jq --arg name "$PLUGIN_NAME" \
    --arg path "$PLUGIN_DIR" \
    '.plugins += [{

@@ -47,7 +47,7 @@
 ### Option 2: Automated Install Script
 
 ```bash
-# From the plugin directory:
+# From the plugin directory (registers the plugin from its current location):
 ./scripts/install.sh
 ```
 
