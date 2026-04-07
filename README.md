@@ -24,10 +24,10 @@ PARA-Programming is a methodology for structured AI-assisted development that em
 | `/para-plan <task>` | Create a planning document (collaborative) |
 | `/para-execute` | Create worktree, extract todos, start execution |
 | `/para-status` | Check current workflow state |
-| `/para-summarize` | Generate post-work summary *(v1.0.0)* |
-| `/para-archive` | Archive context and start fresh *(v1.0.0)* |
-| `/para-check` | Decision helper: should I use PARA for this? *(v1.0.0)* |
-| `/para-help` | Show quick reference *(v1.0.0)* |
+| `/para-summarize` | Generate post-work summary |
+| `/para-archive` | Archive context and start fresh |
+| `/para-check` | Decision helper: should I use PARA for this? |
+| `/para-help` | Show quick reference |
 
 ## Installation
 
@@ -61,9 +61,13 @@ PARA-Programming is a methodology for structured AI-assisted development that em
 
 3. Restart Codex to load the plugin.
 
-### Option 2: Install Script *(coming in v1.0.0)*
+### Option 2: Install Script
 
-An automated install script will be available in a future release.
+```bash
+./scripts/install.sh
+```
+
+See [INSTALL.md](INSTALL.md) for detailed instructions.
 
 ## Quick Start
 

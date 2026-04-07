@@ -25,7 +25,9 @@ para-programming-codex-plugin/
 ├── skills/             # Skill implementations (SKILL.md)
 ├── templates/          # File templates for plans, summaries, etc.
 ├── resources/          # Global AGENTS.md methodology file
-└── examples/           # Marketplace entry example
+├── examples/           # Marketplace entry + example workflow
+├── docs/               # Phased plans documentation
+└── scripts/            # Installation helpers
 ```
 
 ## Key Files

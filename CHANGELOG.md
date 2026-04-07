@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0] - 2026-04-07
+
+### Added
+- Remaining skills: `para-summarize`, `para-archive`, `para-check`, `para-help`
+- `.mcp.json` with repo-search MCP server config
+- `INSTALL.md` with detailed Codex-specific installation instructions
+- `scripts/install.sh` marketplace-entry registration helper (requires `jq`)
+- `docs/` with phased plans quick reference, example, and changelog
+- `examples/example-workflow.md` adapted for Codex
+
+### Changed
+- Bumped version from 0.1.0 to 1.0.0 (full feature parity)
+- Updated README to remove v1.0.0 markers on skills
+- Updated AGENTS.md project structure with new directories
+
 ## [0.1.0] - 2026-04-07
 
 ### Added
