@@ -12,6 +12,7 @@
   "completed_summaries": [
     {COMPLETED_SUMMARIES}
   ],
+  "research_docs": [],
   "worktree_path": null,
   "last_updated": "{TIMESTAMP}"
 }

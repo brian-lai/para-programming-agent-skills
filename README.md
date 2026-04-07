@@ -2,7 +2,7 @@
 
 Structured AI-assisted development workflow for OpenAI Codex.
 
-**Plan → Review → Execute → Summarize → Archive**
+**Research → Plan → Review → Execute → Review → Summarize → Archive**
 
 ## What is PARA-Programming?
 
@@ -10,9 +10,12 @@ PARA-Programming is a methodology for structured AI-assisted development that em
 
 ## Features
 
-- **Structured Planning** — Collaborative plan creation with clarifying questions, spec-driven approach, and phased plan support
+- **Deep Research** — Codebase exploration produces context-compressed research docs for better planning
+- **Structured Planning** — Collaborative plan creation with self-review rounds, Staff+ engineering criteria, and phased plan support
+- **Staff+ Review** — Independent reviewer with FAANG engineer persona reviews plans and PRs
 - **Isolated Execution** — Git worktree isolation keeps your main branch clean while the agent works
-- **Commit-Per-Todo** — Every checklist item becomes an atomic commit with TDD
+- **Commit-Per-Todo** — Every checklist item becomes an atomic commit with TDD (red/green cycle)
+- **Workflow Orchestration** — Automatic multi-phase execute → PR → review → summarize → merge cycle
 - **Context Tracking** — Persistent `context/context.md` tracks active work, plans, and summaries
 - **Phased Execution** — Break complex work into independently reviewable phases
 
@@ -21,8 +24,11 @@ PARA-Programming is a methodology for structured AI-assisted development that em
 | Skill | Purpose |
 |-------|---------|
 | `/para-init` | Initialize PARA structure in a project |
-| `/para-plan <task>` | Create a planning document (collaborative) |
+| `/para-research <task>` | Deep codebase research before planning |
+| `/para-plan <task>` | Create a planning document (collaborative, with self-review) |
+| `/para-review --plan\|--pr` | Staff+ FAANG engineer review loop |
 | `/para-execute` | Create worktree, extract todos, start execution |
+| `/para-workflow` | Orchestrate full execute → review → summarize → archive cycle |
 | `/para-status` | Check current workflow state |
 | `/para-summarize` | Generate post-work summary |
 | `/para-archive` | Archive context and start fresh |
@@ -75,13 +81,22 @@ See [INSTALL.md](INSTALL.md) for detailed instructions.
 # Initialize PARA in your project
 /para-init
 
+# Research the codebase (optional but recommended)
+/para-research add user authentication
+
 # Create a plan for your task
 /para-plan add user authentication
 
-# Review the plan, then execute
+# Review the plan
+/para-review --plan
+
+# Execute (or use /para-workflow for full automation)
 /para-execute
 
-# When done, summarize and archive
+# Review the implementation
+/para-review --pr
+
+# Summarize and archive
 /para-summarize
 /para-archive
 ```

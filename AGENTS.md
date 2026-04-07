@@ -9,7 +9,7 @@ This document contains project-specific context only.
 
 ## About This Project
 
-The PARA-Programming Codex Plugin is the OpenAI Codex adaptation of the PARA-Programming methodology for structured AI-assisted development workflows. It provides skills for managing planning documents, execution tracking, summaries, and context archival.
+The PARA-Programming Codex Plugin is the OpenAI Codex adaptation of the PARA-Programming methodology for structured AI-assisted development workflows. It provides 11 skills for research, planning, review, execution, summarization, and archival — following the workflow: Research → Plan → Review → Execute → Review → Summarize → Archive.
 
 ## Tech Stack
 
