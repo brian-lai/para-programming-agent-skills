@@ -1,9 +1,9 @@
 ---
 name: para-init
-description: Initialize PARA-Programming structure in the current project.
+description: Initialize PARA-Programming structure in the current project. Use when setting up a new repo for PARA workflow, creating context/ directory, or bootstrapping AGENTS.md.
+model: haiku
+effort: low
 ---
-
-# Skill: init
 
 Initialize PARA-Programming structure in the current project.
 
@@ -17,12 +17,12 @@ Initialize PARA-Programming structure in the current project.
 
 ## What It Does
 
-1. **Set up global methodology file** at `~/.agents/AGENTS.md` (copied from `resources/AGENTS.md` if missing; never overwrites existing)
+1. **Set up global methodology file** at `~/.agents/AGENTS.md` (copied from `resources/AGENTS.md` if missing; never overwrites existing).
 2. **Create context directory structure:**
    ```bash
    mkdir -p context/{data,plans,summaries,archives,servers}
    ```
-3. **Create `context/context.md`** with initial structure:
+3. **Create `context/context.md`** seeded from `assets/context-template.md`:
    ````markdown
    # Current Work Summary
 
@@ -37,11 +37,12 @@ Initialize PARA-Programming structure in the current project.
    }
    ```
    ````
-4. **Create project `AGENTS.md`** (if missing) from template based on `--template` option
+   See `references/context-schema.md` for the full field reference.
+4. **Create project `AGENTS.md`** (if missing) from `assets/agents-basic-template.md` (default, `--template=basic`) or `assets/agents-full-template.md` (`--template=full`).
 5. **Update `.gitignore`** to include `.para-worktrees/`:
-   - If `.gitignore` exists, check for `.para-worktrees/` entry; append if missing
-   - If `.gitignore` does not exist, create it with `.para-worktrees/` as its content
-   - This prevents worktree directories from being tracked by git
+   - If `.gitignore` exists, check for `.para-worktrees/` entry; append if missing.
+   - If `.gitignore` does not exist, create it with `.para-worktrees/` as its content.
+   - This prevents worktree directories from being tracked by git.
 
 ## Success Output
 
