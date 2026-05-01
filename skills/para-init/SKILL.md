@@ -46,18 +46,17 @@ Initialize PARA-Programming structure in the current project.
 
 ## Graceful Degradation (partial-install fallback)
 
-If `references/context-schema.md` is not available in this install (single-skill copy without the bundled resource), the minimal context.md JSON schema is:
+If `references/context-schema.md` is not available in this install (single-skill copy without the bundled resource), the minimal required context.md JSON schema is:
 
 ```json
 {
-  "active_context": ["path/to/plan.md"],
-  "research_docs": [],
+  "active_context": [],
   "completed_summaries": [],
   "last_updated": "ISO-8601"
 }
 ```
 
-Required fields: `active_context` (string[]), `completed_summaries` (string[]), `last_updated` (ISO 8601 string). Optional extensions (`phased_execution`, `workflow`, `worktree_path`, `execution_branch`) are documented in the full schema.
+Required fields: `active_context` (string[]), `completed_summaries` (string[]), `last_updated` (ISO 8601 string). Optional fields include `research_docs` (string[]), `worktree_path`, `execution_branch`, `execution_started`, `phased_execution`, and `workflow` — all documented in the full schema.
 
 ## Success Output
 
