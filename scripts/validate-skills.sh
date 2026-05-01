@@ -21,5 +21,6 @@ command -v yq >/dev/null 2>&1 || { echo "ERROR: yq required — install via 'bre
 command -v jq >/dev/null 2>&1 || { echo "ERROR: jq required — install via 'brew install jq'"; exit 1; }
 command -v shellcheck >/dev/null 2>&1 || echo "WARN: shellcheck not found — skipping shell lint"
 
+export STRICT=1
 cd "$REPO_ROOT"
 bash "$REPO_ROOT/tests/conformance/run_all.sh"
