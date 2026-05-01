@@ -12,10 +12,11 @@ set -euo pipefail
 
 command -v yq >/dev/null 2>&1 || { echo "FAIL: yq required — install via 'brew install yq' (mikefarah/yq v4+)"; exit 1; }
 
-SPEC="context/data/2026-05-01-open-standard-conformance-spec.yaml"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SPEC="$SCRIPT_DIR/spec.yaml"
 if [ ! -f "$SPEC" ]; then
-  echo "SKIP: $SPEC not found (run from repo root with context/ present)"
-  exit 0
+  echo "FAIL: spec file not found at $SPEC"
+  exit 1
 fi
 REGISTRY_FILE=$(mktemp)
 trap 'rm -f "$REGISTRY_FILE"' EXIT
