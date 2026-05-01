@@ -17,3 +17,5 @@
   "last_updated": "{TIMESTAMP}"
 }
 ```
+
+See `../references/context-schema.md` for the full field reference.
