@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - `scripts/validate-skills.sh` — conformance validator (runs `tests/conformance/run_all.sh`)
 - `tests/conformance/` — conformance test suite (name regex, dir matching, description bounds, body size, reference resolution)
+- `tests/conformance/spec.yaml` — tracked copy of the conformance spec (source of truth for `test_references_resolve.sh`). Synced from `context/data/2026-05-01-open-standard-conformance-spec.yaml` when the registry changes in phases 2-6.
 - `docs/METHODOLOGY.md` — stub; full content in v3.0.0 release
 - `tests/e2e/multi-client-layout-compat.sh` — E2E stub (exits 1 until phase 7 implements)
 
