@@ -40,7 +40,7 @@ If no task description is provided, ask for one.
    - How config is managed (env vars, config files, feature flags)
    - Naming conventions, file organization patterns
 
-5. **Produce research document** — write findings to `context/data/YYYY-MM-DD-task-name-research.md` using the template from `templates/research-template.md`. The document should be:
+5. **Produce research document** — write findings to `context/data/YYYY-MM-DD-task-name-research.md` using the template from `assets/research-template.md`. The document should be:
    - **High-signal, low-noise** — include what matters for planning, not exhaustive file listings
    - **Structured for context compression** — a planner reading only this document should have sufficient context to create a detailed plan
    - **Honest about gaps** — explicitly call out what's undocumented, inconsistent, or surprising
