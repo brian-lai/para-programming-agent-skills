@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0-alpha.1] - 2026-05-01
+
+### Breaking Changes
+- **Directory renames**: All skill directories renamed from `skills/<name>/` to `skills/para-<name>/`
+  to satisfy the Agent Skills open standard requirement that `name == basename(dir)`.
+  Update any hardcoded skill paths in install scripts or CI configuration.
+- **Template relocation**: All template files moved from top-level `templates/` into each
+  owning skill's `assets/` subdirectory. SKILL.md body references updated accordingly.
+  - `templates/context-template.md` → `skills/para-init/assets/context-template.md`
+  - `templates/agents-basic-template.md` → `skills/para-init/assets/agents-basic-template.md`
+  - `templates/agents-full-template.md` → `skills/para-init/assets/agents-full-template.md`
+  - `templates/plan-template.md` → `skills/para-plan/assets/plan-template.md`
+  - `templates/phased-plan-master-template.md` → `skills/para-plan/assets/phased-plan-master-template.md`
+  - `templates/phased-plan-sub-template.md` → `skills/para-plan/assets/phased-plan-sub-template.md`
+  - `templates/research-template.md` → `skills/para-research/assets/research-template.md`
+  - `templates/summary-template.md` → `skills/para-summarize/assets/summary-template.md`
+
+### Added
+- `scripts/validate-skills.sh` — conformance validator (runs `tests/conformance/run_all.sh`)
+- `tests/conformance/` — conformance test suite (name regex, dir matching, description bounds, body size, reference resolution)
+- `tests/conformance/spec.yaml` — tracked copy of the conformance spec (source of truth for `test_references_resolve.sh`). Synced from `context/data/2026-05-01-open-standard-conformance-spec.yaml` when the registry changes in phases 2-6.
+- `docs/METHODOLOGY.md` — stub; full content in v3.0.0 release
+- `tests/e2e/multi-client-layout-compat.sh` — E2E stub (exits 1 until phase 7 implements)
+
 ## [2.0.0] - 2026-04-07
 
 ### Added

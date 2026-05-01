@@ -1,0 +1,306 @@
+# Agent Skills Conformance Contract
+# Defines what "spec-compliant" means for para-programming-agent-skills.
+# Sourced from https://agentskills.io/specification and client-specific docs.
+# This file is the canonical contract that contract-tests in tests/conformance/ verify.
+
+spec_version: "agentskills.io/2026-04"
+
+skill_file:
+  path_pattern: "skills/{name}/SKILL.md"
+  required: true
+  format: "YAML frontmatter + Markdown body"
+
+  frontmatter:
+    required_fields:
+      - field: name
+        type: string
+        constraints:
+          - "1-64 characters"
+          - "regex: ^[a-z0-9]+(-[a-z0-9]+)*$"
+          - "must equal basename(parent directory)"
+      - field: description
+        type: string
+        constraints:
+          - "1-1024 characters"
+          - "non-empty"
+          - "should include trigger keywords that help agents identify relevant tasks"
+
+    optional_fields:
+      - field: license
+        type: string
+        constraints: ["recommend short form: license name or bundled file reference"]
+      - field: compatibility
+        type: string
+        constraints: ["1-500 characters if provided"]
+      - field: metadata
+        type: object
+        constraints:
+          - "string keys, string values"
+          - "use for client-specific hints (e.g. model, effort for Claude Code)"
+      - field: allowed-tools
+        type: string
+        constraints: ["space-separated tool names", "experimental; client support varies"]
+
+    client_specific_fields:
+      # These are client-recognized top-level keys NOT in the core agentskills.io spec.
+      # The spec ignores unknown top-level keys (does not forbid them). Other clients tolerate them.
+      - field: model
+        type: string
+        readers: [claude-code]
+        notes: "Top-level key. Claude Code reads this to set the model used when the skill is active. Values: opus, sonnet, haiku, or 'inherit'. NOT under metadata."
+      - field: effort
+        type: string
+        readers: [claude-code]
+        notes: "Top-level key. Claude Code reads this to set effort level. Values: low, medium, high, xhigh, max. NOT under metadata."
+      - field: disable-model-invocation
+        type: boolean
+        readers: [cursor, claude-code]
+        notes: "Top-level key. Setting true restricts to slash-command only. Plugin v2.2.2 removed this entirely (blocks skill chaining) — we adopt that decision and do NOT set it."
+      - field: allowed-tools
+        type: string
+        readers: [claude-code, agentskills-experimental]
+        notes: "Space-separated tool names. Claude Code pre-approves these without prompting when skill is active."
+
+  body:
+    format: "Markdown, no format restrictions"
+    size_limit:
+      soft: "500 lines / ~5000 tokens"
+      rationale: "Progressive disclosure: move detail to references/ and assets/"
+
+directory_layout:
+  per_skill:
+    - path: SKILL.md
+      required: true
+    - path: scripts/
+      optional: true
+      purpose: "Executable code invocable by the agent"
+    - path: references/
+      optional: true
+      purpose: "Supplemental documentation loaded on demand"
+    - path: assets/
+      optional: true
+      purpose: "Templates, images, data files"
+
+  repo_root:
+    - path: skills/
+      required: true
+      purpose: "Top-level directory containing all skills. Each subdirectory name must match the contained SKILL.md frontmatter name."
+
+client_discovery:
+  # Each client scans these directories (walking from CWD up to git root) to find skills.
+  # The repo must be installable into at least one discovery path per client.
+  - client: claude-code
+    installation_methods:
+      - type: plugin
+        manifest: .claude-plugin/plugin.json
+        skills_pointer: "./skills/"
+      - type: raw-skill-copy
+        target: "~/.claude/skills/ or <project>/.claude/skills/"
+    invocation:
+      plugin_namespaced: "/{plugin-name}:{skill-name-without-prefix}"
+      raw: "/{skill-name}"
+
+  - client: openai-codex
+    installation_methods:
+      - type: plugin
+        manifest: .codex-plugin/plugin.json
+        skills_pointer: "./skills/"
+        marketplace_registration: "examples/marketplace-entry.json"
+    invocation:
+      primary: "${skill-name} or /skills picker"
+      autonomous: true
+
+  - client: opencode
+    installation_methods:
+      - type: raw-skill-copy
+        target: "<project>/.opencode/skills/ or .agents/skills/ or ~/.config/opencode/skills/"
+      - type: legacy
+        target: "<project>/.claude/skills/"
+    invocation:
+      primary: "skill tool call: skill({ name: ... })"
+      autonomous: true
+    permission_config: "opencode.json { permission: { skill: { ... } } }"
+
+  - client: cursor-cli
+    installation_methods:
+      - type: raw-skill-copy
+        target: "<project>/.cursor/skills/ or .agents/skills/ or ~/.cursor/skills/ or ~/.agents/skills/"
+      - type: legacy
+        target: ".claude/skills/, .codex/skills/"
+    invocation:
+      primary: "/{skill-name} in chat"
+      autonomous: true
+    slash_only_flag: "disable-model-invocation: true"
+
+  - client: gemini-cli
+    installation_methods:
+      - type: raw-skill-copy
+        target: "<project>/.gemini/skills/ or .agents/skills/ or ~/.gemini/skills/"
+    invocation:
+      primary: "/skills list | /skills enable | /skills disable"
+      autonomous: true
+
+skills_to_deliver:
+  # Every skill in this list must pass conformance.
+  - para-archive
+  - para-check
+  - para-execute
+  - para-help
+  - para-init
+  - para-plan
+  - para-research
+  - para-review
+  - para-status
+  - para-summarize
+  - para-workflow
+
+validation:
+  test_suite: tests/conformance/
+  primary_gate: scripts/validate-skills.sh
+  gate_checks:
+    - "Every skills/*/SKILL.md exists"
+    - "frontmatter.name matches parent directory basename"
+    - "frontmatter.name matches regex ^[a-z0-9]+(-[a-z0-9]+)*$"
+    - "frontmatter.description length in [1, 1024]"
+    - "SKILL.md body length <= 500 lines"
+    - "All references to bundled files (scripts/, references/, assets/) resolve"
+    - "No orphaned top-level templates/ or references/ files"
+  optional_gate: "skills-ref validate skills/<name>/ for each skill (if tool installed)"
+
+bundled_resource_placement:
+  # Every resource previously in top-level templates/ or docs/ must move inside a skill or to references/.
+  # This ensures relative paths in SKILL.md resolve after install.
+  mappings:
+    - from: templates/plan-template.md
+      to: skills/para-plan/assets/plan-template.md
+    - from: templates/phased-plan-master-template.md
+      to: skills/para-plan/assets/phased-plan-master-template.md
+    - from: templates/phased-plan-sub-template.md
+      to: skills/para-plan/assets/phased-plan-sub-template.md
+    - from: templates/research-template.md
+      to: skills/para-research/assets/research-template.md
+    - from: templates/summary-template.md
+      to: skills/para-summarize/assets/summary-template.md
+    - from: templates/context-template.md
+      to: skills/para-init/assets/context-template.md
+    - from: templates/agents-basic-template.md
+      to: skills/para-init/assets/agents-basic-template.md
+    - from: templates/agents-full-template.md
+      to: skills/para-init/assets/agents-full-template.md
+    - from: (new) context-schema.md
+      to: skills/para-init/references/context-schema.md
+    - from: (new file — stub landed phase 1, populated phase 7)
+      to: docs/METHODOLOGY.md
+      note: "Kept at repo root as methodology reference. Not loaded by any skill. Stubbed in phase 1 (so test_references_resolve.sh stays green from phase 1 onwards) and fully populated in phase 7."
+
+cross_skill_references:
+  # Central registry of every expected relative path from one skill into another.
+  # tests/conformance/test_references_resolve.sh iterates this list to enforce.
+  # If para-init reorganizes, every entry here must be updated.
+  rule: "Use relative paths like '../para-init/references/context-schema.md'. Never use absolute paths or repo-root paths."
+  paths:
+    - from: skills/para-plan/SKILL.md
+      to: ../para-init/references/context-schema.md
+      reason: "phased_execution field shape reference"
+    - from: skills/para-execute/SKILL.md
+      to: ../para-init/references/context-schema.md
+      reason: "phased_execution field shape reference"
+    - from: skills/para-workflow/SKILL.md
+      to: ../para-init/references/context-schema.md
+      reason: "workflow field shape reference"
+    - from: skills/para-archive/SKILL.md
+      to: ../para-init/assets/context-template.md
+      reason: "seed fresh context.md from canonical template"
+    - from: skills/para-archive/SKILL.md
+      to: ../para-init/references/context-schema.md
+      reason: "schema pointer instead of inline JSON"
+    - from: skills/para-status/SKILL.md
+      to: ../para-init/references/context-schema.md
+      reason: "field meaning lookup"
+  cross_skill_invocations:
+    # Orchestration references: a SKILL.md that names /para-<other> as a FLOW STEP (not just a table entry)
+    # must include graceful-degradation fallback. Phase-7 E2E single-skill-copy test verifies this.
+    - skill: skills/para-workflow/SKILL.md
+      invokes: [/para-execute, /para-review, /para-summarize, /para-archive]
+      kind: flow-step
+    - skill: skills/para-summarize/SKILL.md
+      invokes: [/para-archive]
+      kind: flow-step
+    - skill: skills/para-plan/SKILL.md
+      invokes: [/para-research, /para-execute, /para-review]
+      kind: flow-step
+    - skill: skills/para-research/SKILL.md
+      invokes: [/para-plan]
+      kind: flow-step
+    - skill: skills/para-check/SKILL.md
+      invokes: [/para-plan]
+      kind: flow-step
+    - skill: skills/para-init/SKILL.md
+      invokes: [/para-plan]
+      kind: flow-step
+
+    # Informational references: skills that list or mention other skills for user guidance,
+    # not as executable flow steps. No fallback-comment requirement since the user, not the skill,
+    # decides whether to invoke.
+    - skill: skills/para-help/SKILL.md
+      invokes: [/para-init, /para-research, /para-plan, /para-review, /para-execute, /para-workflow, /para-summarize, /para-archive, /para-status, /para-check, /para-help]
+      kind: informational
+    - skill: skills/para-status/SKILL.md
+      invokes: [/para-init, /para-plan, /para-execute, /para-summarize, /para-archive]
+      kind: informational
+
+canonical_phrases:
+  # Phrases the per-skill tests grep verbatim. Pinning them here prevents drift.
+  checklist_as_commit: "checkbox text from the plan IS the commit message"
+  five_round_cap: "5-round"
+  convergence_rule: "two consecutive rounds produce the same MUST FIX issues"
+  fresh_reviewer_rule: "never continue a previous reviewer"
+  phase_split_triggers:
+    - "More than 5 files with cross-file refactoring"
+    - "2 or more architectural layers"
+    - "merged to `main`"
+  workflow_owns_pr: "This step owns PR creation for workflow runs"
+  summarize_orchestrated_handoff: "invoked as Step 4 of /para-workflow"
+  archive_no_force_remove: "do NOT force-remove"
+  workflow_diagram: "Research → Plan → Review"
+  empty_initial_commit: "empty commit"
+
+content_parity_baseline:
+  source_of_truth: "Frozen snapshot at context/data/plugin-v2.2.2-snapshot/ (from para-programming-plugin v2.2.2, commit 0adb0e7, 2026-04-30). All phase subagents read from this in-repo snapshot, NOT from any sibling plugin checkout."
+  unported_plugin_deltas:
+    - "v2.1.0 content: canonical context-schema, METHODOLOGY.md, Spec+Stubs sections, phase-split triggers, workflow/summarize PR handoff, 5-round review cap, spec-first TDD default, Round 3 self-review"
+    - "v2.2.0 content: top-level model/effort/allowed-tools frontmatter keys (Claude Code reads these top-level; NOT under metadata:)"
+    - "v2.2.1: context-aware disable-model-invocation (don't port; see v2.2.2)"
+    - "v2.2.2: disable-model-invocation removed entirely (adopt this decision — don't add the flag)"
+  rewrite_approach: "Start fresh from spec using plugin v2.2.2 as source material. Restructure for progressive disclosure. Adapt branding (CLAUDE.md → AGENTS.md, /para: → /para-, ~/.claude/ → ~/.agents/)."
+
+progressive_regression:
+  # Which test suites must be green at each phase boundary. Each entry is a relative dir or glob.
+  phase_1_compliance_foundation:
+    - "tests/conformance/"
+  phase_2_para_init:
+    - "tests/conformance/"
+    - "tests/skills/para-init/"
+  phase_3_para_plan_research:
+    - "tests/conformance/"
+    - "tests/skills/para-init/"
+    - "tests/skills/para-plan/"
+    - "tests/skills/para-research/"
+  phase_4_para_execute_review:
+    - "tests/conformance/"
+    - "tests/skills/para-init/"
+    - "tests/skills/para-plan/"
+    - "tests/skills/para-research/"
+    - "tests/skills/para-execute/"
+    - "tests/skills/para-review/"
+  phase_5_para_workflow_summarize_archive:
+    - "tests/conformance/"
+    - "tests/skills/para-*/"
+  phase_6_para_status_check_help:
+    - "tests/conformance/"
+    - "tests/skills/para-*/"
+  phase_7_multi_client_install:
+    - "tests/conformance/"
+    - "tests/skills/para-*/"
+    - "tests/install/"
+    - "tests/e2e/"
