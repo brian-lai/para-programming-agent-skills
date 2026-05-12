@@ -1,9 +1,9 @@
 ---
 name: para-summarize
-description: Generate a summary document from the current work session. Supports both simple and phased plans.
+description: Generate a summary document from the current work session. Supports simple and phased plans. Handles PR creation when run standalone.
+model: sonnet
+effort: medium
 ---
-
-# Skill: summarize
 
 Generate a summary document from the current work session. Supports both simple and phased plans.
 
@@ -18,19 +18,19 @@ Generate a summary document from the current work session. Supports both simple 
 
 1. Reads `worktree_path` from `context/context.md` JSON metadata
 2. Analyzes git changes from the worktree using `git -C {worktree_path} diff main...HEAD` and `git -C {worktree_path} log main..HEAD`
-3. Reviews the active plan (or phase) from `context/context.md`
-4. Creates summary in the **main working tree**: `context/summaries/YYYY-MM-DD-task-name-summary.md` (or `...-phase-N-summary.md`)
-5. Updates `context/context.md`: moves plan from `active_context` to `completed_summaries`, updates timestamp
-6. For phased plans, marks phase status as "completed"
+3. Reviews the active plan or phase from `context/context.md`
+4. Creates summary in the main working tree: `context/summaries/YYYY-MM-DD-task-name-summary.md` or `...-phase-N-summary.md`
+5. Uses `assets/summary-template.md` as the summary structure
+6. Updates `context/context.md`: moves plan from active context to completed summaries, updates timestamp, and marks phase status as completed when relevant
 
 ## Summary Sections
 
 - **Date & Status** -- when completed, success/failure
-- **Changes Made** -- files modified/created with line references (from worktree diff)
+- **Changes Made** -- files modified/created with line references from the worktree diff
 - **Rationale** -- why these changes were made
 - **MCP Tools Used** -- preprocessing tools utilized
 - **Key Learnings** -- insights, follow-up tasks, gotchas
-- **Test Results** -- pass/fail status, coverage metrics
+- **Test Results** -- pass/fail status and coverage metrics
 
 ## Implementation
 
@@ -39,15 +39,22 @@ Generate a summary document from the current work session. Supports both simple 
 3. If `worktree_path` is set, analyze changes with:
    - `git -C {worktree_path} diff main...HEAD` for file-level changes
    - `git -C {worktree_path} log main..HEAD --oneline` for commit history
-4. If no `worktree_path` (legacy or `--no-worktree` execution), fall back to `git diff` and `git status` on current branch
+4. If no `worktree_path` exists, fall back to `git diff` and `git status` on the current branch
 5. Extract task name from plan filename
-6. Create summary file in main working tree with template from `assets/summary-template.md`
+6. Create summary file in the main working tree with template from `assets/summary-template.md`
 7. Update `context/context.md` metadata
 8. Display summary location
 
 ## Post-Summarize Guidance
 
-After summarizing, the next steps are:
+### Standalone Mode
+
+If `/para-summarize` was run standalone, not as part of `/para-workflow`, the next steps are:
+
 1. Push the branch: `git -C {worktree_path} push -u origin para/{task-name}`
 2. Create a PR: `gh pr create` from the worktree branch
 3. Run `/para-archive` to clean up the worktree and archive context
+
+### Orchestrated Mode
+
+If `/para-summarize` was invoked as Step 4 of /para-workflow, the PR was already created in Step 2 of the workflow. Skip the manual push/PR instructions above and return control to `/para-workflow` for merge and archive handling.
