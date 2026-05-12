@@ -1,9 +1,9 @@
 ---
 name: para-research
-description: Perform deep codebase exploration and produce a context-compressed research document for planning.
+description: Perform deep codebase exploration and produce a context-compressed research document for planning. Use before /para-plan for non-trivial tasks to gather contracts, patterns, and interface boundaries.
+model: opus
+effort: high
 ---
-
-# Skill: research
 
 Perform deep codebase exploration and produce a context-compressed research document. This document becomes the primary input for `/para-plan`.
 
@@ -19,7 +19,7 @@ If no task description is provided, ask for one.
 
 ## What It Does
 
-1. **Clarify focus** — if the task description is broad or ambiguous, ask 1-4 clarifying questions to scope the research. Skip if the task is narrow and well-defined.
+1. **Clarify focus** — if the task description is broad or ambiguous, ask 1-4 clarifying questions to clarify scope, depth, and any specific concerns before proceeding. Skip if the task is narrow and well-defined.
 
 2. **Deep codebase exploration** — perform thorough investigation across the relevant area:
    - File structure and organization across the relevant area
