@@ -217,6 +217,9 @@ cross_skill_references:
     - from: skills/para-status/SKILL.md
       to: ../para-init/references/context-schema.md
       reason: "field meaning lookup"
+    - from: skills/para-help/SKILL.md
+      to: ../../docs/METHODOLOGY.md
+      reason: "human-readable methodology reference"
   cross_skill_invocations:
     # Orchestration references: a SKILL.md that names /para-<other> as a FLOW STEP (not just a table entry)
     # must include graceful-degradation fallback. Phase-7 E2E single-skill-copy test verifies this.
