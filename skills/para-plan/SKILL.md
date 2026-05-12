@@ -1,9 +1,9 @@
 ---
 name: para-plan
-description: Create a planning document through collaborative dialogue, with support for multi-phase plans.
+description: Create a planning document through collaborative dialogue with support for multi-phase plans. Use for all non-trivial changes before writing code. Gates /para-execute.
+model: opus
+effort: high
 ---
-
-# Skill: plan
 
 Create a planning document through collaborative dialogue, with support for multi-phase plans.
 
@@ -42,43 +42,52 @@ When `/para-plan` is invoked:
    - Reference the spec and stub file paths in the plan
 
 6. **Determine plan type:**
-   - **Simple plan** (single file) for straightforward tasks
-   - **Phased plan** (master + sub-plans) when work spans >5-10 files, crosses architectural boundaries, or has natural dependency ordering
-   - If proposing a phased plan, confirm with the user first.
+   - **Simple plan** (single file) unless any of the following apply.
+   - **Phased plan** (master + sub-plans) when at least one trigger is met:
+     1. More than 5 files with cross-file refactoring (not just independent edits to many files)
+     2. Work spans 2 or more architectural layers (e.g., API + UI + DB)
+     3. Later work requires earlier work to be merged to `main` -- not just complete -- before it can begin (dependency chain)
+   - If none of these triggers apply, use a simple plan. If proposing a phased plan, confirm with the user first.
 
 7. **Draft the plan** applying Staff+ engineering criteria:
-   - **Think about what NOT to build.** Explicitly state what is deferred or out of scope and why.
-   - **Identify interface boundaries.** Every boundary between systems, modules, or layers needs a defined contract.
-   - **Address graceful degradation.** For every external dependency, document what happens when it fails.
-   - **Include observability.** Specify what gets logged, what gets metered/monitored, and what alerts should fire.
-   - **Document architecture decisions as a table:** Decision | Choice | Rationale | Alternatives Rejected.
-   - **Concrete test annotations on every implementation step.** Each step must have a `Tests:` annotation with specific function signatures, test case names, and key assertions.
-   - **Checklist = commit.** Every implementation step MUST be written as a checkbox item (`- [ ] ...`) where the text serves as the git commit message.
+   - **Think about what NOT to build.** Explicitly state what is deferred or out of scope and why. Resist over-engineering -- if a simple approach works, prefer it and document the rationale.
+   - **Identify interface boundaries.** Every boundary between systems, modules, or layers needs a defined contract (API spec, message schema, shared type, or interface definition). List each boundary and its contract.
+   - **Address graceful degradation.** For every external dependency (databases, APIs, queues, third-party services), document what happens when it fails. Fill in a Failure Scenario / Expected Behavior table.
+   - **Include observability.** Specify what gets logged (with correlation IDs), what gets metered or monitored, and what alerts should fire. Every cross-boundary call should be traceable.
+   - **Document architecture decisions as a table:** Decision | Choice | Rationale | Alternatives Rejected. This makes trade-offs explicit and reviewable.
+   - **Concrete test annotations on every implementation step.** Each step must have a `Tests:` annotation with specific function signatures, test case names, and key assertions -- not vague descriptions like "test the API".
+   - **Checklist = commit.** Every implementation step MUST be written as a checkbox item (`- [ ] ...`) where the text serves as the git commit message. Keep items atomic -- one logical change per item.
 
 8. **Self-review loop (2-3 rounds).** Before presenting the plan to the user, re-read the entire plan and revise it. This is NOT optional for any plan that spans more than 2-3 files.
 
    **Round 1 -- Correctness & Completeness:**
-   - Are there technical bugs in the approach?
+   - Are there technical bugs in the approach (wrong API usage, missing adapters, race conditions)?
    - Are any interface boundaries missing their contract definition?
-   - Is anything over-engineered or under-engineered?
+   - Is anything over-engineered (building abstractions that are not needed yet)?
+   - Is anything under-engineered (hardcoding something that will immediately need to change)?
    - Are all file paths accurate and consistent across the plan?
 
    **Round 2 -- Testing & TDD:**
-   - Do tests come BEFORE implementation in the ordering?
+   - Do tests come BEFORE implementation in the ordering? (Contract tests and acceptance test skeleton should be written first.)
    - Is there a contract test suite for every interface boundary?
-   - Is there an E2E acceptance test defined on day 1 (even if it stays red)?
-   - Are test annotations concrete (function signatures, test names) rather than vague?
+   - Is there an E2E acceptance test defined on day 1 (even if it stays red until later phases)?
+   - Does the progressive regression rule make sense? (Which test suites go green at each step/phase?)
+   - Are test annotations concrete (function signatures, test names, key assertions) rather than vague?
 
-   **Round 3 (conditional):** Run ONLY if Rounds 1 and 2 together produced more than 3 substantive changes.
+   **Round 3 (conditional) -- Consistency & Cross-references:**
+   Run this round ONLY if Rounds 1 and 2 together produced more than 3 substantive changes to the plan.
+   - Are all file paths, type names, and function signatures consistent between the master plan and sub-plans?
+   - Does the progressive regression rule match the actual test suites defined?
+   - Are architecture decisions reflected accurately in both the master plan tables and sub-plan implementation steps?
 
-   **Convergence rule:** Stop self-review when a round produces fewer than 3 substantive edits.
+   **5-round cap and convergence rule:** Stop self-review when a round produces fewer than 3 substantive edits. A "substantive edit" is a change to logic, structure, contracts, or test coverage -- not a typo fix or wording improvement.
 
-9. **Present the plan** to the user for review. Note how many self-review rounds were completed.
+9. **Present the plan** to the user for review. Note how many self-review rounds were completed and summarize the key changes made during self-review.
 
-10. **After the plan is written**, ask the user if they'd like to proceed. Offer options like:
+10. **After the plan is written**, ask the user if they would like to proceed. Offer options like:
     - "Run `/para-review --plan` for Staff+ review" -- independent reviewer before execution
     - "Yes, run `/para-execute`" -- proceed directly to implementation
-    - "I'd like to make adjustments first" -- continue refining the plan
+    - "I would like to make adjustments first" -- continue refining the plan
     For phased plans, reference `/para-execute --phase=1` to start with the first phase.
 
 ## Plan Structure
@@ -86,12 +95,13 @@ When `/para-plan` is invoked:
 ### Simple Plan
 
 File: `context/plans/YYYY-MM-DD-task-name.md`
+Template: `assets/plan-template.md`
 
 Sections:
 - **Objective** -- what needs to be done
 - **Core Principles** -- 3-6 engineering principles guiding the implementation
-- **Spec** -- path to spec file and what it covers
-- **Stubs** -- list of stub source files to be created
+- **Spec** -- path to spec file (`context/data/YYYY-MM-DD-task-name-spec.yaml` or equivalent) and what it covers
+- **Stubs** -- list of stub source files to be created and their locations
 - **Architecture Decisions** -- table: Decision | Choice | Rationale | Alternatives Rejected
 - **Interface Boundaries** -- every cross-system boundary with its contract
 - **Graceful Degradation** -- table: Failure Scenario | Expected Behavior
@@ -102,13 +112,17 @@ Sections:
 
 ### Phased Plan
 
+Templates:
+- Master plan: `assets/phased-plan-master-template.md`
+- Sub-plan: `assets/phased-plan-sub-template.md`
+
 Files:
-- `context/plans/YYYY-MM-DD-task-name.md` (master plan: architecture-only reference with core principles, architecture decisions, responsibility split, graceful degradation, progressive regression rule)
-- `context/plans/YYYY-MM-DD-task-name-phase-1.md` (self-contained implementation-ready sub-plan with TDD ordering)
+- `context/plans/YYYY-MM-DD-task-name.md` -- master plan using `assets/phased-plan-master-template.md` (architecture-only reference document with core principles, architecture decisions, responsibility split, graceful degradation, progressive regression rule)
+- `context/plans/YYYY-MM-DD-task-name-phase-1.md` -- sub-plan using `assets/phased-plan-sub-template.md` (self-contained implementation-ready sub-plan with TDD ordering)
 - `context/plans/YYYY-MM-DD-task-name-phase-2.md`
 - etc.
 
-The master plan should be concise (1-3 pages) and never contain implementation steps. Each sub-plan should be independently executable.
+The master plan should be kept concise (1-3 pages) and never contain implementation steps. Each sub-plan should be independently executable -- someone should be able to work from a sub-plan without needing to read the master plan.
 
 Each phase should be independently reviewable and mergeable.
 
@@ -116,25 +130,33 @@ Each phase should be independently reviewable and mergeable.
 
 After creating the plan, update `context/context.md`:
 - Add plan file(s) to `active_context` array
-- For phased plans, add `phased_execution` metadata with phase status tracking:
-  ```json
-  {
-    "phased_execution": {
-      "master_plan": "context/plans/YYYY-MM-DD-task-name.md",
-      "phases": [
-        { "phase": 1, "plan": "context/plans/YYYY-MM-DD-task-name-phase-1.md", "status": "pending", "branch": null, "worktree_path": null },
-        { "phase": 2, "plan": "context/plans/YYYY-MM-DD-task-name-phase-2.md", "status": "pending", "branch": null, "worktree_path": null }
-      ],
-      "current_phase": null
-    }
-  }
-  ```
+- For phased plans, add `phased_execution` metadata with phase status tracking. See `../para-init/references/context-schema.md` for the full field reference. Note: `branch` and `worktree_path` are set to `null` at plan time. They are populated by `/para-execute` when a phase begins execution.
 - Update `last_updated` timestamp
+
+If ../para-init/references/context-schema.md is not available in this install, the minimal fields needed are: `active_context` (string[]), `research_docs` (string[]), `completed_summaries` (string[]), `phased_execution` (object for phased plans), and `last_updated` (ISO 8601 string).
+
+## Example
+
+```
+User: /para-plan add-caching-layer
+
+Agent: I would like to clarify a few things before creating the plan:
+
+[Asks 2-3 questions about:]
+- Cache backend preference (Redis, Memcached, in-memory)
+- Scope (which data to cache, TTL strategy)
+- Invalidation strategy (time-based, event-based, manual)
+
+[After receiving answers, explores codebase, then creates plan]
+[Runs 2 rounds of self-review, fixes test ordering and adds missing degradation scenario]
+
+Creates: context/plans/2025-12-18-add-caching-layer.md
+```
 
 ## Notes
 
 - All project work MUST start with a plan (per PARA workflow)
 - Master plans should be concise (1-3 pages); sub-plans should be self-contained and implementation-ready
-- Don't ask questions you could answer by reading the codebase
+- Do not ask questions you could answer by reading the codebase
 - Bias towards 2-4 focused questions, not 10+ scattered ones
 - Complex plans undergo 2-3 automatic self-review rounds before being presented for human review
