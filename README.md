@@ -8,7 +8,20 @@ Cross-client Agent Skills package for the PARA-Programming methodology.
 
 PARA-Programming is a structured workflow for AI-assisted development. It keeps plans, research, execution state, reviews, summaries, and archives in a project-local `context/` directory so long-running work can survive context resets and client changes.
 
-This repository packages the methodology as open-standard Agent Skills for Claude Code, OpenAI Codex, OpenCode, Cursor, and Gemini CLI. The skill layout follows the emerging portable `SKILL.md` convention promoted by agentskills.io: each skill lives in its own directory, the directory basename matches frontmatter `name`, and assets/references stay beside the skill that owns them.
+This repository packages the methodology as open-standard Agent Skills. The skill layout follows the emerging portable `SKILL.md` convention promoted by agentskills.io: each skill lives in its own directory, the directory basename matches frontmatter `name`, and assets/references stay beside the skill that owns them.
+
+## Supported Clients
+
+| Client | Status | Install path | Invocation |
+|--------|--------|--------------|------------|
+| OpenAI Codex | Supported out of the box | `scripts/install.sh` installs to `~/.agents/skills` and mirrors to `~/.codex/skills` | `$para-init` or `/skills` |
+| Gemini CLI | Supported out of the box | Uses the same `~/.agents/skills` install written by `scripts/install.sh` | Auto-activation or `/skills list` |
+| Pi | Supported out of the box | Uses the same `~/.agents/skills` install written by `scripts/install.sh` | Auto-activation or `/skill:para-init` when skill commands are enabled |
+| Claude Code | Use the Claude plugin | Use `github.com/brian-lai/para-programming-plugin` | Claude plugin commands |
+| OpenCode | Manual/experimental | Copy or symlink `skills/` into the client skills path | Client-specific |
+| Cursor | Manual/experimental | Copy or symlink `skills/` into the client skills path | Client-specific |
+
+For Claude Code, use the original PARA-Programming plugin: `https://github.com/brian-lai/para-programming-plugin`. This repository is the open-standard/Codex-oriented Agent Skills package.
 
 ## Skills
 
@@ -28,13 +41,7 @@ This repository packages the methodology as open-standard Agent Skills for Claud
 
 ## Installation
 
-See [INSTALL.md](INSTALL.md) for client-specific installation paths:
-
-- Claude Code
-- OpenAI Codex
-- OpenCode
-- Cursor
-- Gemini
+See [INSTALL.md](INSTALL.md) for client-specific installation paths and support notes.
 
 For Codex local skill installation from a checkout:
 
