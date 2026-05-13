@@ -9,9 +9,9 @@ This repository is a portable Agent Skills package. The canonical skill payload 
 | OpenAI Codex | Yes | `scripts/install.sh` installs to `~/.agents/skills`, mirrors to `~/.codex/skills`, and registers the plugin marketplace entry. |
 | Gemini CLI | Yes | Gemini discovers `~/.agents/skills`, so the Codex installer also installs the Gemini-compatible user skill path. |
 | Pi | Yes | Pi discovers `~/.agents/skills`, so the Codex installer also installs the Pi-compatible user skill path. |
+| OpenCode | Yes | OpenCode discovers `~/.agents/skills`, so the Codex installer also installs the OpenCode-compatible user skill path. |
+| Cursor | Yes | Cursor discovers Agent Skills from shared `.agents/skills` locations and Cursor-specific `.cursor/skills` locations; the installer writes the shared global path. |
 | Claude Code | No | Use the original Claude plugin instead: `https://github.com/brian-lai/para-programming-plugin`. |
-| OpenCode | Manual/experimental | Copy or symlink `skills/` into the OpenCode skills path configured on your machine. |
-| Cursor | Manual/experimental | Copy or symlink `skills/` into the Cursor Agent Skills path configured on your machine. |
 
 ## Claude Code
 
@@ -85,31 +85,40 @@ Pi discovers user skills from `~/.agents/skills`, so the Codex installer provide
 
 ## OpenCode
 
-Use the open-standard skill layout directly.
+OpenCode discovers user skills from `~/.agents/skills`, so the Codex installer provides out-of-box OpenCode support.
 
-1. Clone this repository:
+1. Run the same installer:
 
    ```bash
-   git clone https://github.com/brian-lai/para-programming-agent-skills.git ~/.opencode/para-programming-agent-skills
+   ./scripts/install.sh
    ```
 
-2. Copy or symlink `skills/` into the OpenCode skills location configured on your machine.
+2. Start OpenCode from any project. OpenCode exposes discovered skills to agents through its native `skill` tool.
 
-3. Keep `docs/` and `resources/` beside the package when possible so cross-skill references and methodology docs remain available.
+3. Optional project-local install: copy or symlink this repository's `skills/` tree into `.agents/skills/` or `.opencode/skills/` in a project.
 
 ## Cursor
 
-Cursor can consume the same `skills/` layout when configured for Agent Skills.
+Cursor supports Agent Skills in the editor and CLI. The installer writes the shared global `~/.agents/skills` path, which Cursor-compatible Agent Skills tooling can discover. Cursor also supports Cursor-specific skill directories such as `.cursor/skills/` for project-level skills and `~/.cursor/skills/` for user-level skills.
 
-1. Clone this repository:
+1. Run the same installer:
 
    ```bash
-   git clone https://github.com/brian-lai/para-programming-agent-skills.git ~/.cursor/para-programming-agent-skills
+   ./scripts/install.sh
    ```
 
-2. Copy or symlink `skills/` into the Cursor Agent Skills directory used by your environment.
+2. Restart Cursor. Skills can be auto-selected by the agent or invoked from the slash command menu, for example:
 
-3. Restart Cursor and confirm the `$para-*` skills are discoverable in the agent session.
+   ```text
+   /para-init
+   ```
+
+3. If your Cursor version does not discover the shared global path, mirror the installed skills into Cursor's user-level skill directory:
+
+   ```bash
+   mkdir -p ~/.cursor/skills
+   cp -R ~/.agents/skills/para-* ~/.cursor/skills/
+   ```
 
 ## Manual Acceptance Checklist
 
@@ -119,8 +128,8 @@ Before publishing or cutting a release, verify these flows manually:
 - OpenAI Codex: `scripts/install.sh` installs `para-*` skills into `~/.agents/skills`, and `$para-init` is selectable via `/skills` or direct `$para-init` mention.
 - Gemini CLI: `gemini skills list --all` discovers the installed `para-*` skills from `~/.agents/skills`.
 - Pi: Pi discovers the installed `para-*` skills from `~/.agents/skills`; `/skill:para-init` works when skill commands are enabled.
-- OpenCode: copying `skills/` preserves every `SKILL.md` and asset/reference path used by the skills.
-- Cursor: the skills directory is discoverable and the `$para-*` invocation names are shown consistently.
+- OpenCode: OpenCode discovers installed `para-*` skills from `~/.agents/skills` and exposes them through its native `skill` tool.
+- Cursor: Cursor discovers installed `para-*` skills from the shared `~/.agents/skills` path or from a fallback `~/.cursor/skills` mirror, and exposes them through the slash command menu.
 - Single-skill installs: any skill that references a sibling skill includes a graceful fallback phrase.
 - Full-tree installs: `docs/` is present beside `skills/` when using `para-help` methodology links.
 
