@@ -10,11 +10,11 @@ Spawn an independent subagent with a Staff+ FAANG engineer persona to review a p
 ## Usage
 
 ```
-/para-review --plan                    # Review the active plan
-/para-review --plan=path/to/plan.md    # Review a specific plan file
-/para-review --pr                      # Review the current branch's changes as a PR
-/para-review --pr=123                  # Review a specific PR number
-/para-review --approve                 # Override: skip remaining review rounds and approve
+$para-review --plan                    # Review the active plan
+$para-review --plan=path/to/plan.md    # Review a specific plan file
+$para-review --pr                      # Review the current branch's changes as a PR
+$para-review --pr=123                  # Review a specific PR number
+$para-review --approve                 # Override: skip remaining review rounds and approve
 ```
 
 ## Staff+ FAANG Engineer Reviewer Persona
@@ -77,7 +77,7 @@ After the initial review, the loop proceeds:
 
 > "Review has not converged after 5 rounds. Here are the remaining issues: [list]. Would you like to:
 > 1. Continue addressing issues
-> 2. Override and approve (`/para-review --approve`)
+> 2. Override and approve (`$para-review --approve`)
 > 3. Revise the approach"
 
 **Convergence check:** If two consecutive rounds produce the same MUST FIX issues, escalate immediately rather than waiting for round 5. This prevents infinite loops where fixes for one issue reintroduce another.

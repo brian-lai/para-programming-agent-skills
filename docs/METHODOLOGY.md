@@ -69,7 +69,7 @@ Each step produces an artifact that feeds the next:
 | Summarize | Git diff + plan | `context/summaries/*.md` | — |
 | Archive | Context state | `context/archives/*.md` | — |
 
-For multi-phase work, `/para-workflow` orchestrates this loop across all phases automatically.
+For multi-phase work, `$para-workflow` orchestrates this loop across all phases automatically.
 
 ---
 
@@ -221,7 +221,7 @@ Archives are never deleted. They form a searchable project memory: what was plan
    - Implement to make tests pass
    - Run tests to see them pass (green)
    - Mark complete and commit with the checklist item text as the commit message
-5. After all todos, suggests running `/para-review --pr`
+5. After all todos, suggests running `$para-review --pr`
 
 **Why worktrees:** Git worktrees give full isolation without the overhead of cloning the repository. The agent works in `.para-worktrees/{task-name}/` while your main working tree stays exactly where it is. This is essential for agent teams — multiple agents can work on different phases in parallel, each in their own worktree.
 
@@ -234,10 +234,10 @@ Archives are never deleted. They form a searchable project memory: what was plan
 **Purpose:** Orchestrate the full execute → PR → review → summarize → archive → next phase cycle.
 
 **What it does:** For each phase in the plan:
-1. Runs `/para-execute --phase=N`
+1. Runs `$para-execute --phase=N`
 2. Creates a PR with auto-generated title and body
-3. Runs `/para-review --pr` (subagent review loop)
-4. Runs `/para-summarize --phase=N`
+3. Runs `$para-review --pr` (subagent review loop)
+4. Runs `$para-summarize --phase=N`
 5. Merges the PR
 6. Archives the phase context
 7. Pulls latest main and starts the next phase
@@ -247,7 +247,7 @@ Archives are never deleted. They form a searchable project memory: what was plan
 - **`--auto`** — fully autonomous, no pauses between phases
 - **`--skip-review`** — skips the subagent review loop for speed
 
-**State tracking:** Workflow progress is tracked in `context/context.md` metadata. If interrupted, running `/para-workflow` again resumes from the current step of the current phase.
+**State tracking:** Workflow progress is tracked in `context/context.md` metadata. If interrupted, running `$para-workflow` again resumes from the current step of the current phase.
 
 **Why this command exists:** Without it, multi-phase execution requires manually running 6-7 commands per phase. The workflow command eliminates this overhead while preserving all quality gates. It's the primary interface for agent team workflows — you set it up and let it run.
 
@@ -363,12 +363,12 @@ Agent 6 (Summarizer): Changes → summary document
 [Repeat for each phase]
 ```
 
-In practice, `/para-workflow` handles agents 4-6 in a loop across all phases. The human's involvement is:
+In practice, `$para-workflow` handles agents 4-6 in a loop across all phases. The human's involvement is:
 
 1. Describe the task
 2. Answer clarifying questions during planning
-3. Approve the plan (or delegate to `/para-review --plan`)
-4. Run `/para-workflow` (or `/para-workflow --auto`)
+3. Approve the plan (or delegate to `$para-review --plan`)
+4. Run `$para-workflow` (or `$para-workflow --auto`)
 5. Review the final result
 
 Everything in between is automated, quality-gated, and resumable.

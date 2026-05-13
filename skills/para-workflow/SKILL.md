@@ -10,16 +10,16 @@ Orchestrate the full PARA execution cycle across phases: execute -> PR -> review
 ## Usage
 
 ```
-/para-workflow                     # Run workflow for active plan, pausing at phase boundaries
-/para-workflow --auto              # Fully autonomous, no pause between phases
-/para-workflow --phase=N           # Start from a specific phase
-/para-workflow --skip-review       # Skip Staff+ review loops
+$para-workflow                     # Run workflow for active plan, pausing at phase boundaries
+$para-workflow --auto              # Fully autonomous, no pause between phases
+$para-workflow --phase=N           # Start from a specific phase
+$para-workflow --skip-review       # Skip Staff+ review loops
 ```
 
 ## Prerequisites
 
 - `context/context.md` must exist with an active phased plan
-- For simple non-phased plans, use `/para-execute` directly
+- For simple non-phased plans, use `$para-execute` directly
 - Git repository must be clean, or the user must confirm proceeding with dirty state
 
 ## Process Per Phase
@@ -28,7 +28,7 @@ For each phase in the plan, the workflow runs these steps in order:
 
 ### Step 1: Execute
 
-Run `/para-execute --phase=N`.
+Run `$para-execute --phase=N`.
 
 - Creates a worktree and branch for the phase
 - Extracts checklist items as todos
@@ -37,7 +37,7 @@ Run `/para-execute --phase=N`.
 
 ### Step 2: Create PR
 
-Create a pull request for the phase branch. This step owns PR creation for workflow runs. `/para-summarize` in Step 4 detects that it is running inside the orchestrator and skips its standalone push/PR guidance.
+Create a pull request for the phase branch. This step owns PR creation for workflow runs. `$para-summarize` in Step 4 detects that it is running inside the orchestrator and skips its standalone push/PR guidance.
 
 - **PR title:** `para/{task-name} phase N: {phase title}`
 - **PR body:** generated from:
@@ -48,16 +48,16 @@ Create a pull request for the phase branch. This step owns PR creation for workf
 
 ### Step 3: Review
 
-Run `/para-review --pr` unless `--skip-review` is specified.
+Run `$para-review --pr` unless `--skip-review` is specified.
 
 - Staff+ reviewer reviews the PR
 - Loop until approved or user override
-- Respect the `/para-review` 5-round cap and convergence rules
+- Respect the `$para-review` 5-round cap and convergence rules
 - Apply fixes, create additional commits as needed, and push fixes to the PR branch
 
 ### Step 4: Summarize
 
-Run `/para-summarize --phase=N`.
+Run `$para-summarize --phase=N`.
 
 - Generate phase summary to `context/summaries/`
 - Record what changed, rationale, key learnings, and tests
@@ -74,7 +74,7 @@ Merge the PR.
 
 ### Step 6: Archive
 
-Run `/para-archive` for cleanup.
+Run `$para-archive` for cleanup.
 
 - For mid-workflow, perform partial archive behavior: update `context/context.md` to reflect completed phase but keep remaining phases active
 - For final phase, perform full archive: move context to archives and create fresh context
@@ -95,19 +95,19 @@ Track workflow progress in `context/context.md` metadata with a workflow state o
 
 If ../para-init/references/context-schema.md is not available in this install, the minimal workflow state fields are: mode, current_step, current_phase, phases_completed, and started.
 
-This enables resumability. If the workflow is interrupted, running `/para-workflow` again picks up from the current step of the current phase.
+This enables resumability. If the workflow is interrupted, running `$para-workflow` again picks up from the current step of the current phase.
 
 ## Error Handling
 
 - **Step failure:** If any step fails, such as tests failing, PR conflicts, or review non-convergence, pause and present the error with options to fix and continue, skip the current step, or abort.
-- **Merge conflicts:** If the PR cannot be merged, pause and ask the user to resolve conflicts manually. After resolution, resume with `/para-workflow`.
-- **Review non-convergence:** If Staff+ review hits the 5-round limit, escalate per `/para-review` convergence rules. The workflow pauses until the user decides.
+- **Merge conflicts:** If the PR cannot be merged, pause and ask the user to resolve conflicts manually. After resolution, resume with `$para-workflow`.
+- **Review non-convergence:** If Staff+ review hits the 5-round limit, escalate per `$para-review` convergence rules. The workflow pauses until the user decides.
 
 ## Completion
 
 When all phases are complete:
 
-1. Run full archive (`/para-archive`)
+1. Run full archive (`$para-archive`)
 2. Display summary of all phases:
    - Total phases completed
    - Total commits across all phases
@@ -117,7 +117,7 @@ When all phases are complete:
 
 ## Notes
 
-- The workflow command is an orchestrator; it delegates to `/para-execute`, `/para-review`, `/para-summarize`, and `/para-archive`
+- The workflow command is an orchestrator; it delegates to `$para-execute`, `$para-review`, `$para-summarize`, and `$para-archive`
 - `--auto` mode still requires Staff+ review approval as a quality gate unless `--skip-review` is also specified
 - Each phase creates its own PR, enabling incremental review and merge
 - The workflow is resumable; state is tracked in `context/context.md`

@@ -18,7 +18,7 @@ Claude-compatible package metadata lives in `.claude-plugin/`.
 
 ## OpenAI Codex
 
-Codex metadata lives in `.codex-plugin/plugin.json`.
+Codex reads local user skills from `~/.agents/skills`. The installer copies this package's `skills/` tree there, mirrors it into `~/.codex/skills` for older local runtimes, installs supporting docs, and registers the plugin marketplace entry.
 
 1. Clone this repository:
 
@@ -26,19 +26,19 @@ Codex metadata lives in `.codex-plugin/plugin.json`.
    git clone https://github.com/brian-lai/para-programming-agent-skills.git ~/.codex/plugins/para-programming
    ```
 
-2. Register the plugin in `~/.agents/plugins/marketplace.json`:
+2. Install the skills:
 
    ```bash
    ~/.codex/plugins/para-programming/scripts/install.sh
    ```
 
-3. Restart Codex and run:
+3. Restart Codex and mention the skill, or run `/skills` and select it:
 
    ```text
-   /para-init
+   $para-init
    ```
 
-Preview the Codex registration without writes:
+Preview the Codex install without writes:
 
 ```bash
 ./scripts/install.sh --dry-run
@@ -70,7 +70,7 @@ Cursor can consume the same `skills/` layout when configured for Agent Skills.
 
 2. Copy or symlink `skills/` into the Cursor Agent Skills directory used by your environment.
 
-3. Restart Cursor and confirm the `/para-*` skills are discoverable in the agent session.
+3. Restart Cursor and confirm the `$para-*` skills are discoverable in the agent session.
 
 ## Gemini
 
@@ -91,9 +91,9 @@ Gemini CLI can use the portable skill directories when its local Agent Skills pa
 Before publishing or cutting a release, verify these flows manually:
 
 - Claude Code: plugin metadata loads from `.claude-plugin/plugin.json` and the `para-skills` package appears.
-- OpenAI Codex: `.codex-plugin/plugin.json` loads with `"skills": "./skills/"` and `/para-init` is callable.
+- OpenAI Codex: `scripts/install.sh` installs `para-*` skills into `~/.agents/skills`, and `$para-init` is selectable via `/skills` or direct `$para-init` mention.
 - OpenCode: copying `skills/` preserves every `SKILL.md` and asset/reference path used by the skills.
-- Cursor: the skills directory is discoverable and the `/para-*` invocation names are shown consistently.
+- Cursor: the skills directory is discoverable and the `$para-*` invocation names are shown consistently.
 - Gemini: each `para-*` skill can be installed independently or as a full `skills/` tree.
 - Single-skill installs: any skill that references a sibling skill includes a graceful fallback phrase.
 - Full-tree installs: `docs/` is present beside `skills/` when using `para-help` methodology links.

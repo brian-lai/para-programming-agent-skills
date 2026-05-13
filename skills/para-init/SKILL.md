@@ -10,9 +10,9 @@ Initialize PARA-Programming structure in the current project.
 ## Usage
 
 ```
-/para-init
-/para-init --template=basic    # Minimal project AGENTS.md (default)
-/para-init --template=full     # Comprehensive project AGENTS.md
+$para-init
+$para-init --template=basic    # Minimal project AGENTS.md (default)
+$para-init --template=full     # Comprehensive project AGENTS.md
 ```
 
 ## What It Does
@@ -83,7 +83,7 @@ Files created/updated:
 
 Next steps:
 1. Edit AGENTS.md with your project-specific context
-2. Create your first plan: /para-plan <task-description>
-3. Check status: /para-status
-4. Get help: /para-help
+2. Create your first plan: $para-plan <task-description>
+3. Check status: $para-status
+4. Get help: $para-help
 ```

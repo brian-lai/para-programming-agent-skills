@@ -10,9 +10,9 @@ Display the current state of PARA context and workflow progress.
 ## Usage
 
 ```
-/para-status
-/para-status --verbose         # Include file contents preview
-/para-status --files           # List all context files
+$para-status
+$para-status --verbose         # Include file contents preview
+$para-status --files           # List all context files
 ```
 
 ## What It Does
@@ -49,23 +49,23 @@ Completed Summaries:
 Last Updated: 2025-11-24T14:30:00Z
 
 Next Action:
-   Continue executing the plan, or run /para-summarize when complete
+   Continue executing the plan, or run $para-summarize when complete
 ```
 
 ## State Detection
 
 | State | Detection | Next step |
 |---|---|---|
-| **No context** | `context/context.md` does not exist | Run `/para-init` |
-| **Idle** | Context exists, no active plans, no active worktree | Run `/para-plan <task>` or `/para-check` |
-| **Planning** | `active_context` contains plan or research docs, no worktree path | Review plan, then run `/para-review --plan` or `/para-execute` |
-| **Executing** | `worktree_path` is set and worktree exists | Continue todos, then run `/para-review --pr` and `/para-summarize` |
-| **Summarized** | Completed summary exists and no active work remains | Run `/para-archive` |
+| **No context** | `context/context.md` does not exist | Run `$para-init` |
+| **Idle** | Context exists, no active plans, no active worktree | Run `$para-plan <task>` or `$para-check` |
+| **Planning** | `active_context` contains plan or research docs, no worktree path | Review plan, then run `$para-review --plan` or `$para-execute` |
+| **Executing** | `worktree_path` is set and worktree exists | Continue todos, then run `$para-review --pr` and `$para-summarize` |
+| **Summarized** | Completed summary exists and no active work remains | Run `$para-archive` |
 
 ## Worktree Health Checks
 
 - **Active:** `worktree_path` in metadata, directory exists, branch is valid
-- **Stale reference:** `worktree_path` in metadata but directory does not exist -- warn: "Worktree referenced in context.md but directory missing. Run `/para-execute` to recreate or update context.md."
+- **Stale reference:** `worktree_path` in metadata but directory does not exist -- warn: "Worktree referenced in context.md but directory missing. Run `$para-execute` to recreate or update context.md."
 - **Orphaned worktree:** Directory exists in `.para-worktrees/` but is not referenced in `context/context.md` -- warn: "Orphaned worktree found at `.para-worktrees/{name}`. Run `git worktree remove` to clean up or update context.md."
 - **No worktree:** No `worktree_path` in metadata -- normal for No context, Idle, Planning, or legacy `--no-worktree` execution
 

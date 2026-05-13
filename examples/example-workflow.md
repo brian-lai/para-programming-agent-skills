@@ -13,7 +13,7 @@ You have a web API project that needs authentication added. You're using Codex w
 ## Step 1: Check Current Status
 
 ```
-/para-status
+$para-status
 ```
 
 **Output:**
@@ -25,8 +25,8 @@ You have a web API project that needs authentication added. You're using Codex w
    No active context
 
 🎯 Next Action:
-   Run /para-init to set up PARA structure (if not done)
-   Or run /para-plan to start a new task
+   Run $para-init to set up PARA structure (if not done)
+   Or run $para-plan to start a new task
 ```
 
 ---
@@ -34,7 +34,7 @@ You have a web API project that needs authentication added. You're using Codex w
 ## Step 2: Verify Workflow Needed
 
 ```
-/para-check "Add JWT-based user authentication to the API"
+$para-check "Add JWT-based user authentication to the API"
 ```
 
 **Output:**
@@ -52,11 +52,11 @@ Reason:
 Category: Code Implementation
 
 Recommended Actions:
-  1. Run /para-plan to create implementation plan
+  1. Run $para-plan to create implementation plan
   2. Get human review of the plan
   3. Execute the implementation
-  4. Run /para-summarize when complete
-  5. Run /para-archive to clean up
+  4. Run $para-summarize when complete
+  5. Run $para-archive to clean up
 ```
 
 ---
@@ -64,7 +64,7 @@ Recommended Actions:
 ## Step 3: Create a Plan
 
 ```
-/para-plan add-jwt-authentication
+$para-plan add-jwt-authentication
 ```
 
 **The agent creates:** `context/plans/2025-11-24-add-jwt-authentication.md`
@@ -163,7 +163,7 @@ The agent implements step-by-step:
 After implementation is complete:
 
 ```
-/para-summarize
+$para-summarize
 ```
 
 **The agent analyzes git changes and creates:** `context/summaries/2025-11-24-add-jwt-authentication-summary.md`
@@ -231,7 +231,7 @@ Implemented JWT authentication with httpOnly cookies (instead of header-based to
 ## Step 7: Check Status
 
 ```
-/para-status
+$para-status
 ```
 
 **Output:**
@@ -251,7 +251,7 @@ Implemented JWT authentication with httpOnly cookies (instead of header-based to
 ⏰ Last Updated: 2025-11-24T15:45:00Z
 
 🎯 Next Action:
-   Run /para-archive to clean up and prepare for next task
+   Run $para-archive to clean up and prepare for next task
 ```
 
 ---
@@ -259,7 +259,7 @@ Implemented JWT authentication with httpOnly cookies (instead of header-based to
 ## Step 8: Archive and Clean Up
 
 ```
-/para-archive
+$para-archive
 ```
 
 **The agent archives context:**
@@ -275,7 +275,7 @@ Implemented JWT authentication with httpOnly cookies (instead of header-based to
 ## Step 9: Start Next Task (Optional)
 
 ```
-/para-plan add-rate-limiting
+$para-plan add-rate-limiting
 ```
 
 **And the cycle continues...**
@@ -284,11 +284,11 @@ Implemented JWT authentication with httpOnly cookies (instead of header-based to
 
 ## Key Takeaways
 
-1. **Every code change starts with a plan** - `/para-plan`
+1. **Every code change starts with a plan** - `$para-plan`
 2. **Always get human review** - Before execution
-3. **Document everything** - `/para-summarize` captures learnings
-4. **Clean up when done** - `/para-archive` maintains clean context
-5. **Stay oriented** - `/para-status` shows where you are
+3. **Document everything** - `$para-summarize` captures learnings
+4. **Clean up when done** - `$para-archive` maintains clean context
+5. **Stay oriented** - `$para-status` shows where you are
 
 This workflow ensures:
 - ✅ Structured approach to complex tasks

@@ -14,17 +14,17 @@ This repository packages the methodology as open-standard Agent Skills for Claud
 
 | Skill | Purpose |
 |-------|---------|
-| `/para-init` | Initialize PARA structure in a project |
-| `/para-research <task>` | Deep codebase research before planning |
-| `/para-plan <task>` | Create a planning document with self-review |
-| `/para-review --plan\|--pr` | Review a plan or PR with Staff+ criteria |
-| `/para-execute` | Create a worktree and execute one checklist item per commit |
-| `/para-workflow` | Orchestrate execute, review, summarize, and merge across phases |
-| `/para-status` | Check current workflow state |
-| `/para-summarize` | Generate a post-work summary |
-| `/para-archive` | Archive context and start fresh |
-| `/para-check` | Decide whether a request needs the PARA workflow |
-| `/para-help` | Show quick reference |
+| `$para-init` | Initialize PARA structure in a project |
+| `$para-research <task>` | Deep codebase research before planning |
+| `$para-plan <task>` | Create a planning document with self-review |
+| `$para-review --plan\|--pr` | Review a plan or PR with Staff+ criteria |
+| `$para-execute` | Create a worktree and execute one checklist item per commit |
+| `$para-workflow` | Orchestrate execute, review, summarize, and merge across phases |
+| `$para-status` | Check current workflow state |
+| `$para-summarize` | Generate a post-work summary |
+| `$para-archive` | Archive context and start fresh |
+| `$para-check` | Decide whether a request needs the PARA workflow |
+| `$para-help` | Show quick reference |
 
 ## Installation
 
@@ -36,11 +36,13 @@ See [INSTALL.md](INSTALL.md) for client-specific installation paths:
 - Cursor
 - Gemini
 
-For Codex marketplace registration from a local checkout:
+For Codex local skill installation from a checkout:
 
 ```bash
 ./scripts/install.sh
 ```
+
+The installer follows the current Codex Skills guide by installing user skills into `~/.agents/skills`. It also mirrors into `~/.codex/skills` for older local runtimes.
 
 Preview the install without writes:
 
@@ -70,7 +72,7 @@ These skills were generalized from the original `para-programming-plugin` comman
 
 - `CLAUDE.md` -> `AGENTS.md`
 - `~/.claude/` -> `~/.agents/`
-- `/para:command` -> `/para-command`
+- `/para:command` -> `$para-command` skill mention
 - `commands/*.md` -> `skills/para-*/SKILL.md`
 
 ## License
