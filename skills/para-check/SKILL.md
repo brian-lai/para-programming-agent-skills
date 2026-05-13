@@ -10,8 +10,8 @@ Decision helper to determine if PARA workflow should be used for a given request
 ## Usage
 
 ```
-/para-check "Add user authentication to the API"
-/para-check "Where is the auth middleware defined?"
+$para-check "Add user authentication to the API"
+$para-check "Where is the auth middleware defined?"
 ```
 
 ## Decision Logic
@@ -19,7 +19,7 @@ Decision helper to determine if PARA workflow should be used for a given request
 ```
 Does this request require code/file changes?
 |- YES -> USE PARA WORKFLOW
-|        Next: Run /para-plan to create an implementation plan.
+|        Next: Run $para-plan to create an implementation plan.
 `- NO  -> SKIP PARA
          |- Read-only project question -> Direct answer with file references
          |- navigation request -> Point to relevant files or commands
@@ -55,7 +55,7 @@ Request: "Add user authentication to the API"
 USE PARA WORKFLOW
 
 Reason: This request requires code changes and file modifications.
-Next: Run /para-plan to create an implementation plan.
+Next: Run $para-plan to create an implementation plan.
 ```
 
 For skip cases, replace the verdict with `SKIP PARA` and provide the direct answer or inspection path.

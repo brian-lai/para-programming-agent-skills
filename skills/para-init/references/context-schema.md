@@ -11,13 +11,13 @@
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `active_context` | `string[]` | Yes | Paths to active plan files (e.g., `context/plans/YYYY-MM-DD-task-name.md`). Empty when idle. |
-| `research_docs` | `string[]` | No | Paths to research documents produced by `/para-research`. |
+| `research_docs` | `string[]` | No | Paths to research documents produced by `$para-research`. |
 | `completed_summaries` | `string[]` | Yes | Paths to summary files from completed work. Carried forward across archives. |
 | `worktree_path` | `string \| null` | No | Path to the active git worktree (e.g., `.para-worktrees/task-name`). Set during simple-plan execution; `null` or absent when idle. |
 | `execution_branch` | `string` | No | Git branch name for the current execution (e.g., `para/task-name`). Set during execution. |
 | `execution_started` | `string` | No | ISO 8601 timestamp marking when execution began. |
 | `phased_execution` | `object` | No | Present only for phased (multi-phase) plans. See Phased Execution Fields below. |
-| `workflow` | `object` | No | Present only when `/para-workflow` is actively orchestrating. See Workflow Fields below. |
+| `workflow` | `object` | No | Present only when `$para-workflow` is actively orchestrating. See Workflow Fields below. |
 | `last_updated` | `string` | Yes | ISO 8601 timestamp of the most recent metadata update. |
 
 ### Phased Execution Fields (`phased_execution`)

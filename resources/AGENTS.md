@@ -77,11 +77,11 @@ If a request sounds like it could bypass this (e.g. "make a quick update", "just
 Research → Plan → Review Plan → Execute → Review PR → Summarize → Archive
 ```
 
-For multi-phase work, use `/para-workflow` to orchestrate the full cycle automatically.
+For multi-phase work, use `$para-workflow` to orchestrate the full cycle automatically.
 
 ### 1. Research (Optional but Recommended)
 
-Run `/para-research` to perform deep codebase exploration before planning:
+Run `$para-research` to perform deep codebase exploration before planning:
 - Produces a structured research doc at `context/data/YYYY-MM-DD-task-name-research.md`
 - Covers architecture, components, API contracts, patterns, graceful degradation, gaps
 - Becomes primary input for the planning phase
@@ -114,7 +114,7 @@ Run `/para-research` to perform deep codebase exploration before planning:
 
 ### 3. Review Plan
 
-Run `/para-review --plan` for independent Staff+ reviewer:
+Run `$para-review --plan` for independent Staff+ reviewer:
 - Spawns a separate reviewer with Staff+ FAANG engineer persona
 - Reviews architecture, TDD ordering, completeness, scope
 - Loops until approved (MUST FIX → address → re-review)
@@ -137,7 +137,7 @@ Run `/para-review --plan` for independent Staff+ reviewer:
 
 ### 5. Review PR
 
-Run `/para-review --pr` for independent Staff+ reviewer of the implementation:
+Run `$para-review --pr` for independent Staff+ reviewer of the implementation:
 - Checks commit-plan alignment, test quality, conventions
 - Loops until approved
 

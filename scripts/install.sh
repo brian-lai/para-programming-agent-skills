@@ -2,8 +2,9 @@
 #
 # PARA-Programming Codex Plugin - Install Helper
 #
-# Installs skills into ~/.codex/skills and adds the plugin entry to
-# ~/.agents/plugins/marketplace.json.
+# Installs skills into ~/.agents/skills per the current Codex Skills guide,
+# mirrors them into ~/.codex/skills for older local runtimes, and adds the
+# plugin entry to ~/.agents/plugins/marketplace.json.
 # Requires: jq (for marketplace JSON manipulation)
 # Idempotent: refreshes direct skill files and skips marketplace registration
 # when the entry already exists.
@@ -12,11 +13,15 @@
 set -e
 
 PLUGIN_NAME="para-programming"
+AGENTS_HOME="${AGENTS_HOME:-$HOME/.agents}"
+AGENTS_SKILLS_DIR="$AGENTS_HOME/skills"
+AGENTS_DOCS_DIR="$AGENTS_HOME/docs"
+AGENTS_PARA_INIT_RESOURCES_DIR="$AGENTS_SKILLS_DIR/para-init/resources"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 CODEX_SKILLS_DIR="$CODEX_HOME/skills"
 CODEX_DOCS_DIR="$CODEX_HOME/docs"
 CODEX_PARA_INIT_RESOURCES_DIR="$CODEX_SKILLS_DIR/para-init/resources"
-MARKETPLACE_DIR="$HOME/.agents/plugins"
+MARKETPLACE_DIR="$AGENTS_HOME/plugins"
 MARKETPLACE_FILE="$MARKETPLACE_DIR/marketplace.json"
 PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DRY_RUN=0
@@ -43,24 +48,37 @@ echo "========================================"
 echo ""
 
 if [ "$DRY_RUN" -eq 1 ]; then
-    echo "Dry run: would install skills into $CODEX_SKILLS_DIR"
-    echo "Dry run: would install methodology docs into $CODEX_DOCS_DIR"
-    echo "Dry run: would install para-init resources into $CODEX_PARA_INIT_RESOURCES_DIR"
+    echo "Dry run: would install skills into $AGENTS_SKILLS_DIR"
+    echo "Dry run: would install methodology docs into $AGENTS_DOCS_DIR"
+    echo "Dry run: would install para-init resources into $AGENTS_PARA_INIT_RESOURCES_DIR"
+    echo "Dry run: would mirror skills into $CODEX_SKILLS_DIR for older local runtimes"
     echo "Dry run: would register '$PLUGIN_NAME' in $MARKETPLACE_FILE"
     echo "Dry run: plugin source would be $PLUGIN_DIR"
     echo "Dry run: no filesystem changes made"
     exit 0
 fi
 
-echo "Installing PARA skills into $CODEX_SKILLS_DIR..."
+echo "Installing PARA skills into $AGENTS_SKILLS_DIR..."
+mkdir -p "$AGENTS_SKILLS_DIR"
+cp -R "$PLUGIN_DIR/skills/." "$AGENTS_SKILLS_DIR/"
+
+echo "Installing methodology docs into $AGENTS_DOCS_DIR..."
+mkdir -p "$AGENTS_DOCS_DIR"
+cp -R "$PLUGIN_DIR/docs/." "$AGENTS_DOCS_DIR/"
+
+echo "Installing para-init resources into $AGENTS_PARA_INIT_RESOURCES_DIR..."
+mkdir -p "$AGENTS_PARA_INIT_RESOURCES_DIR"
+cp "$PLUGIN_DIR/resources/AGENTS.md" "$AGENTS_PARA_INIT_RESOURCES_DIR/AGENTS.md"
+
+echo "Mirroring PARA skills into $CODEX_SKILLS_DIR for older local runtimes..."
 mkdir -p "$CODEX_SKILLS_DIR"
 cp -R "$PLUGIN_DIR/skills/." "$CODEX_SKILLS_DIR/"
 
-echo "Installing methodology docs into $CODEX_DOCS_DIR..."
+echo "Mirroring methodology docs into $CODEX_DOCS_DIR..."
 mkdir -p "$CODEX_DOCS_DIR"
 cp -R "$PLUGIN_DIR/docs/." "$CODEX_DOCS_DIR/"
 
-echo "Installing para-init resources into $CODEX_PARA_INIT_RESOURCES_DIR..."
+echo "Mirroring para-init resources into $CODEX_PARA_INIT_RESOURCES_DIR..."
 mkdir -p "$CODEX_PARA_INIT_RESOURCES_DIR"
 cp "$PLUGIN_DIR/resources/AGENTS.md" "$CODEX_PARA_INIT_RESOURCES_DIR/AGENTS.md"
 
@@ -137,9 +155,11 @@ jq --arg name "$PLUGIN_NAME" \
    }]' "$MARKETPLACE_FILE" > "$TEMP_FILE" && mv "$TEMP_FILE" "$MARKETPLACE_FILE"
 
 echo ""
-echo "Done! PARA skills installed at: $CODEX_SKILLS_DIR"
+echo "Done! PARA skills installed at: $AGENTS_SKILLS_DIR"
+echo "Compatibility mirror installed at: $CODEX_SKILLS_DIR"
 echo "Plugin registered at: $MARKETPLACE_FILE"
 echo "Plugin source: $PLUGIN_DIR"
 echo ""
-echo "Restart Codex to load the plugin, then run:"
-echo "  /para-init"
+echo "Restart Codex to load the skills, then mention the skill:"
+echo '  $para-init'
+echo "You can also run /skills in the CLI/IDE skill picker."

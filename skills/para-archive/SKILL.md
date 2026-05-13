@@ -10,9 +10,9 @@ Archive the current context to create a clean slate for the next task.
 ## Usage
 
 ```
-/para-archive
-/para-archive --fresh          # Completely empty context
-/para-archive --seed           # Carry forward relevant context
+$para-archive
+$para-archive --fresh          # Completely empty context
+$para-archive --seed           # Carry forward relevant context
 ```
 
 Default: create fresh context with references to completed summaries.
@@ -26,7 +26,7 @@ Default: create fresh context with references to completed summaries.
    - Branch has been pushed and PR created or merged
 3. **Clean up worktrees:**
    - For each worktree path found in metadata, run `git worktree remove {worktree_path}`
-   - If the worktree has uncommitted changes, warn the user and require them to commit or stash first, then re-run `/para-archive`; do NOT force-remove because that can permanently destroy uncommitted work
+   - If the worktree has uncommitted changes, warn the user and require them to commit or stash first, then re-run `$para-archive`; do NOT force-remove because that can permanently destroy uncommitted work
    - After removal, run `git worktree prune` to clean up stale references
    - Remove `.para-worktrees/` if empty
 4. Move `context/context.md` to `context/archives/YYYY-MM-DD-HHMM-context.md`

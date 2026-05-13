@@ -260,7 +260,7 @@ Phase 4: Remove from Monolith
 
 ### Detection Logic
 
-When `/para-plan` is invoked, the agent:
+When `$para-plan` is invoked, the agent:
 1. Analyzes task description
 2. Explores relevant codebase areas
 3. Estimates files affected

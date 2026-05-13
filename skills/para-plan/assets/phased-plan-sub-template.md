@@ -102,4 +102,4 @@
 
 ---
 
-**Next Step:** Once reviewed and approved, run `/para-execute --phase={PHASE_ID}` to begin implementation.
+**Next Step:** Once reviewed and approved, run `$para-execute --phase={PHASE_ID}` to begin implementation.

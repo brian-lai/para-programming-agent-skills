@@ -1,6 +1,6 @@
 ---
 name: para-plan
-description: Create a planning document through collaborative dialogue with support for multi-phase plans. Use for all non-trivial changes before writing code. Gates /para-execute.
+description: Create a planning document through collaborative dialogue with support for multi-phase plans. Use for all non-trivial changes before writing code. Gates $para-execute.
 model: opus
 effort: high
 ---
@@ -10,7 +10,7 @@ Create a planning document through collaborative dialogue, with support for mult
 ## Usage
 
 ```
-/para-plan [task-description]
+$para-plan [task-description]
 ```
 
 If no task description is provided, ask for one.
@@ -19,7 +19,7 @@ If no task description is provided, ask for one.
 
 **Planning is a dialogue, not a one-shot generation.**
 
-When `/para-plan` is invoked:
+When `$para-plan` is invoked:
 
 1. **Identify ambiguities** in the task description -- scope, approach, constraints, preferences.
 
@@ -28,7 +28,7 @@ When `/para-plan` is invoked:
    - Reference existing codebase patterns when relevant ("I see you use X elsewhere, should we follow that?")
    - Skip only if ALL of these are true: task is very narrow, only one reasonable approach exists, no risk of breaking changes, user gave extremely detailed requirements.
 
-3. **Check for research doc.** If a research document exists (`context/data/YYYY-MM-DD-task-name-research.md`), use it as primary input for steps 4-6. If no research doc exists for a non-trivial task, suggest running `/para-research` first.
+3. **Check for research doc.** If a research document exists (`context/data/YYYY-MM-DD-task-name-research.md`), use it as primary input for steps 4-6. If no research doc exists for a non-trivial task, suggest running `$para-research` first.
 
 4. **Explore the codebase** with clarifications in hand -- identify:
    - Existing patterns, conventions, and affected components
@@ -85,10 +85,10 @@ When `/para-plan` is invoked:
 9. **Present the plan** to the user for review. Note how many self-review rounds were completed and summarize the key changes made during self-review.
 
 10. **After the plan is written**, ask the user if they would like to proceed. Offer options like:
-    - "Run `/para-review --plan` for Staff+ review" -- independent reviewer before execution
-    - "Yes, run `/para-execute`" -- proceed directly to implementation
+    - "Run `$para-review --plan` for Staff+ review" -- independent reviewer before execution
+    - "Yes, run `$para-execute`" -- proceed directly to implementation
     - "I would like to make adjustments first" -- continue refining the plan
-    For phased plans, reference `/para-execute --phase=1` to start with the first phase.
+    For phased plans, reference `$para-execute --phase=1` to start with the first phase.
 
 ## Plan Structure
 
@@ -130,7 +130,7 @@ Each phase should be independently reviewable and mergeable.
 
 After creating the plan, update `context/context.md`:
 - Add plan file(s) to `active_context` array
-- For phased plans, add `phased_execution` metadata with phase status tracking. See `../para-init/references/context-schema.md` for the full field reference. Note: `branch` and `worktree_path` are set to `null` at plan time. They are populated by `/para-execute` when a phase begins execution.
+- For phased plans, add `phased_execution` metadata with phase status tracking. See `../para-init/references/context-schema.md` for the full field reference. Note: `branch` and `worktree_path` are set to `null` at plan time. They are populated by `$para-execute` when a phase begins execution.
 - Update `last_updated` timestamp
 
 If ../para-init/references/context-schema.md is not available in this install, the minimal fields needed are: `active_context` (string[]), `research_docs` (string[]), `completed_summaries` (string[]), `phased_execution` (object for phased plans), and `last_updated` (ISO 8601 string).
@@ -138,7 +138,7 @@ If ../para-init/references/context-schema.md is not available in this install, t
 ## Example
 
 ```
-User: /para-plan add-caching-layer
+User: $para-plan add-caching-layer
 
 Agent: I would like to clarify a few things before creating the plan:
 

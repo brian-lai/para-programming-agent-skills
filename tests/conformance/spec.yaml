@@ -221,35 +221,35 @@ cross_skill_references:
       to: ../../docs/METHODOLOGY.md
       reason: "human-readable methodology reference"
   cross_skill_invocations:
-    # Orchestration references: a SKILL.md that names /para-<other> as a FLOW STEP (not just a table entry)
+    # Orchestration references: a SKILL.md that names $para-<other> as a FLOW STEP (not just a table entry)
     # must include graceful-degradation fallback. Phase-7 E2E single-skill-copy test verifies this.
     - skill: skills/para-workflow/SKILL.md
-      invokes: [/para-execute, /para-review, /para-summarize, /para-archive]
+      invokes: ["$para-execute", "$para-review", "$para-summarize", "$para-archive"]
       kind: flow-step
     - skill: skills/para-summarize/SKILL.md
-      invokes: [/para-archive]
+      invokes: ["$para-archive"]
       kind: flow-step
     - skill: skills/para-plan/SKILL.md
-      invokes: [/para-research, /para-execute, /para-review]
+      invokes: ["$para-research", "$para-execute", "$para-review"]
       kind: flow-step
     - skill: skills/para-research/SKILL.md
-      invokes: [/para-plan]
+      invokes: ["$para-plan"]
       kind: flow-step
     - skill: skills/para-check/SKILL.md
-      invokes: [/para-plan]
+      invokes: ["$para-plan"]
       kind: flow-step
     - skill: skills/para-init/SKILL.md
-      invokes: [/para-plan]
+      invokes: ["$para-plan"]
       kind: flow-step
 
     # Informational references: skills that list or mention other skills for user guidance,
     # not as executable flow steps. No fallback-comment requirement since the user, not the skill,
     # decides whether to invoke.
     - skill: skills/para-help/SKILL.md
-      invokes: [/para-init, /para-research, /para-plan, /para-review, /para-execute, /para-workflow, /para-summarize, /para-archive, /para-status, /para-check, /para-help]
+      invokes: ["$para-init", "$para-research", "$para-plan", "$para-review", "$para-execute", "$para-workflow", "$para-summarize", "$para-archive", "$para-status", "$para-check", "$para-help"]
       kind: informational
     - skill: skills/para-status/SKILL.md
-      invokes: [/para-init, /para-plan, /para-execute, /para-summarize, /para-archive]
+      invokes: ["$para-init", "$para-plan", "$para-execute", "$para-summarize", "$para-archive"]
       kind: informational
 
 canonical_phrases:
@@ -263,7 +263,7 @@ canonical_phrases:
     - "2 or more architectural layers"
     - "merged to `main`"
   workflow_owns_pr: "This step owns PR creation for workflow runs"
-  summarize_orchestrated_handoff: "invoked as Step 4 of /para-workflow"
+  summarize_orchestrated_handoff: "invoked as Step 4 of $para-workflow"
   archive_no_force_remove: "do NOT force-remove"
   workflow_diagram: "Research → Plan → Review"
   empty_initial_commit: "empty commit"

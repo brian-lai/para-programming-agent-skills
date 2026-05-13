@@ -1,18 +1,18 @@
 ---
 name: para-research
-description: Perform deep codebase exploration and produce a context-compressed research document for planning. Use before /para-plan for non-trivial tasks to gather contracts, patterns, and interface boundaries.
+description: Perform deep codebase exploration and produce a context-compressed research document for planning. Use before $para-plan for non-trivial tasks to gather contracts, patterns, and interface boundaries.
 model: opus
 effort: high
 ---
 
-Perform deep codebase exploration and produce a context-compressed research document. This document becomes the primary input for `/para-plan`.
+Perform deep codebase exploration and produce a context-compressed research document. This document becomes the primary input for `$para-plan`.
 
 ## Usage
 
 ```
-/para-research [task-description]
-/para-research --scope=frontend    # Focus research on a specific area
-/para-research --specs             # Emphasize API contract analysis
+$para-research [task-description]
+$para-research --scope=frontend    # Focus research on a specific area
+$para-research --specs             # Emphasize API contract analysis
 ```
 
 If no task description is provided, ask for one.
@@ -47,7 +47,7 @@ If no task description is provided, ask for one.
 
 6. **Update context** — add the research doc path to `context/context.md`'s `research_docs` array.
 
-7. **Suggest next step** — recommend running `/para-plan`, noting the research doc is available as input.
+7. **Suggest next step** — recommend running `$para-plan`, noting the research doc is available as input.
 
 ## Options
 
@@ -86,7 +86,7 @@ If `research_docs` doesn't exist in the metadata, add it.
 ## Example
 
 ```
-User: /para-research rewrite-auth-middleware
+User: $para-research rewrite-auth-middleware
 
 Agent: [Deeply investigates auth-related code]
 [Discovers existing middleware, session handling, token storage, OAuth flow]
@@ -101,12 +101,12 @@ Key findings:
 - OpenAPI spec and implementation disagree on token format
 - No graceful degradation when Redis is unavailable
 
-Suggest running /para-plan to create an implementation plan using this research.
+Suggest running $para-plan to create an implementation plan using this research.
 ```
 
 ## Notes
 
 - Research is optional but strongly recommended for non-trivial tasks
 - The research doc lives in `context/data/` alongside specs and other input files
-- `/para-plan` automatically checks for research docs and uses them as primary input
+- `$para-plan` automatically checks for research docs and uses them as primary input
 - Research docs should be treated as snapshots — they may become stale as the codebase changes

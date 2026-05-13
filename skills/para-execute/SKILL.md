@@ -10,9 +10,9 @@ Execute the active plan by creating an isolated git worktree and tracking todos.
 ## Usage
 
 ```
-/para-execute                    # Auto-detect plan; prompts for phase if phased
-/para-execute --phase=N          # Execute specific phase
-/para-execute --no-worktree      # Skip worktree creation; fall back to git checkout -b
+$para-execute                    # Auto-detect plan; prompts for phase if phased
+$para-execute --phase=N          # Execute specific phase
+$para-execute --no-worktree      # Skip worktree creation; fall back to git checkout -b
 ```
 
 ## What It Does
@@ -33,9 +33,9 @@ When `--no-worktree` is specified, fall back to branch-based behavior: `git chec
 ## Prerequisites
 
 - `context/context.md` must exist with an active plan
-- If no active plan, error: "No active plan found. Run `/para-plan` first."
+- If no active plan, error: "No active plan found. Run `$para-plan` first."
 - If dirty git state, warn user and offer to continue or stash first
-- Check `.gitignore` for `.para-worktrees/`; if missing, warn and suggest running `/para-init`
+- Check `.gitignore` for `.para-worktrees/`; if missing, warn and suggest running `$para-init`
 - If target worktree directory already exists, ask whether to continue in it, remove and recreate, or cancel
 - If target branch already exists but no worktree, use `git worktree add .para-worktrees/{task-name} para/{task-name}` without `-b`
 
@@ -77,7 +77,7 @@ The final step must commit with the checklist item text as the commit message.
 
 If a todo has no meaningful automated tests, such as config, documentation, or template updates, note this in the commit and skip the RED/GREEN steps.
 
-When all todos are complete, suggest running `/para-review --pr` for independent Staff+ review before merging. Then run `/para-summarize`.
+When all todos are complete, suggest running `$para-review --pr` for independent Staff+ review before merging. Then run `$para-summarize`.
 
 ## Edge Cases
 
@@ -86,7 +86,7 @@ When all todos are complete, suggest running `/para-review --pr` for independent
 - **Worktree directory already exists:** Ask whether to continue in the existing worktree, remove and recreate, or cancel.
 - **Branch exists but no worktree:** Use `git worktree add` without `-b` to attach to the existing branch.
 - **Stale worktree:** Warn user, offer to recreate or clean up metadata.
-- **`.para-worktrees/` not in .gitignore:** Warn and suggest running `/para-init`.
+- **`.para-worktrees/` not in .gitignore:** Warn and suggest running `$para-init`.
 - **If a todo is too large:** Break it into smaller sub-items before implementing.
 - **User runs command from inside worktree:** Detect missing `context/context.md` relative to cwd and warn that commands should be run from the main working tree.
 
@@ -95,4 +95,4 @@ When all todos are complete, suggest running `/para-review --pr` for independent
 - Worktree isolation keeps the main working tree on its current branch while the agent works in `.para-worktrees/`
 - Branch naming follows `para/{task-name}` for easy identification
 - For phased plans, each phase branches from `main` after previous phases are merged
-- Run `/para-status` anytime to see current progress and worktree state
+- Run `$para-status` anytime to see current progress and worktree state
