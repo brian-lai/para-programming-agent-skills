@@ -1,23 +1,14 @@
-# PARA-Programming Codex Plugin
+# PARA-Programming Agent Skills
 
-Structured AI-assisted development workflow for OpenAI Codex.
+Cross-client Agent Skills package for the PARA-Programming methodology.
 
-**Research → Plan → Review → Execute → Review → Summarize → Archive**
+**Research -> Plan -> Review -> Execute -> Review -> Summarize -> Archive**
 
-## What is PARA-Programming?
+## What Is This?
 
-PARA-Programming is a methodology for structured AI-assisted development that emphasizes planning, deliberate execution, and knowledge preservation. This plugin brings the PARA workflow to the OpenAI Codex ecosystem.
+PARA-Programming is a structured workflow for AI-assisted development. It keeps plans, research, execution state, reviews, summaries, and archives in a project-local `context/` directory so long-running work can survive context resets and client changes.
 
-## Features
-
-- **Deep Research** — Codebase exploration produces context-compressed research docs for better planning
-- **Structured Planning** — Collaborative plan creation with self-review rounds, Staff+ engineering criteria, and phased plan support
-- **Staff+ Review** — Independent reviewer with FAANG engineer persona reviews plans and PRs
-- **Isolated Execution** — Git worktree isolation keeps your main branch clean while the agent works
-- **Commit-Per-Todo** — Every checklist item becomes an atomic commit with TDD (red/green cycle)
-- **Workflow Orchestration** — Automatic multi-phase execute → PR → review → summarize → merge cycle
-- **Context Tracking** — Persistent `context/context.md` tracks active work, plans, and summaries
-- **Phased Execution** — Break complex work into independently reviewable phases
+This repository packages the methodology as open-standard Agent Skills for Claude Code, OpenAI Codex, OpenCode, Cursor, and Gemini CLI. The skill layout follows the emerging portable `SKILL.md` convention promoted by agentskills.io: each skill lives in its own directory, the directory basename matches frontmatter `name`, and assets/references stay beside the skill that owns them.
 
 ## Skills
 
@@ -25,102 +16,62 @@ PARA-Programming is a methodology for structured AI-assisted development that em
 |-------|---------|
 | `/para-init` | Initialize PARA structure in a project |
 | `/para-research <task>` | Deep codebase research before planning |
-| `/para-plan <task>` | Create a planning document (collaborative, with self-review) |
-| `/para-review --plan\|--pr` | Staff+ FAANG engineer review loop |
-| `/para-execute` | Create worktree, extract todos, start execution |
-| `/para-workflow` | Orchestrate full execute → review → summarize → archive cycle |
+| `/para-plan <task>` | Create a planning document with self-review |
+| `/para-review --plan\|--pr` | Review a plan or PR with Staff+ criteria |
+| `/para-execute` | Create a worktree and execute one checklist item per commit |
+| `/para-workflow` | Orchestrate execute, review, summarize, and merge across phases |
 | `/para-status` | Check current workflow state |
-| `/para-summarize` | Generate post-work summary |
+| `/para-summarize` | Generate a post-work summary |
 | `/para-archive` | Archive context and start fresh |
-| `/para-check` | Decision helper: should I use PARA for this? |
+| `/para-check` | Decide whether a request needs the PARA workflow |
 | `/para-help` | Show quick reference |
 
 ## Installation
 
-### Option 1: Local Marketplace Entry
+See [INSTALL.md](INSTALL.md) for client-specific installation paths:
 
-1. Copy the plugin to a local directory (e.g., `~/.codex/plugins/para-programming/`)
-2. Add the marketplace entry to `~/.agents/plugins/marketplace.json`:
+- Claude Code
+- OpenAI Codex
+- OpenCode
+- Cursor
+- Gemini
 
-```json
-{
-  "name": "para-programming-plugins",
-  "interface": {
-    "displayName": "PARA-Programming Plugins"
-  },
-  "plugins": [
-    {
-      "name": "para-programming",
-      "source": {
-        "source": "local",
-        "path": "./plugins/para-programming"
-      },
-      "policy": {
-        "installation": "AVAILABLE",
-        "authentication": "ON_INSTALL"
-      },
-      "category": "Productivity"
-    }
-  ]
-}
-```
-
-3. Restart Codex to load the plugin.
-
-### Option 2: Install Script
+For Codex marketplace registration from a local checkout:
 
 ```bash
 ./scripts/install.sh
 ```
 
-See [INSTALL.md](INSTALL.md) for detailed instructions.
-
-## Quick Start
+Preview the install without writes:
 
 ```bash
-# Initialize PARA in your project
-/para-init
-
-# Research the codebase (optional but recommended)
-/para-research add user authentication
-
-# Create a plan for your task
-/para-plan add user authentication
-
-# Review the plan
-/para-review --plan
-
-# Execute (or use /para-workflow for full automation)
-/para-execute
-
-# Review the implementation
-/para-review --pr
-
-# Summarize and archive
-/para-summarize
-/para-archive
+./scripts/install.sh --dry-run
 ```
 
-## File Structure (Per Project)
+## Project Context
 
-```
+The workflow creates project-local context files:
+
+```text
 context/
-├── context.md       # Active session context
-├── plans/           # YYYY-MM-DD-task-name.md
-├── summaries/       # YYYY-MM-DD-task-name-summary.md
-├── archives/        # YYYY-MM-DD-context.md
-├── data/            # Input/output files, specs
-└── servers/         # MCP tool wrappers
+├── context.md
+├── plans/
+├── summaries/
+├── archives/
+├── data/
+└── servers/
 ```
+
+`resources/AGENTS.md` contains the global PARA workflow methodology template. `docs/METHODOLOGY.md` explains the rationale and lifecycle in detail.
 
 ## Adapted From
 
-This plugin is a Codex adaptation of the [PARA-Programming Plugin for Claude Code](https://github.com/brian-lai/para-programming-plugin). Key adaptations:
+These skills were generalized from the original `para-programming-plugin` command set and converted to portable Agent Skills:
 
-- `CLAUDE.md` → `AGENTS.md`
-- `~/.claude/` → `~/.agents/`
-- `/para:command` → `/para-command` (hyphenated for Codex compatibility)
-- `commands/*.md` → `skills/*/SKILL.md` (Codex skill format)
+- `CLAUDE.md` -> `AGENTS.md`
+- `~/.claude/` -> `~/.agents/`
+- `/para:command` -> `/para-command`
+- `commands/*.md` -> `skills/para-*/SKILL.md`
 
 ## License
 

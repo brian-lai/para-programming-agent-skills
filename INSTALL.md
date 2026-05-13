@@ -1,127 +1,113 @@
 # Installation Guide
 
-## Prerequisites
+This repository is a portable Agent Skills package. The canonical skill payload is the `skills/` directory plus the shared docs/resources used by those skills.
 
-- [OpenAI Codex](https://codex.openai.com/) installed and configured
-- Git installed
+## Claude Code
 
-## Installation
+Claude-compatible package metadata lives in `.claude-plugin/`.
 
-### Option 1: Local Plugin Installation
-
-1. **Clone the plugin repository:**
+1. Clone this repository:
 
    ```bash
-   git clone https://github.com/brian-lai/para-programming-codex-plugin.git ~/.codex/plugins/para-programming
+   git clone https://github.com/brian-lai/para-programming-agent-skills.git ~/para-programming-agent-skills
    ```
 
-2. **Register the plugin in your marketplace file:**
+2. Register the marketplace entry from `.claude-plugin/marketplace.json`, or point your Claude Code plugin configuration at this checkout.
 
-   Create or update `~/.agents/plugins/marketplace.json`:
+3. Restart Claude Code and verify the PARA skills are visible.
 
-   ```json
-   {
-     "name": "personal-plugins",
-     "interface": {
-       "displayName": "Personal Plugins"
-     },
-     "plugins": [
-       {
-         "name": "para-programming",
-         "source": {
-           "source": "local",
-           "path": "~/.codex/plugins/para-programming"
-         },
-         "policy": {
-           "installation": "AVAILABLE",
-           "authentication": "ON_INSTALL"
-         },
-         "category": "Productivity"
-       }
-     ]
-   }
+## OpenAI Codex
+
+Codex metadata lives in `.codex-plugin/plugin.json`.
+
+1. Clone this repository:
+
+   ```bash
+   git clone https://github.com/brian-lai/para-programming-agent-skills.git ~/.codex/plugins/para-programming
    ```
 
-3. **Restart Codex** to load the plugin.
+2. Register the plugin in `~/.agents/plugins/marketplace.json`:
 
-### Option 2: Automated Install Script
+   ```bash
+   ~/.codex/plugins/para-programming/scripts/install.sh
+   ```
+
+3. Restart Codex and run:
+
+   ```text
+   /para-init
+   ```
+
+Preview the Codex registration without writes:
 
 ```bash
-# From the plugin directory (registers the plugin from its current location):
-./scripts/install.sh
+./scripts/install.sh --dry-run
 ```
 
-The script will:
-- Create `~/.agents/plugins/` if it doesn't exist
-- Add the plugin entry to `~/.agents/plugins/marketplace.json`
-- Skip if the entry already exists (idempotent)
+## OpenCode
 
-**Requires:** `jq` for JSON manipulation. If `jq` is not installed, the script prints manual instructions.
+Use the open-standard skill layout directly.
 
-### Option 3: Repo-Level Installation
+1. Clone this repository:
 
-To make the plugin available for a specific repository:
-
-1. Copy the plugin to `./plugins/para-programming/` in your repo
-2. Create `.agents/plugins/marketplace.json` in your repo root:
-
-   ```json
-   {
-     "name": "repo-plugins",
-     "interface": {
-       "displayName": "Repository Plugins"
-     },
-     "plugins": [
-       {
-         "name": "para-programming",
-         "source": {
-           "source": "local",
-           "path": "./plugins/para-programming"
-         },
-         "policy": {
-           "installation": "INSTALLED_BY_DEFAULT",
-           "authentication": "ON_INSTALL"
-         },
-         "category": "Productivity"
-       }
-     ]
-   }
+   ```bash
+   git clone https://github.com/brian-lai/para-programming-agent-skills.git ~/.opencode/para-programming-agent-skills
    ```
 
-3. Restart Codex.
+2. Copy or symlink `skills/` into the OpenCode skills location configured on your machine.
 
-## Post-Installation
+3. Keep `docs/` and `resources/` beside the package when possible so cross-skill references and methodology docs remain available.
 
-After installation, initialize PARA in your project:
+## Cursor
 
-```bash
-/para-init
-```
+Cursor can consume the same `skills/` layout when configured for Agent Skills.
 
-This creates:
-- `context/` directory structure
-- `AGENTS.md` project-specific context file
-- `~/.agents/AGENTS.md` global methodology (if missing)
+1. Clone this repository:
 
-## Session Hook (Manual Setup)
+   ```bash
+   git clone https://github.com/brian-lai/para-programming-agent-skills.git ~/.cursor/para-programming-agent-skills
+   ```
 
-Codex does not currently have a built-in hook lifecycle system equivalent to Claude Code's `hooks.json`. If a hook system becomes available in the future, a session start hook can be configured to display PARA status on startup.
+2. Copy or symlink `skills/` into the Cursor Agent Skills directory used by your environment.
 
-For now, run `/para-status` at the beginning of each session to see your current workflow state.
+3. Restart Cursor and confirm the `/para-*` skills are discoverable in the agent session.
 
-## Uninstallation
+## Gemini
 
-1. Remove the plugin entry from `~/.agents/plugins/marketplace.json`
-2. Delete the plugin directory: `rm -rf ~/.codex/plugins/para-programming`
-3. Restart Codex
+Gemini CLI can use the portable skill directories when its local Agent Skills path is enabled.
+
+1. Clone this repository:
+
+   ```bash
+   git clone https://github.com/brian-lai/para-programming-agent-skills.git ~/.gemini/para-programming-agent-skills
+   ```
+
+2. Copy or symlink `skills/` into the Gemini CLI skills directory configured on your machine.
+
+3. Start a new Gemini CLI session and verify the `para-*` skills are available.
+
+## Manual Acceptance Checklist
+
+Before publishing or cutting a release, verify these flows manually:
+
+- Claude Code: plugin metadata loads from `.claude-plugin/plugin.json` and the `para-skills` package appears.
+- OpenAI Codex: `.codex-plugin/plugin.json` loads with `"skills": "./skills/"` and `/para-init` is callable.
+- OpenCode: copying `skills/` preserves every `SKILL.md` and asset/reference path used by the skills.
+- Cursor: the skills directory is discoverable and the `/para-*` invocation names are shown consistently.
+- Gemini: each `para-*` skill can be installed independently or as a full `skills/` tree.
+- Single-skill installs: any skill that references a sibling skill includes a graceful fallback phrase.
+- Full-tree installs: `docs/` is present beside `skills/` when using `para-help` methodology links.
 
 ## Troubleshooting
 
-### Plugin not loading
-- Verify the path in `marketplace.json` points to the correct location
-- Ensure the `.codex-plugin/plugin.json` file exists in the plugin directory
-- Restart Codex after making changes
+### Skills Not Available
 
-### Skills not available
-- Check that the `"skills": "./skills/"` path in `plugin.json` is correct
-- Verify each skill has a `SKILL.md` file with valid YAML frontmatter
+- Restart the client after changing plugin or skill paths.
+- Verify each copied skill directory contains `SKILL.md`.
+- Confirm each `SKILL.md` frontmatter `name` matches the directory basename.
+
+### Codex Registration Failed
+
+- Install `jq` if running `scripts/install.sh` without `--dry-run`.
+- Check that `~/.agents/plugins/marketplace.json` is valid JSON.
+- Re-run `./scripts/install.sh --dry-run` to inspect the intended marketplace path.

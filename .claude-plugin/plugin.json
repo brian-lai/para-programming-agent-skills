@@ -1,0 +1,19 @@
+{
+  "name": "para-skills",
+  "version": "3.0.0",
+  "description": "PARA-Programming methodology - cross-client Agent Skills package for Claude Code, Codex, OpenCode, Cursor, and Gemini CLI",
+  "author": {
+    "name": "PARA-Programming Community",
+    "email": "hello@para-programming.dev"
+  },
+  "homepage": "https://github.com/brian-lai/para-programming-agent-skills",
+  "repository": "https://github.com/brian-lai/para-programming-agent-skills",
+  "license": "MIT",
+  "keywords": [
+    "para",
+    "methodology",
+    "workflow",
+    "agent-skills",
+    "multi-client"
+  ]
+}

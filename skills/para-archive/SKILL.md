@@ -36,6 +36,8 @@ Default: create fresh context with references to completed summaries.
 
 See `../para-init/references/context-schema.md` for the full context metadata field reference.
 
+If ../para-init/assets/context-template.md is not available in this install, create a minimal fresh `context/context.md` with empty `active_context`, `completed_summaries`, and `research_docs` arrays plus a current `last_updated` timestamp.
+
 If ../para-init/references/context-schema.md is not available in this install, the minimal fields needed are: `active_context` (string[]), `completed_summaries` (string[]), `research_docs` (string[]), `worktree_path` (string or null), and `last_updated` (ISO 8601 string).
 
 ## Fresh vs Seeded Context

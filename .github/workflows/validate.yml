@@ -1,0 +1,35 @@
+name: Validate Agent Skills
+
+"on":
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install validation dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq shellcheck
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Shellcheck scripts and tests
+        run: |
+          shellcheck scripts/*.sh
+          shellcheck tests/conformance/*.sh
+          shellcheck tests/skills/*/*.sh
+          shellcheck tests/install/*.sh
+          shellcheck tests/e2e/*.sh
+
+      - name: Validate skills
+        run: bash scripts/validate-skills.sh
+
+      - name: Validate multi-client layout compatibility
+        run: bash tests/e2e/multi-client-layout-compat.sh
