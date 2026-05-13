@@ -19,7 +19,7 @@ else
   fail=1
 fi
 
-if echo "$body" | grep -q '~/\.agents/AGENTS\.md'; then
+if echo "$body" | grep -q '\~\/\.agents/AGENTS\.md'; then
   echo "PASS body mentions ~/.agents/AGENTS.md"
 else
   echo "FAIL body does not mention ~/.agents/AGENTS.md"
