@@ -1,14 +1,14 @@
 {
   "name": "para-programming",
-  "version": "3.0.0-alpha.1",
-  "description": "PARA-Programming methodology for Codex - structured context, persistent memory, and intelligent execution",
+  "version": "3.0.0",
+  "description": "PARA-Programming methodology - cross-client Agent Skills package for Claude Code, Codex, OpenCode, Cursor, and Gemini CLI",
   "author": {
     "name": "PARA-Programming Community",
     "email": "hello@para-programming.dev",
-    "url": "https://github.com/brian-lai/para-programming-codex-plugin"
+    "url": "https://github.com/brian-lai/para-programming-agent-skills"
   },
-  "homepage": "https://github.com/brian-lai/para-programming-codex-plugin",
-  "repository": "https://github.com/brian-lai/para-programming-codex-plugin",
+  "homepage": "https://github.com/brian-lai/para-programming-agent-skills",
+  "repository": "https://github.com/brian-lai/para-programming-agent-skills",
   "license": "MIT",
   "keywords": [
     "para",
@@ -18,20 +18,22 @@
     "planning",
     "ai-assisted-development",
     "pair-programming",
-    "persistent-memory"
+    "persistent-memory",
+    "agent-skills",
+    "multi-client"
   ],
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "PARA-Programming",
     "shortDescription": "Structured AI-assisted development workflow",
-    "longDescription": "Plan, Review, Execute, Summarize, and Archive your development work with structured context management, git worktree isolation, and phased execution support.",
+    "longDescription": "Plan, Review, Execute, Summarize, and Archive your development work with structured context management, git worktree isolation, phased execution support, and cross-client Agent Skills portability.",
     "developerName": "PARA-Programming Community",
     "category": "Productivity",
     "capabilities": [
       "Read",
       "Write"
     ],
-    "websiteURL": "https://github.com/brian-lai/para-programming-codex-plugin"
+    "websiteURL": "https://github.com/brian-lai/para-programming-agent-skills"
   }
 }

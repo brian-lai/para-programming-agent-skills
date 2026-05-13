@@ -1,0 +1,14 @@
+{
+  "name": "brian-lai",
+  "owner": {
+    "name": "Brian Lai",
+    "email": "hello@para-programming.dev"
+  },
+  "plugins": [
+    {
+      "name": "para-skills",
+      "source": "./",
+      "version": "3.0.0"
+    }
+  ]
+}

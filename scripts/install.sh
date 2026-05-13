@@ -13,10 +13,35 @@ PLUGIN_NAME="para-programming"
 MARKETPLACE_DIR="$HOME/.agents/plugins"
 MARKETPLACE_FILE="$MARKETPLACE_DIR/marketplace.json"
 PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DRY_RUN=0
+
+for arg in "$@"; do
+    case "$arg" in
+        --dry-run)
+            DRY_RUN=1
+            ;;
+        -h|--help)
+            echo "Usage: $0 [--dry-run]"
+            exit 0
+            ;;
+        *)
+            echo "Error: unknown argument: $arg"
+            echo "Usage: $0 [--dry-run]"
+            exit 1
+            ;;
+    esac
+done
 
 echo "PARA-Programming Codex Plugin - Install"
 echo "========================================"
 echo ""
+
+if [ "$DRY_RUN" -eq 1 ]; then
+    echo "Dry run: would register '$PLUGIN_NAME' in $MARKETPLACE_FILE"
+    echo "Dry run: plugin source would be $PLUGIN_DIR"
+    echo "Dry run: no filesystem changes made"
+    exit 0
+fi
 
 # Check for jq
 if ! command -v jq &> /dev/null; then
