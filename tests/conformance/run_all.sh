@@ -38,7 +38,7 @@ done
 # 2. Per-skill tests under tests/skills/<skill>/test_*.sh
 if [ -d "$REPO_ROOT/tests/skills" ]; then
   while IFS= read -r test_script; do
-    rel="${test_script#$REPO_ROOT/tests/}"
+    rel="${test_script#"$REPO_ROOT"/tests/}"
     run_test "$test_script" "$rel"
   done < <(find "$REPO_ROOT/tests/skills" -type f -name 'test_*.sh' | sort)
 fi
@@ -46,7 +46,7 @@ fi
 # 3. Installation/package tests under tests/install/test_*.sh
 if [ -d "$REPO_ROOT/tests/install" ]; then
   while IFS= read -r test_script; do
-    rel="${test_script#$REPO_ROOT/tests/}"
+    rel="${test_script#"$REPO_ROOT"/tests/}"
     run_test "$test_script" "$rel"
   done < <(find "$REPO_ROOT/tests/install" -type f -name 'test_*.sh' | sort)
 fi
