@@ -17,9 +17,9 @@ This repository packages the methodology as open-standard Agent Skills. The skil
 | OpenAI Codex | Supported out of the box | `scripts/install.sh` installs to `~/.agents/skills` and mirrors to `~/.codex/skills` | `$para-init` or `/skills` |
 | Gemini CLI | Supported out of the box | Uses the same `~/.agents/skills` install written by `scripts/install.sh` | Auto-activation or `/skills list` |
 | Pi | Supported out of the box | Uses the same `~/.agents/skills` install written by `scripts/install.sh` | Auto-activation or `/skill:para-init` when skill commands are enabled |
+| OpenCode | Supported out of the box | Uses the same `~/.agents/skills` install written by `scripts/install.sh` | Loaded by OpenCode's native `skill` tool |
+| Cursor | Supported out of the box | Uses the same `~/.agents/skills` install written by `scripts/install.sh` | Auto-activation or slash menu, e.g. `/para-init` |
 | Claude Code | Use the Claude plugin | Use `github.com/brian-lai/para-programming-plugin` | Claude plugin commands |
-| OpenCode | Manual/experimental | Copy or symlink `skills/` into the client skills path | Client-specific |
-| Cursor | Manual/experimental | Copy or symlink `skills/` into the client skills path | Client-specific |
 
 For Claude Code, use the original PARA-Programming plugin: `https://github.com/brian-lai/para-programming-plugin`. This repository is the open-standard/Codex-oriented Agent Skills package.
 
