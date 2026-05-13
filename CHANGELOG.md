@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [3.0.0-alpha.1] - 2026-05-01
+## [3.0.0] - 2026-05-13
 
 ### Breaking Changes
 - **Directory renames**: All skill directories renamed from `skills/<name>/` to `skills/para-<name>/`
@@ -18,13 +18,25 @@ All notable changes to this project will be documented in this file.
   - `templates/phased-plan-sub-template.md` → `skills/para-plan/assets/phased-plan-sub-template.md`
   - `templates/research-template.md` → `skills/para-research/assets/research-template.md`
   - `templates/summary-template.md` → `skills/para-summarize/assets/summary-template.md`
+- **Frontmatter normalization**: skill model, effort, and allowed-tools declarations moved to
+  top-level open-standard keys instead of client-specific nested metadata.
 
 ### Added
-- `scripts/validate-skills.sh` — conformance validator (runs `tests/conformance/run_all.sh`)
-- `tests/conformance/` — conformance test suite (name regex, dir matching, description bounds, body size, reference resolution)
-- `tests/conformance/spec.yaml` — tracked copy of the conformance spec (source of truth for `test_references_resolve.sh`). Synced from `context/data/2026-05-01-open-standard-conformance-spec.yaml` when the registry changes in phases 2-6.
-- `docs/METHODOLOGY.md` — stub; full content in v3.0.0 release
-- `tests/e2e/multi-client-layout-compat.sh` — E2E stub (exits 1 until phase 7 implements)
+- `scripts/validate-skills.sh` - conformance validator for skill, package, and install tests.
+- `tests/conformance/` - conformance suite for name regex, directory matching, description bounds, body size, reference resolution, and changelog coverage.
+- `tests/conformance/spec.yaml` - tracked conformance registry for known cross-skill and documentation references.
+- `tests/install/` - package metadata and installation documentation tests for Codex and Claude-compatible manifests.
+- `tests/e2e/multi-client-layout-compat.sh` - multi-client layout compatibility test for Claude Code, OpenAI Codex, OpenCode, Cursor, Gemini, and generic `.agents` layouts.
+- `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` for Claude-compatible package metadata.
+- `.github/workflows/validate.yml` CI workflow with pinned mikefarah/yq, jq, shellcheck, skill validation, and E2E layout validation.
+- `docs/METHODOLOGY.md` full methodology guide ported from the original PARA-Programming plugin.
+- `skills/para-init/references/context-schema.md` shared context schema reference.
+
+### Changed
+- `.codex-plugin/plugin.json` released at `3.0.0` and updated to the `para-programming-agent-skills` repository.
+- `INSTALL.md` now covers Claude Code, OpenAI Codex, OpenCode, Cursor, and Gemini with a manual acceptance checklist.
+- `README.md` now positions the repository as a cross-client Agent Skills package aligned with open-standard `SKILL.md` portability and agentskills.io conventions.
+- `scripts/install.sh` now supports `--dry-run` and exits without filesystem writes in dry-run mode.
 
 ## [2.0.0] - 2026-04-07
 
