@@ -12,4 +12,9 @@ if [ -e "$tmp_home/.agents" ]; then
   exit 1
 fi
 
+if [ -e "$tmp_home/.codex" ]; then
+  echo "FAIL dry-run wrote to CODEX_HOME"
+  exit 1
+fi
+
 echo "PASS install dry-run made no HOME writes"
