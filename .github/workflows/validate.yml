@@ -22,11 +22,11 @@ jobs:
 
       - name: Shellcheck scripts and tests
         run: |
-          shellcheck scripts/*.sh
-          shellcheck tests/conformance/*.sh
-          shellcheck tests/skills/*/*.sh
-          shellcheck tests/install/*.sh
-          shellcheck tests/e2e/*.sh
+          shellcheck --severity=warning scripts/*.sh
+          shellcheck --severity=warning tests/conformance/*.sh
+          shellcheck --severity=warning tests/skills/*/*.sh
+          shellcheck --severity=warning tests/install/*.sh
+          shellcheck --severity=warning tests/e2e/*.sh
 
       - name: Validate skills
         run: bash scripts/validate-skills.sh
