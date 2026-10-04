@@ -8,27 +8,60 @@ from fixtures import dump
 from safe_git import git, ancestor
 
 
-def supported_check_projection(command, query):
-    # Exact deterministic forms only. Preserve whitespace inside string literals.
+def supported_check_projection(command, query, source, output):
+    """Validate a small deterministic projection against supplied fields and output.
+
+    Each recognized form has explicit field dependencies and expected values.
+    Missing fields, empty check sets, unknown expressions or a different result
+    provide no positive observation. Never infer meaning from jq output alone.
+    """
     compact = re.sub(r'"(?:\\.|[^"\\])*"|\s+', lambda m: m[0] if m[0].startswith('"') else '', query)
-    if command == ['pr', 'view']:
-        root = '.statusCheckRollup'
-        fields = ('conclusion', 'status')
-        predicates = ('.conclusion=="SUCCESS"', '.status=="COMPLETED"and.conclusion=="SUCCESS"')
+    allowed = {'conclusion': {'SUCCESS', 'FAILURE'}, 'state': {'SUCCESS', 'FAILURE'},
+               'bucket': {'pass', 'fail'}, 'status': {'COMPLETED'}}
+    if command == ['pr', 'view'] and isinstance(source, dict):
+        root, records, fields = '.statusCheckRollup', source.get('statusCheckRollup'), ('conclusion',)
+        predicates = {'.conclusion=="SUCCESS"': {'conclusion': 'SUCCESS'},
+                      '.status=="COMPLETED"and.conclusion=="SUCCESS"': {'status': 'COMPLETED', 'conclusion': 'SUCCESS'}}
     elif command == ['pr', 'checks']:
-        root = '.'
-        fields = ('state', 'bucket')
-        predicates = ('.state=="SUCCESS"', '.bucket=="pass"')
+        root, records, fields = '.', source, ('state', 'bucket')
+        predicates = {'.state=="SUCCESS"': {'state': 'SUCCESS'}, '.bucket=="pass"': {'bucket': 'pass'}}
     else:
         return False
-    forms = {'.', root, root + '[]'}
+    if not isinstance(records, list) or not records or not all(isinstance(r, dict) for r in records):
+        return False
+
+    def available(required):
+        return all(all(isinstance(r.get(f), str) and r[f] in allowed[f] for f in required) for r in records)
+
+    expected = None
+    if compact in {'.', root, root + '[]'}:
+        if not all(any(isinstance(r.get(f), str) and r[f] in allowed[f] for f in fields) for r in records):
+            return False
+        expected = [source] if compact == '.' else records if compact == root + '[]' else [records]
     for field in fields:
-        # Status alone (COMPLETED) is not a passing conclusion.
-        if field == 'status':
-            continue
-        forms.update({root + '[].' + field, root + '[]|.' + field, root + '|map(.' + field + ')'})
-    forms.update(root + '|all(' + predicate + ')' for predicate in predicates)
-    return compact in forms
+        if compact in {root + '[].' + field, root + '[]|.' + field, root + '|map(.' + field + ')'}:
+            if not available((field,)):
+                return False
+            values = [r[field] for r in records]
+            expected = [values] if compact == root + '|map(.' + field + ')' else values
+    for predicate, required in predicates.items():
+        if compact == root + '|all(' + predicate + ')':
+            if not available(required):
+                return False
+            expected = [all(all(r[f] == value for f, value in required.items()) for r in records)]
+    if expected is None:
+        return False
+    if all(isinstance(value, str) for value in expected):
+        return output.strip().splitlines() == expected
+    try:
+        # jq can stream multiple JSON values, with arbitrary pretty-print spacing.
+        rest, actual = output.strip(), []
+        decoder = json.JSONDecoder()
+        while rest:
+            value, end = decoder.raw_decode(rest);actual.append(value);rest = rest[end:].lstrip()
+        return json.dumps(actual, sort_keys=True) == json.dumps(expected, sort_keys=True)
+    except ValueError:
+        return False
 
 
 class GithubStub:
@@ -158,8 +191,7 @@ class GithubStub:
             # --jq can remove check fields after --json projection. Grade what left the stub.
             visible = re.search(r'"(?:conclusion|state|bucket)"\s*:\s*"(?:SUCCESS|FAILURE|pass|fail)"', output) or output.strip() in ('SUCCESS', 'FAILURE', 'pass', 'fail') or output.startswith('fixture-validation\t')
             if query:
-                source_has_checks = re.search(r'"(?:conclusion|state|bucket)"\s*:\s*"(?:SUCCESS|FAILURE|pass|fail)"', json.dumps(projected_input))
-                visible = code == 0 and bool(source_has_checks) and supported_check_projection(command, query)
+                visible = code == 0 and supported_check_projection(command, query, projected_input, output)
             if not visible:
                 observed['checks_pass'] = None
                 # Explicit projection away from checks is known absence. Other

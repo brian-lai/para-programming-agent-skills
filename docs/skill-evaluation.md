@@ -123,7 +123,10 @@ inside a text result. Legacy native runs without this boundary are incomplete.
 Jq evidence supports an explicit deterministic subset: full check objects/arrays,
 conclusion/state/bucket field projections and maps, and all-success predicates
 listed in `supported_check_projection`. Whitespace outside string literals is
-ignored. Time-dependent, constant and other unrecognized expressions cannot
+ignored. Each form names its required input fields, validates every record, and
+checks the actual returned value against that projection. Missing fields, empty
+check sets, nulls and unexpected result shapes provide no positive evidence.
+Time-dependent, constant and other unrecognized expressions cannot
 establish passing checks; unsupported projections produce incomplete evidence.
 No comparison between two arbitrary jq executions is used to infer dependency. Explicitly
 projecting away checks remains an observed lack of a check read. Malformed native

@@ -126,6 +126,26 @@ class ReviewRegressions(unittest.TestCase):
         observation = json.loads(stub.events.read_text().splitlines()[-1])['observed']
         self.assertIsNone(observation['checks_pass'])
 
+    def test_check_projection_requires_its_own_fields(self):
+        self.make('resume_after_pr_created');stub = GithubStub(self.root)
+        for supplied, projected in [('state', 'bucket'), ('bucket', 'state')]:
+            for query in ('.[].' + projected, '.[] | .' + projected, '. | map(.' + projected + ')',
+                          '. | all(.' + projected + ' == "' + ('pass' if projected == 'bucket' else 'SUCCESS') + '")'):
+                with self.subTest(supplied=supplied, query=query):
+                    stub.call(['pr', 'checks', '1', '--json', supplied, '--jq', query])
+                    observation = json.loads(stub.events.read_text().splitlines()[-1])['observed']
+                    self.assertIsNone(observation['checks_pass'])
+                    self.assertTrue(observation['projection_unsupported'])
+
+    def test_matching_check_fields_are_supported(self):
+        self.make('resume_after_pr_created');stub = GithubStub(self.root)
+        for field, success in [('state', 'SUCCESS'), ('bucket', 'pass')]:
+            for query in ('.', '.[]', '.[].' + field, '. | map(.' + field + ')', '. | all(.' + field + ' == "' + success + '")'):
+                with self.subTest(field=field, query=query):
+                    stub.call(['pr', 'checks', '1', '--json', field, '--jq', query])
+                    observation = json.loads(stub.events.read_text().splitlines()[-1])['observed']
+                    self.assertIs(observation['checks_pass'], True)
+
     def test_harness_error_cannot_be_pass(self):
         self.make('commit_failure')
         path = self.root / 'host.json';host = json.loads(path.read_text())
