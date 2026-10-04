@@ -68,6 +68,10 @@ def prepare(case_id, out, variant=0):
             'worktree_path': None, 'last_updated': '2026-10-04T12:00:00Z',
             'user_extension': {'keep': 'original'}, 'execution': {'base': {'remote': remote_name, 'branch': base, 'start_sha': start}}}
     (repo / 'context/user-note.txt').write_text('keep me\n')
+    if case_id in ('docs_only', 'answerable_questions', 'research_freshness'):
+        data['active_context'] = []
+        data.pop('execution')
+        (repo / plan_path).unlink()
     state = {'base': base, 'remote_name': remote_name, 'prs': [], 'race_on_merge': case_id == 'stale_review_head',
              'checks_pass': case_id != 'failed_required_check'}
     full = case_id in ('simple_workflow_lifecycle', 'multi_phase_lifecycle', 'nondefault_base', 'direct_execute_scope', 'commit_failure')

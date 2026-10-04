@@ -19,7 +19,7 @@ def compare(baseline, candidate):
     if a.keys() != b.keys():
         raise ValueError('unpaired or missing trials')
     for key in a:
-        for field in ('host', 'host_version', 'model', 'settings', 'evidence_kind'):
+        for field in ('host', 'host_version', 'model', 'settings', 'evidence_kind', 'observed_models'):
             if a[key].get(field) != b[key].get(field):
                 raise ValueError(f'pair mismatch: {key} {field}')
     added = {'simple_workflow_no_pr', 'simple_workflow_lifecycle'}

@@ -39,3 +39,22 @@ Human or agent judgments remain fallible. Report who judged, calibration example
 Before measurement, pilot one full simple lifecycle per arm. Freeze fixtures, model, settings, isolation and limits after pilots. Defaults: targeted cases 600 seconds/100 aggregate tool calls; simple lifecycle 1200/200; two-phase lifecycle 1800/300. The external capture function preserves partial transcripts on timeout or observed tool limit. Include child tool events when the host exposes them; otherwise disclose unobservable counts. A Docker adapter must also stop its named container after timeout; killing only the docker client does not stop a container.
 
 Run three paired trials for each of the ten core cases and the two held-out cases, with seeded randomized arm order and fresh fixtures. Record pilots separately. Review held-out results before using them to tune guidance. Instruction fixes identify exact revisions and affected cases; shared workflow/schema changes require rerunning all lifecycle cases. Report final-revision coverage and every case not rerun.
+
+## Verified host adapter
+
+The local adapter uses Claude Code 2.1.289 with the configured `claude-sonnet-5-5` model, low effort, empty setting sources, no external MCP servers, and safe mode. A capability probe verified independent delegation. Bare mode exposed only Bash/Edit/Read and was rejected for lifecycle trials. We explicitly read the selected revision's skills/resources and inject its matching global methodology; this evaluates body guidance, not native skill discovery or metadata-driven model switching. Built-in host instructions remain consistent across arms.
+
+Build the optional live-trial image (not needed by CI):
+
+```bash
+docker build -t para-skill-eval:claude-2.1.289 tests/behavior/host
+python3 scripts/run-skill-trial.py --case simple_workflow_lifecycle --revision BASELINE_OR_CANDIDATE_SHA --trial 0 --out NEW_TEMP_DIRECTORY
+```
+
+The adapter accepts the already configured HTTPS model endpoint/auth environment without printing credentials. It creates an internal Docker network, mounts only the disposable repository/local remote plus read-only skill instructions and gh shim into the agent, and restricts outbound CONNECT traffic to the model endpoint. A separate gateway owns service state/events; the agent cannot mount them. Direct outbound access is probed before launching the host. Only generated container/network names are cleaned up. Transcripts and manifests stay on the host outside agent mounts; trial directories remain for inspection. Remove only a positively identified disposable trial directory after exporting evidence.
+
+Pin the resulting image ID and archive it with the report: the Dockerfile pins CLI/Node versions, while OS package resolution can change on rebuild. Native streaming output and observed model names must be retained. Run `--probe` only for a delegation capability check; it is labeled separately and is not a task trial.
+
+CI runs Python standard-library fixture/grader/measurement/comparison tests through `scripts/validate-skills.sh`, alongside existing conformance and installation checks. Layout compatibility remains a separate CI step. CI requires no model credentials, Docker daemon or network access for these deterministic tests; live trials are an explicit evaluation job.
+
+For lifecycle cases, the adapter also clones the resulting bare base into a fresh validation container with no network or credentials, calls the required greeting/farewell functions, and runs unittest discovery. It saves `validation.json` outside agent mounts. This independently checks implemented behavior without executing agent-written code on the user's host. Missing collection is incomplete harness evidence; failed function/tests are task failures.

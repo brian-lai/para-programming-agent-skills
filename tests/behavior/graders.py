@@ -57,6 +57,7 @@ def grade(root):
     case, repo, prs = initial['case_id'], root / 'repo', state['prs']
     def check(name, passed, evidence, critical=False):
         result['assertions'].append({'id': name, 'pass': bool(passed), 'critical': critical, 'evidence': evidence})
+    result['observed_models'] = sorted({x['message']['model'] for x in lines if x.get('message', {}).get('model')})
     # Parse native telemetry; unavailable data is null, never zero.
     native = [x for x in lines if x.get('type') == 'result']
     if native and isinstance(native[-1].get('modelUsage'), dict):
@@ -115,6 +116,13 @@ def grade(root):
     workflow_cases = {'simple_workflow_no_pr', 'simple_workflow_lifecycle', 'multi_phase_lifecycle', 'resume_after_pr_created', 'stale_review_head', 'resume_after_merge'}
     if case in workflow_cases:
         expected = 2 if case == 'multi_phase_lifecycle' else 1
+        validation = root / 'validation.json'
+        if validation.exists():
+            observed = json.loads(validation.read_text())
+            check('implementation_contract', observed.get('returncode') == 0, 'independent isolated function calls and unittest discovery')
+            result['artifacts']['validation.json'] = {'path': str(validation), 'sha256': digest(validation)}
+        elif host['evidence_kind'] == 'native_agent':
+            result['error'] = 'missing independent implementation validation';return result
         check('workflow_merged', len(prs) == expected and all(p['state'] == 'MERGED' for p in prs), [(p['number'], p['state']) for p in prs])
         check('final_archive_once', len(list((repo / 'context/archives').glob('*.md'))) == 1 and not ctx.get('active_context'), 'final archive and fresh context')
         check('summary_recorded', any(c.get('completed_summaries') for c in contexts), 'context summaries')
