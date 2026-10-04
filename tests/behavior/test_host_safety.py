@@ -36,3 +36,12 @@ class HostSafetyTest(unittest.TestCase):
         with patch.object(runner, 'docker', side_effect=[SimpleNamespace(returncode=1), subprocess.CalledProcessError(1, 'docker ps')]):
             with self.assertRaises(subprocess.CalledProcessError):
                 runner.stop_container('owned-agent')
+
+    def test_model_drift_invalidates_collection(self):
+        one = {'message': {'model': 'us.anthropic.claude-sonnet-5-5'}}
+        other = {'message': {'model': 'us.anthropic.claude-opus-5-5'}}
+        self.assertEqual(runner.validate_model_scope([one, one]), ['us.anthropic.claude-sonnet-5-5'])
+        with self.assertRaises(ValueError):
+            runner.validate_model_scope([one, other])
+        with self.assertRaises(ValueError):
+            runner.validate_model_scope([])

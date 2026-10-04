@@ -134,3 +134,15 @@ JSONL is parsed line by line and does not discard independently recorded service
 failures. Missing or invalid host evidence likewise cannot erase a logged unsafe
 merge attempt. Both collector and worker absence must be confirmed through the
 Docker daemon before independent validation starts.
+
+
+The collector sets `CLAUDE_CODE_SUBAGENT_MODEL` and
+`CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1` so per-invocation/frontmatter model hints
+cannot change the reviewer model. This follows the pinned host's
+[documented force-model control](https://code.claude.com/docs/en/sub-agents#run-every-subagent-on-one-model).
+The collector also rejects missing or mixed native model IDs. Earlier pilots
+that selected Opus for a Sonnet trial are development evidence, not fixed-model
+comparisons. A pilot also exposed deferred primary-context writes; the candidate
+workflow now requires persisted evidence before advancing and a reread before
+merge. This guidance change requires all lifecycle cases to run on the new
+candidate revision; previous pilots are not results for that revision.

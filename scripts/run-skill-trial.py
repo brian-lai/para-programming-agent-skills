@@ -48,6 +48,13 @@ def capture_and_stop(command, path, limits, *containers):
             raise RuntimeError('Could not confirm containers stopped: ' + '; '.join(failures))
 
 
+def validate_model_scope(events):
+    models = sorted({e['message']['model'] for e in events if e.get('message', {}).get('model')})
+    if len(models) != 1:
+        raise ValueError('native model scope is missing or drifted: ' + ', '.join(models))
+    return models
+
+
 def run(args):
     if not os.environ.get('ANTHROPIC_BASE_URL', '').startswith('https://'):
         raise ValueError('Set the authorized HTTPS model endpoint before running trials')
@@ -79,7 +86,7 @@ def run(args):
     harness_files = sorted(p for p in (SOURCE / 'tests/behavior').rglob('*') if p.is_file() and '__pycache__' not in p.parts)
     harness_files += [SOURCE / 'scripts' / name for name in ('run-skill-trial.py', 'evaluate-skills.py', 'measure-skill-context.py')]
     harness_hash = hashlib.sha256(b''.join(p.read_bytes() for p in harness_files)).hexdigest()
-    settings = {'limits': limits, 'effort': 'low', 'model': args.model, 'safe_mode': False, 'setting_sources': [], 'native_skills': False,
+    settings = {'limits': limits, 'effort': 'low', 'model': args.model, 'safe_mode': False, 'setting_sources': [], 'native_skills': False, 'subagent_model_forced': True,
                 'isolation': 'separate-collector-and-shell-containers-mcp-text-boundary', 'harness_sha256': harness_hash,
                 'skill_loading': 'explicit body/resource reads; metadata model hints not applied', 'image': docker('image', 'inspect', IMAGE, '--format', '{{.Id}}').stdout.strip()}
     manifest = {'host': 'claude-code', 'host_version': '2.1.289', 'model': args.model, 'settings': settings,
@@ -99,7 +106,7 @@ def run(args):
     # adapter sends shell requests to a separate PID/mount namespace via MCP.
     base = ['run', '--rm', '--name', agent, *common,
             '--mount', f'type=bind,source={SOURCE / "tests/behavior/host/mcp.py"},target=/fixture-mcp.py,readonly',
-            '--workdir', '/tmp', '-e', 'ANTHROPIC_BASE_URL', '-e', 'ANTHROPIC_AUTH_TOKEN',
+            '--workdir', '/tmp', '-e', 'CLAUDE_CODE_SUBAGENT_MODEL=' + args.model, '-e', 'CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1', '-e', 'ANTHROPIC_BASE_URL', '-e', 'ANTHROPIC_AUTH_TOKEN',
             '-e', 'ANTHROPIC_API_KEY', '-e', 'HTTPS_PROXY=http://gateway:8080', '-e', 'HTTP_PROXY=http://gateway:8080',
             '-e', 'NO_PROXY=gateway,worker,localhost,127.0.0.1', '-e', 'CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1', IMAGE]
     start = time.monotonic()
@@ -147,14 +154,16 @@ print("ISOLATION_OK")'''
                    '--append-system-prompt', system, prompt]
         observed = capture_and_stop(command, root / 'transcript.jsonl', limits, agent, worker)
         manifest.update(observed)
-        inits = []
+        inits, native_events = [], []
         for line in (root / 'transcript.jsonl').read_bytes().splitlines():
             try:
                 event = json.loads(line)
             except ValueError:
                 continue
+            native_events.append(event)
             if event.get('subtype') == 'init':
                 inits.append(event)
+        manifest['observed_models'] = validate_model_scope(native_events)
         manifest['native_tool_scopes'] = [e.get('tools', []) for e in inits]
         if not inits or any(set(e.get('tools', [])) != {'Task', 'mcp__fixture__Bash'} for e in inits):
             raise ValueError('collector exposed unexpected native tool scope')
