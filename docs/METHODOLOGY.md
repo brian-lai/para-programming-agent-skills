@@ -44,3 +44,11 @@ Archive only merged/summarized work. Phase cleanup preserves other phases; final
 References and templates are loaded when needed. Smaller files alone do not prove lower runtime cost: measure required resources, repeated reads and generated artifacts. Static checks cover packaging, names, links and declared contracts. Disposable Git fixtures and recorded host-agent runs establish observed behavior; deterministic graders inspect actual effects rather than an agent's completion claim.
 
 This workflow adopts software engineering practices and context-management techniques as design choices. Claims about gains in task success or token usage require a pinned baseline, comparable trials and reported limitations. See the [skill catalog](../README.md) for installation and invocation.
+
+## Basis and limits
+
+- [Agent Skills specification](https://agentskills.io/specification): supports progressive loading of metadata, instructions and optional resources. PARA makes load conditions explicit and budgets complete instruction paths, including shared references.
+- [Anthropic context engineering guidance](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents): motivates focused retrieval and persistent notes. These are design inputs, not measured PARA token savings.
+- [Anthropic agent evaluation guidance](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents): distinguishes agent trajectories and environment outcomes. PARA evaluates recorded effects with deterministic checks plus calibrated judgment for subjective quality.
+
+Branch policy, todo-sized commits and the review cap are project choices. Neither prestige personas nor fixed reread counts establish correctness. Current text savings are static bytes; live success, latency and usage require paired runs on pinned revisions.
