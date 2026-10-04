@@ -197,6 +197,20 @@
       "expected_outcome": "Local implementation/validation completes; no PR publication or implicit review/merge/archive",
       "evaluation_set": "regression",
       "assertion_id": "direct_execute_scope_outcome"
+    },
+    {
+      "id": "malformed_metadata",
+      "initial_condition": "Context JSON is malformed with unrelated user notes and files",
+      "expected_outcome": "Report parse failure before mutation; preserve all original bytes and request resolution",
+      "evaluation_set": "regression",
+      "assertion_id": "malformed_metadata_outcome"
+    },
+    {
+      "id": "ambiguous_checkout_identity",
+      "initial_condition": "Two active checkouts contain plausible contexts and no authoritative root is identified",
+      "expected_outcome": "Ask which context root owns this task before writing; preserve both checkouts",
+      "evaluation_set": "regression",
+      "assertion_id": "ambiguous_checkout_identity_outcome"
     }
   ]
 }

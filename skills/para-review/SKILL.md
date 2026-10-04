@@ -88,7 +88,7 @@ When `--approve` is specified:
 
 1. Skip all remaining review rounds
 2. Record the explicit user override and reviewed target in context, separately from independent approval: "Staff+ review: OVERRIDDEN by user"
-3. Proceed to the next workflow step
+3. Return the recorded override to the caller; workflow controls subsequent steps
 
 Use sparingly. The review loop exists to catch real issues. Override is for cases where:
 - The reviewer is flagging stylistic preferences that do not apply to this project

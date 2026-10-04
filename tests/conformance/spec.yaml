@@ -359,8 +359,8 @@ cross_skill_references:
       invokes: ["para-execute", "para-review", "para-summarize", "para-archive"]
       kind: flow-step
     - skill: skills/para-summarize/SKILL.md
-      invokes: ["para-archive"]
-      kind: flow-step
+      invokes: ["para-workflow"]
+      kind: informational
     - skill: skills/para-plan/SKILL.md
       invokes: ["para-research", "para-execute", "para-review"]
       kind: flow-step
@@ -395,10 +395,10 @@ canonical_phrases:
     - "2 or more architectural layers"
     - "merged to `main`"
   workflow_owns_pr: "This step owns PR creation for workflow runs"
-  summarize_orchestrated_handoff: "invoked as Step 4 of the para-workflow skill"
+  summarize_orchestrated_handoff: "Return to the orchestrator"
   archive_no_force_remove: "do NOT force-remove"
   workflow_diagram: "Research → Plan → Review"
-  empty_initial_commit: "empty commit"
+  commit_completion: "Commit succeeds before marking todo complete"
 
 content_parity_baseline:
   source_of_truth: "Frozen snapshot at context/data/plugin-v2.2.2-snapshot/ (from para-programming-plugin v2.2.2, commit 0adb0e7, 2026-04-30). All phase subagents read from this in-repo snapshot, NOT from any sibling plugin checkout."

@@ -71,4 +71,5 @@
 
 ---
 
-**Work Complete:** This summary has been added to `context/summaries/`. Use the `para-archive` skill when ready to start the next task.
+**Report saved:** {ACTUAL_SUMMARY_PATH}.
+**Lifecycle status:** {VERIFIED_MERGE_STATE_AND_OUTSTANDING_STEP}. Summary completion does not imply merge; use the `para-workflow` skill to continue any unfinished lifecycle.
