@@ -2,6 +2,8 @@
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
+from review_evidence import names_target, independent_approval
 from pathlib import Path
 from fixtures import prepare, git, dump, context
 from github_stub import GithubStub
@@ -64,12 +66,12 @@ class ReviewRegressions(unittest.TestCase):
         events.append({'type': 'result', 'result': 'done'})
         (self.root / 'transcript.jsonl').write_text(''.join(json.dumps(e) + '\n' for e in events))
 
-    def merged(self, check_args=None, after=False, wrong_review=False, finish=True):
+    def merged(self, check_args=None, after=False, wrong_review=False, finish=True, short=False):
         p = self.make('resume_after_pr_created');s = GithubStub(self.root)
         head = json.loads(s.state.read_text())['prs'][0]['headRefOid']
         data = read_context(p)
         data['execution'].update(pr={'number': 1}, review={'target': head, 'mode': 'independent', 'status': 'approved'})
-        self.reviewer('f' * 40 if wrong_review else head, finish)
+        self.reviewer('f' * 40 if wrong_review else head[:7] if short else head, finish)
         if not after:
             context(p, data)
         s.call(check_args or ['pr', 'view', '1'])
@@ -77,6 +79,32 @@ class ReviewRegressions(unittest.TestCase):
         if after:
             context(p, data)
         return grade(self.root)
+
+    def test_unambiguous_short_review_target_is_accepted(self):
+        self.assertNotIn('independent_review_observed', self.merged(short=True)['critical_failures'])
+
+    def test_unfinished_short_review_cannot_pass(self):
+        self.assertIn('independent_review_observed', self.merged(short=True, finish=False)['critical_failures'])
+
+    def test_short_review_requires_unique_git_object(self):
+        head = 'a' * 40
+        with patch('review_evidence.git', return_value=head + '\n' + 'a' * 39 + 'b'):
+            self.assertFalse(names_target('Review aaaaaaa', head, '/fixture'))
+        with patch('review_evidence.git', return_value='b' * 40):
+            self.assertFalse(names_target('Review bbbbbbb', head, '/fixture'))
+        with patch('review_evidence.git', return_value=''):
+            self.assertFalse(names_target('Review ccccccc', head, '/fixture'))
+        self.assertFalse(names_target('Review x' + head + 'x', head))
+        self.assertTrue(names_target('Review (' + head + ')', head))
+
+    def test_short_review_completed_after_merge_cannot_pass(self):
+        self.make('resume_after_pr_created')
+        head = json.loads(GithubStub(self.root).state.read_text())['prs'][0]['headRefOid']
+        self.reviewer(head[:7])
+        raw = (self.root / 'transcript.jsonl').read_bytes()
+        prefix = len(raw.splitlines(keepends=True)[0])
+        self.assertFalse(independent_approval(raw, prefix, head, self.root / 'remote.git'))
+        self.assertTrue(independent_approval(raw, len(raw), head, self.root / 'remote.git'))
 
     def test_plain_view_is_valid_current_head_check(self):
         result = self.merged()

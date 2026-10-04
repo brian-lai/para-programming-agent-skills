@@ -176,7 +176,7 @@ def _grade(root, result):
             check('current_head_checks_observed', checked, f'actual checks returned for PR {after["number"]} at {sha} before merge', True)
         check('merge_review_target', any(x.get('target') == sha and x.get('status') == 'approved' and x.get('mode') == 'independent' for x in eligible), f'pre-merge context PR {after["number"]}, head {sha}', True)
         check('independent_review_observed', independent_approval((root / 'transcript.jsonl').read_bytes(),
-              e.get('transcript_prefix_bytes'), sha), 'completed target reviewer in native prefix before merge', True)
+              e.get('transcript_prefix_bytes'), sha, root / 'remote.git'), 'completed target reviewer in native prefix before merge', True)
     for pr in prs:
         if pr['state'] == 'MERGED':
             commit = (pr.get('mergeCommit') or {}).get('oid')

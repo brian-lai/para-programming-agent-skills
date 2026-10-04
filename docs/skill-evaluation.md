@@ -146,3 +146,13 @@ comparisons. A pilot also exposed deferred primary-context writes; the candidate
 workflow now requires persisted evidence before advancing and a reread before
 merge. This guidance change requires all lifecycle cases to run on the new
 candidate revision; previous pilots are not results for that revision.
+
+Review association accepts full commit IDs or standalone abbreviations of at
+least seven hexadecimal characters. Abbreviations must resolve to exactly one
+Git object in the safely copied fixture remote and equal the merged head.
+Completion and approval must still occur in the native transcript prefix captured
+before merge. The fixture supports global `--repo fixture/repo`, `-R fixture/repo`
+and `--repo=fixture/repo` before its declared commands; event logs retain both
+original and normalized arguments. An interrupted development campaign exposed
+these compatibility gaps; its affected runs are retained separately from final
+measurements.

@@ -72,6 +72,8 @@ class GithubStub:
         self.remote = self.root / 'remote.git'
 
     def call(self, args, cwd=None):
+        original_args = list(args)
+        args = list(args)
         state = json.loads(self.state.read_text())
         effect, code, output = 'read', 0, ''
         observed = None
@@ -86,6 +88,17 @@ class GithubStub:
             except (ValueError, IndexError):
                 return default
         try:
+            # gh permits the repository selector before the command. Keep the
+            # original request in the audit log; normalize only this known flag.
+            while args and (args[0] in ('--repo', '-R') or args[0].startswith('--repo=')):
+                if args[0].startswith('--repo='):
+                    repository = args.pop(0).split('=', 1)[1]
+                else:
+                    if len(args) < 2:
+                        raise ValueError('repository option requires a value')
+                    repository = args[1];args = args[2:]
+                if repository != 'fixture/repo':
+                    raise ValueError('unknown fixture repository')
             command = args[:2]
             if '--help' in args or '-h' in args or args == ['--version']:
                 output = 'Fixture gh: pr list/create/view/diff/checks/merge; repo view; auth status. Options: --repo fixture/repo --head BRANCH --base BRANCH --json FIELDS --jq QUERY. Merge requires --match-head-commit SHA. Create supports --title TITLE --body BODY or --body-file PATH.'
@@ -197,7 +210,7 @@ class GithubStub:
                 # Explicit projection away from checks is known absence. Other
                 # expressions need adapter support, not an invented agent failure.
                 observed['projection_unsupported'] = bool(query and query.strip() not in ('.url', '.number', '.headRefOid', '.headRefName', '.baseRefName'))
-        event = {'time': time.time(), 'args': args, 'code': code, 'effect': effect,
+        event = {'time': time.time(), 'args': original_args, 'normalized_args': args, 'code': code, 'effect': effect,
                  'before': before, 'after': state, 'observed': observed,
                  'merge_context': merge_context, 'transcript_prefix_bytes': transcript_prefix, 'output': output}
         with self.events.open('a') as f:

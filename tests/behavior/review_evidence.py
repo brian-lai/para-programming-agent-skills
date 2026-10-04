@@ -1,9 +1,29 @@
 """Associate native completed reviewer events with a target before a merge call."""
 import json
 import re
+import subprocess
+from safe_git import git
 
 
-def independent_approval(raw, prefix_bytes, head):
+def names_target(text, head, repository=None):
+    # Match standalone Git object IDs, not arbitrary substrings. A short ID
+    # counts only if safe Git resolves exactly one object and it is this head.
+    tokens = re.findall(r'(?<![\w])[0-9a-fA-F]{7,40}(?![\w])', text)
+    for token in tokens:
+        token = token.lower()
+        if token == head:
+            return True
+        if repository is not None and len(token) < 40:
+            try:
+                matches = git(repository, 'rev-parse', '--disambiguate=' + token).splitlines()
+            except subprocess.CalledProcessError:
+                continue
+            if matches == [head]:
+                return True
+    return False
+
+
+def independent_approval(raw, prefix_bytes, head, repository=None):
     if prefix_bytes is None:
         return False
     events = []
@@ -30,7 +50,7 @@ def independent_approval(raw, prefix_bytes, head):
         if event.get('subtype') == 'task_notification' and event.get('status') == 'completed':
             completed.add(event.get('tool_use_id'))
     return any(key in completed and re.search(r'\breview\b', prompt, re.I) and
-               head in (prompt + '\n' + answers.get(key, '')) and
+               names_target(prompt + '\n' + answers.get(key, ''), head, repository) and
                re.search(r'\bAPPROVED\b', answers.get(key, '')) and
                not re.search(r'\b(?:NOT APPROVED|CHANGES REQUESTED)\b', answers.get(key, ''))
                for key, prompt in tasks.items())

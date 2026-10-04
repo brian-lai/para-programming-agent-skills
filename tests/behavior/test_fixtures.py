@@ -47,6 +47,22 @@ class FixturesTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(set(json.loads(output)), {'url'})
 
+    def test_global_repository_option_preserves_request_and_check_identity(self):
+        self.make('resume_after_pr_created')
+        stub = GithubStub(self.root / 'trial')
+        for prefix in (['--repo', 'fixture/repo'], ['-R', 'fixture/repo'], ['--repo=fixture/repo']):
+            for operation in ('diff', 'checks'):
+                args = prefix + ['pr', operation, '1']
+                with self.subTest(args=args):
+                    self.assertEqual(stub.call(args)[0], 0)
+                    event = json.loads(stub.events.read_text().splitlines()[-1])
+                    self.assertEqual(event['args'], args)
+                    self.assertEqual(event['observed']['number'], 1)
+                    if operation == 'checks':
+                        self.assertTrue(event['observed']['checks_pass'])
+        for args in (['--repo'], ['--repo', 'other/repo', 'pr', 'view', '1']):
+            self.assertNotEqual(stub.call(args)[0], 0)
+
     def test_stub_rejects_unknown_operation(self):
         self.make()
         self.assertNotEqual(GithubStub(self.root / 'trial').call(['api', '/delete-everything'])[0], 0)
