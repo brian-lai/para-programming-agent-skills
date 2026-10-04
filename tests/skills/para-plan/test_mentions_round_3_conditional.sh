@@ -1,17 +1,13 @@
 #!/usr/bin/env bash
-# Asserts para-plan documents conditional Round 3 self-review.
+# Structural contract only; behavioral evaluation is separate.
 set -euo pipefail
-SKILL_MD="skills/para-plan/SKILL.md"
-body=$(awk '/^---$/{c++; next} c>=2' "$SKILL_MD")
-fail=0
-
-for phrase in "Round 3 (conditional)" "more than 3 substantive changes"; do
-  if echo "$body" | grep -qF "$phrase"; then
-    echo "PASS found: $phrase"
-  else
-    echo "FAIL missing: $phrase"
-    fail=1
-  fi
-done
-
-exit "$fail"
+python3 - <<'PYTEST'
+from pathlib import Path
+s=Path('skills/para-plan/SKILL.md').read_text()
+assert 'Inspect existing research' in s, 'Inspect existing research'
+assert 'material unresolved choices' in s, 'material unresolved choices'
+assert 'recheck affected parts' in s, 'recheck affected parts'
+assert 'more than 3 substantive changes' not in s, 'more than 3 substantive changes'
+assert 'before doing anything else' not in s, 'before doing anything else'
+print('PASS planning contract')
+PYTEST

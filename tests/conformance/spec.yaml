@@ -391,9 +391,9 @@ canonical_phrases:
   convergence_rule: "two consecutive rounds produce the same MUST FIX issues"
   fresh_reviewer_rule: "never continue a previous reviewer"
   phase_split_triggers:
-    - "More than 5 files with cross-file refactoring"
-    - "2 or more architectural layers"
-    - "merged to `main`"
+    - "cross-file refactoring"
+    - "architectural layers"
+    - "selected base"
   workflow_owns_pr: "This step owns PR creation for workflow runs"
   summarize_orchestrated_handoff: "Return to the orchestrator"
   archive_no_force_remove: "do NOT force-remove"

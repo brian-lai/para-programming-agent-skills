@@ -1,112 +1,22 @@
 ---
 name: para-research
-description: Perform deep codebase exploration and produce a context-compressed research document for planning. Use before the para-plan skill for non-trivial tasks to gather contracts, patterns, and interface boundaries.
+description: Investigate relevant code, contracts and uncertainties before planning; produce a compact research snapshot with evidence and freshness guidance.
 model: opus
 effort: high
 ---
 
-Perform deep codebase exploration and produce a context-compressed research document. This document becomes the primary input for the `para-plan` skill.
+Investigate the facts needed to plan the requested change. Research is read-only except for primary-context artifacts.
 
 ## Usage
 
-```
-para-research [task-description]
-para-research --scope=frontend    # Focus research on a specific area
-para-research --specs             # Emphasize API contract analysis
+```text
+para-research <task> [--scope=<area>] [--specs]
 ```
 
-If no task description is provided, ask for one.
+1. Identify the task and primary context root. Read existing research and project guidance first; inspect the affected code, contracts and tests. Ask only about material uncertainty the available evidence cannot resolve.
+2. Follow relevant call/data paths and failure handling. `--scope` bounds exploration; `--specs` emphasizes interface contracts. Read adjacent components only when they affect a decision. Reuse existing specs; distinguish observed behavior from inference.
+3. Stop when remaining unknowns would not change scope, design or validation. For unresolved consequential gaps, record the next focused check rather than claiming exhaustive coverage.
+4. Write `context/data/YYYY-MM-DD-task-name-research.md` using `assets/research-template.md`. Include the inspected revision, relevant source paths/symbols, decisions supported by evidence, gaps and freshness conditions. Omit irrelevant sections and long file inventories.
+5. Parse primary context before writing; preserve existing/unknown fields, append and deduplicate research_docs, and update last_updated. Malformed or concurrently changed state requires reconciliation. Report the artifact and planning-relevant findings; recommend the `para-plan` skill.
 
-## What It Does
-
-1. **Clarify focus** — if the task description is broad or ambiguous, ask 1-4 clarifying questions to clarify scope, depth, and any specific concerns before proceeding. Skip if the task is narrow and well-defined.
-
-2. **Deep codebase exploration** — perform thorough investigation across the relevant area:
-   - File structure and organization across the relevant area
-   - Key interfaces and contracts (OpenAPI specs, TypeScript interfaces, Protobuf, shared types)
-   - Test patterns, test coverage, and test framework conventions
-   - Dependency map for affected components (what depends on what)
-   - Error handling and graceful degradation patterns
-   - Logging and observability patterns
-
-3. **API contract analysis** — if the project has OpenAPI/Swagger specs, interface files, or shared type definitions:
-   - Parse specs and cross-reference with actual implementation
-   - Flag any inconsistencies between spec and implementation
-   - Document the canonical source of truth for each contract
-
-4. **Pattern recognition** — identify conventions, idioms, and anti-patterns that should inform planning:
-   - How errors are handled and propagated
-   - How dependencies are injected or wired
-   - How config is managed (env vars, config files, feature flags)
-   - Naming conventions, file organization patterns
-
-5. **Produce research document** — write findings to `context/data/YYYY-MM-DD-task-name-research.md` using the template from `assets/research-template.md`. The document should be:
-   - **High-signal, low-noise** — include what matters for planning, not exhaustive file listings
-   - **Structured for context compression** — a planner reading only this document should have sufficient context to create a detailed plan
-   - **Honest about gaps** — explicitly call out what's undocumented, inconsistent, or surprising
-
-6. **Update context** — add the research doc path to `context/context.md`'s `research_docs` array.
-
-7. **Suggest next step** — recommend using the `para-plan` skill, noting the research doc is available as input.
-
-## Options
-
-### `--scope=<area>`
-
-Focus research on a specific area of the codebase (e.g., `frontend`, `api`, `auth`, `database`). Without this flag, research covers the entire codebase relevant to the task description.
-
-### `--specs`
-
-Emphasize API contract analysis. Spend more effort on finding, parsing, and cross-referencing OpenAPI specs, interface definitions, and shared types. Useful when the task involves integration work or API changes.
-
-## Research Quality Criteria
-
-The research document should pass this test: **Could a Staff+ engineer read this document and create a detailed implementation plan without additional codebase exploration?**
-
-If the answer is no, the research is not deep enough. Specifically:
-
-- Every component mentioned should include its key files, public API, and dependencies
-- Every interface boundary should have its contract documented
-- Patterns should be described with concrete examples (file paths, function names), not vague descriptions
-- Gaps and inconsistencies should be specific and actionable
-
-## Context Update
-
-After producing the research document, update `context/context.md`:
-
-```json
-{
-  "research_docs": ["context/data/YYYY-MM-DD-task-name-research.md"],
-  "last_updated": "{ISO timestamp}"
-}
-```
-
-If `research_docs` doesn't exist in the metadata, add it.
-
-## Example
-
-```
-User: Use the `para-research` skill to research rewrite-auth-middleware
-
-Agent: [Deeply investigates auth-related code]
-[Discovers existing middleware, session handling, token storage, OAuth flow]
-[Cross-references OpenAPI spec with actual endpoints]
-[Finds inconsistency: spec says JWT, implementation uses opaque tokens]
-
-Creates: context/data/2025-12-18-rewrite-auth-middleware-research.md
-
-Key findings:
-- Auth middleware in src/middleware/auth.ts (450 lines, no tests)
-- Session tokens stored in Redis with 24h TTL
-- OpenAPI spec and implementation disagree on token format
-- No graceful degradation when Redis is unavailable
-
-Suggest using the `para-plan` skill to create an implementation plan using this research.
-```
-
-## Notes
-
-- Research is optional but strongly recommended for non-trivial tasks
-- The research doc lives in `context/data/` alongside specs and other input files
-- The `para-plan` skill automatically checks for research docs and uses them as primary input
-- Research docs should be treated as snapshots — they may become stale as the codebase changes
+Research is a snapshot. Reopen sources when the revision/scope changed or a decision lacks evidence; the document does not promise to eliminate future exploration.

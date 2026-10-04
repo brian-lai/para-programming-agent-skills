@@ -1,25 +1,11 @@
 #!/usr/bin/env bash
-# Asserts the simple plan template has exactly one Spec and one Stubs section.
+# Structural contract only; behavioral evaluation is separate.
 set -euo pipefail
-TEMPLATE="skills/para-plan/assets/plan-template.md"
-[ -f "$TEMPLATE" ] || { echo "FAIL: $TEMPLATE not found"; exit 1; }
-
-spec_count=$(grep -c '^## Spec$' "$TEMPLATE" || true)
-stubs_count=$(grep -c '^## Stubs$' "$TEMPLATE" || true)
-fail=0
-
-if [ "$spec_count" -eq 1 ]; then
-  echo "PASS exactly one ## Spec"
-else
-  echo "FAIL expected one ## Spec, found $spec_count"
-  fail=1
-fi
-
-if [ "$stubs_count" -eq 1 ]; then
-  echo "PASS exactly one ## Stubs"
-else
-  echo "FAIL expected one ## Stubs, found $stubs_count"
-  fail=1
-fi
-
-exit "$fail"
+python3 - <<'PYTEST'
+from pathlib import Path
+s=Path('skills/para-plan/assets/plan-template.md').read_text()
+assert 'Existing contract' in s, 'Existing contract'
+assert 'only when' in s, 'only when'
+assert 'execution checkout' in s, 'execution checkout'
+print('PASS planning contract')
+PYTEST
