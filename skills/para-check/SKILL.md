@@ -5,57 +5,15 @@ model: haiku
 effort: low
 ---
 
-Decision helper to determine if PARA workflow should be used for a given request.
+Triage the request against the project's branch/PR policy.
 
-## Usage
-
-```
-para-check "Add user authentication to the API"
-para-check "Where is the auth middleware defined?"
+```text
+para-check "<request>"
 ```
 
-## Decision Logic
+- Tracked code changes, features, bug fixes, configuration or documentation edits: **USE PARA WORKFLOW**. Use the `para-plan` skill, reusing an active applicable plan.
+- Read-only questions, navigation, explanations or state inspection: **SKIP PARA** and answer directly.
+- Research/plan/progress/summary artifacts in primary context do not recursively require another plan. Continue the active workflow.
+- Unclear intent: inspect available context, then ask only if whether to change files remains consequentially ambiguous.
 
-```
-Does this request require code/file changes?
-|- YES -> USE PARA WORKFLOW
-|        Next: Use the `para-plan` skill to create an implementation plan.
-`- NO  -> SKIP PARA
-         |- Read-only project question -> Direct answer with file references
-         |- navigation request -> Point to relevant files or commands
-         |- explanations -> Explain directly
-         `- General question -> Standard response
-```
-
-## Use PARA Workflow For
-
-- features or user-facing behavior changes
-- bug fixes
-- refactoring
-- config changes, migrations, tests, or documentation edits
-- architecture decisions or complex debugging that may lead to code changes
-
-## Skip PARA For
-
-- Read-only questions about the codebase
-- file or symbol navigation
-- explanations of existing behavior
-- general informational questions
-- commands that only inspect state and do not edit files
-
-## Output Format
-
-Display a short verdict with reasoning:
-
-```
-PARA Workflow Check
-
-Request: "Add user authentication to the API"
-
-USE PARA WORKFLOW
-
-Reason: This request requires code changes and file modifications.
-Next: Use the `para-plan` skill to create an implementation plan.
-```
-
-For skip cases, replace the verdict with `SKIP PARA` and provide the direct answer or inspection path.
+Return the verdict, one-sentence reason and next action. Do not start implementation from a triage request.

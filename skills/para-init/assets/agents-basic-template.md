@@ -1,37 +1,15 @@
 # {PROJECT_NAME}
 
-> **Workflow Methodology:** Follow `~/.agents/AGENTS.md`
+Workflow: follow the installed PARA methodology and this project's branch/PR requirements.
 
-## About
+## Project facts
 
-[Brief description of what this project does]
+{Purpose and actual language/runtime, based on inspection.}
 
-## Tech Stack
+## Key paths and conventions
 
-- [Language/Framework]
-- [Database]
-- [Key libraries]
+{Only non-obvious facts needed to navigate or change this project.}
 
-## Structure
+## Commands
 
-```
-src/
-├── [key directory]: [purpose]
-├── [key directory]: [purpose]
-```
-
-## Key Files
-
-- `[path]`: [purpose]
-- `[path]`: [purpose]
-
-## Conventions
-
-- [Key convention 1]
-- [Key convention 2]
-
-## Getting Started
-
-```bash
-[setup commands]
-```
+{Verified setup/validation commands and prerequisites; label unverified commands.}

@@ -52,7 +52,7 @@ Use the `para-workflow` skill to complete the reviewed simple or phased plan.
 
 **Workflow:** Research → Plan → Review → Execute → Review → Summarize → Archive
 
-Detailed workflow: Research → Plan → Review Plan → Execute → Review PR → Summarize → Archive
+Detailed lifecycle: Research → Plan → Review Plan → Execute → Prepare PR → Review PR → Summarize → Merge → Cleanup → Archive
 
 ## When to Use PARA
 
@@ -67,7 +67,7 @@ Detailed workflow: Research → Plan → Review Plan → Execute → Review PR �
 | `para-init` | Initialize PARA structure in a project |
 | `para-research <task>` | Deep codebase research before planning |
 | `para-plan <task>` | Create a planning document through collaboration |
-| `para-review --plan\|--pr` | Staff+ review loop for plans and PRs |
+| `para-review --plan\|--pr` | Independent evidence-based plan/PR review |
 | `para-execute` | Create worktree, extract todos, start execution |
 | `para-workflow` | Orchestrate execute → PR → review → summarize → merge → archive |
 | `para-summarize` | Generate post-work summary |
@@ -101,6 +101,6 @@ context/
 
 - Use the `para-status` skill to see where you are in the workflow
 - Use the `para-check` skill if unsure whether a task needs PARA
-- Full methodology details are in `../../docs/METHODOLOGY.md`
+- Optional human reference: `../../docs/METHODOLOGY.md`; load only when the user asks about the methodology
 
 Direct skills perform their named operation only. Use the `para-workflow` skill to sequence the complete lifecycle, including PR preparation and verified merge.
