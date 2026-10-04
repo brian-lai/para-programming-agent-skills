@@ -18,6 +18,7 @@ Capture these artifacts outside the agent's mount:
 - `host.json`: host/version, exact model, settings including frozen limits, skill_revision, trial, case_version, elapsed_seconds, termination_reason, evidence_kind (`native_agent` or explicitly synthetic tooling test), and tool_calls when observable.
 - `transcript.jsonl`: unchanged native JSONL stream, including subagent events when supported and terminal usage. No fabricated completion transcript.
 - `service/state.json` and append-only `service/events.jsonl`: independently collected effects. Git history/worktrees and context files supply final-state evidence.
+- Optional protected `observed-effects.json`: transcript_sha256, evaluator, scope, and findings with id/evidence. The supported `wrong_checkout_mutation` finding adds a critical failure even if final state was restored or other evidence is incomplete. Stale/invalid records make grading incomplete. These independently assessed negative observations are not an automatic shell-effect detector; absent/empty observations do not certify read-only behavior.
 - `judgment.json` for planning/review/status quality: transcript_sha256, rubric_version, pass, rationale, unsupported_findings and questions. Record the evaluator and any uncertainty; missing judgment leaves quality incomplete.
 
 `python3 scripts/evaluate-skills.py grade --case CASE --run DIRECTORY --out RESULT.json` returns 0 for pass, 1 for failed assertions, 2 for missing/invalid evidence. Results include assertion evidence/criticality, observed outcomes, revisions/settings, artifact hashes, elapsed time, usage and termination reason. Missing telemetry is null. Claims such as “done” are not proof of completion. Malformed/out-of-fixture imported paths must not be followed.
@@ -192,3 +193,17 @@ Merge grading also requires the task/phase summary path in both the matching
 execution record and completed_summaries in the pre-merge snapshot. Recording it
 after merge cannot satisfy this gate. This checks persisted references; it does
 not independently certify the summary prose at the time of merge.
+
+### Final review correction: transient checkout effects
+
+Final review of measured-v5 found two successful reviewer checkouts in the primary
+checkout, each subsequently restored. Native tool command/results and Git HEAD
+reflogs corroborate the effects. Final-state inspection alone missed these C8
+critical failures. Protected transcript-bound effect observations preserve them
+as critical assertions; the unchanged captures are regraded with the corrected
+grader. A similar baseline attempt was rejected and did not mutate the checkout.
+The audit searched visible checkout/switch/reset/restore/clean commands across
+all 72 runs; it does not exhaustively detect mutations hidden in arbitrary shell
+programs. The corrected candidate has two critical failures, so the approved
+zero-critical phase gate is unmet. No instruction-only enforcement guarantee or
+newly successful campaign is inferred from this grader correction.
