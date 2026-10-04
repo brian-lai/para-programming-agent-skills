@@ -7,6 +7,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tests/behavior'))
 from fixtures import prepare
 from graders import grade
+from comparison import compare
 
 
 def main():
@@ -20,6 +21,10 @@ def main():
     g.add_argument('--case', required=True)
     g.add_argument('--run', required=True)
     g.add_argument('--out', required=True)
+    c = commands.add_parser('compare')
+    c.add_argument('--baseline', required=True)
+    c.add_argument('--candidate', required=True)
+    c.add_argument('--out', required=True)
     args = parser.parse_args()
     try:
         if args.command == 'prepare':
@@ -31,6 +36,14 @@ def main():
                 raise ValueError('case/run mismatch')
             Path(args.out).write_text(json.dumps(value, indent=2) + '\n')
             return {'pass': 0, 'fail': 1, 'incomplete': 2}[value['outcome']]
+        elif args.command == 'compare':
+            def rows(directory):
+                paths = sorted(Path(directory).glob('*.json'))
+                if not paths:
+                    raise ValueError('no result files')
+                return [json.loads(p.read_text()) for p in paths]
+            value = compare(rows(args.baseline), rows(args.candidate))
+            Path(args.out).write_text(json.dumps(value, indent=2) + '\n')
         return 0
     except (ValueError, OSError) as exc:
         print(str(exc), file=sys.stderr)

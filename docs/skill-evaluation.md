@@ -29,3 +29,13 @@ Calibrate before trials using obvious positive/negative examples, then keep the 
 - Status: report the actual variant with a useful next action and no state mutation; never call summarized-unmerged work completed.
 
 Human or agent judgments remain fallible. Report who judged, calibration examples and disagreements; deterministic evidence and subjective judgments are separate assertions. Small samples diagnose regressions, not general superiority.
+
+## Measurement and paired comparisons
+
+`python3 scripts/measure-skill-context.py --root REVISION_CHECKOUT --manifest tests/fixtures/skill-context-budget.json --baseline tests/fixtures/skill-context-baseline.json --out METRICS.json` counts each declared required file once, reports metadata/body sizes separately, and returns 1 for growth or 2 for invalid input. Optional resource load conditions are explicit. The reviewed manifest does not automatically discover every actual read; inspect native traces for extra/repeated reads and generated artifacts.
+
+`python3 scripts/evaluate-skills.py compare --baseline BASELINE_RESULTS --candidate CANDIDATE_RESULTS --out COMPARISON.json` requires one result JSON per trial in each directory. Pair by case/version/variant/trial and require identical model, host version and settings. Keep failures/timeouts and identify incomplete harness runs. Mixed revisions are labeled and partitioned; do not present them as one final-candidate run. Universal simple-plan orchestration is reported separately as an added capability.
+
+Before measurement, pilot one full simple lifecycle per arm. Freeze fixtures, model, settings, isolation and limits after pilots. Defaults: targeted cases 600 seconds/100 aggregate tool calls; simple lifecycle 1200/200; two-phase lifecycle 1800/300. The external capture function preserves partial transcripts on timeout or observed tool limit. Include child tool events when the host exposes them; otherwise disclose unobservable counts. A Docker adapter must also stop its named container after timeout; killing only the docker client does not stop a container.
+
+Run three paired trials for each of the ten core cases and the two held-out cases, with seeded randomized arm order and fresh fixtures. Record pilots separately. Review held-out results before using them to tune guidance. Instruction fixes identify exact revisions and affected cases; shared workflow/schema changes require rerunning all lifecycle cases. Report final-revision coverage and every case not rerun.
