@@ -22,6 +22,8 @@ class GithubStub:
         merge_context = None
         transcript_prefix = None
         before = json.loads(json.dumps(state))
+        query = None
+        projected_input = None
         def option(key, default=None):
             try:
                 return args[args.index(key) + 1]
@@ -123,16 +125,33 @@ class GithubStub:
                 def project(value):
                     return {k: value.get(k) for k in keys}
                 output = project(output) if isinstance(output, dict) else [project(v) for v in output]
+            projected_input = output
             output = json.dumps(output)
             query = option('--jq') or option('-q')
             if query:
-                result = subprocess.run(['jq', '-r', query], input=output, text=True, capture_output=True)
+                result = subprocess.run(['jq', '-r', query], input=output, text=True, capture_output=True, timeout=5)
                 code, output = result.returncode, result.stdout or result.stderr
         if observed and observed['checks_pass'] is not None:
             # --jq can remove check fields after --json projection. Grade what left the stub.
             visible = re.search(r'"(?:conclusion|state|bucket)"\s*:\s*"(?:SUCCESS|FAILURE|pass|fail)"', output) or output.strip() in ('SUCCESS', 'FAILURE', 'pass', 'fail') or output.startswith('fixture-validation\t')
+            if not visible and query and code == 0 and output.strip() in ('true', 'false'):
+                # Test whether the boolean projection actually depends on check
+                # conclusions. A constant `true` is never sufficient evidence.
+                def flip(value):
+                    if isinstance(value, list):
+                        return [flip(v) for v in value]
+                    if isinstance(value, dict):
+                        return {k: ('FAILURE' if v == 'SUCCESS' else 'SUCCESS' if v == 'FAILURE' else
+                                    'fail' if v == 'pass' else 'pass' if v == 'fail' else flip(v))
+                                if k in ('conclusion', 'state', 'bucket') else flip(v) for k, v in value.items()}
+                    return value
+                probe = subprocess.run(['jq', '-r', query], input=json.dumps(flip(projected_input)), text=True, capture_output=True, timeout=5)
+                visible = probe.returncode == 0 and probe.stdout.strip() in ('true', 'false') and probe.stdout.strip() != output.strip()
             if not visible:
                 observed['checks_pass'] = None
+                # Explicit projection away from checks is known absence. Other
+                # expressions need adapter support, not an invented agent failure.
+                observed['projection_unsupported'] = bool(query and query.strip() not in ('.url', '.number', '.headRefOid', '.headRefName', '.baseRefName'))
         event = {'time': time.time(), 'args': args, 'code': code, 'effect': effect,
                  'before': before, 'after': state, 'observed': observed,
                  'merge_context': merge_context, 'transcript_prefix_bytes': transcript_prefix, 'output': output}

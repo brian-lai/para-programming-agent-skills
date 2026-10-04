@@ -95,3 +95,36 @@ collector isolation and grading flaws before the campaign completed. Retain thos
 artifacts with the reason for exclusion; do not combine them with a new frozen
 campaign. Simple-plan retry/stale-head fixtures and explicit partial archive are
 extended workflow capabilities and reported separately from common tasks.
+
+### Collector revision 3: shell isolation
+
+The native CLI runs in a collector container without fixture mounts or native
+shell/file tools. Its tools are restricted to native Agent delegation and one
+MCP Bash tool. That adapter sends shell commands over the internal network to a
+separate worker container containing the fixture. The worker has no model
+credentials. Its response is always serialized as text inside an MCP tool result;
+it cannot supply a native transcript envelope. File operations use this same
+shell tool in both comparison arms. This changes the host tool interface, so
+comparison trials must be restarted with identical adapter settings in both arms.
+
+The fixed CLI's `--safe-mode` disables explicitly configured MCP servers too.
+This adapter instead uses a fresh container home, empty setting sources, disabled
+native skills, strict MCP configuration and an explicit native tool allowlist.
+The actual tool scopes and built-in plugins are recorded in `host.json`; unexpected
+tool scopes invalidate a run. The pinned host's built-in plugins are common to
+both arms. No user-installed configuration, skills or plugins are mounted.
+
+Run `python3 tests/behavior/host/check-boundary.py` explicitly for the credentials-free
+Docker boundary probe. It reproduces a tool writing a fake event to worker PID 1
+stdout, confirms that it appears only in worker logs, and verifies it cannot
+become a collector event. Offline tests also verify arbitrary worker bytes remain
+inside a text result. Legacy native runs without this boundary are incomplete.
+
+Boolean jq check aggregations are supported when the result changes after check
+conclusions are inverted. Constant or unrecognized projections cannot establish
+passing checks; unsupported projections produce incomplete evidence. Explicitly
+projecting away checks remains an observed lack of a check read. Malformed native
+JSONL is parsed line by line and does not discard independently recorded service
+failures. Missing or invalid host evidence likewise cannot erase a logged unsafe
+merge attempt. Both collector and worker absence must be confirmed through the
+Docker daemon before independent validation starts.

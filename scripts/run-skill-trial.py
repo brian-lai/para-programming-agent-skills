@@ -25,12 +25,27 @@ def docker(*args, check=True):
     return subprocess.run(['docker', *args], capture_output=True, text=True, check=check)
 
 
-def capture_and_stop(command, path, limits, agent):
+def stop_container(name):
+    docker('rm', '-f', name, check=False)
+    # A failed remove may mean the --rm collector already exited. Confirm
+    # absence with a successful daemon query; daemon failure is not absence.
+    remaining = docker('ps', '-a', '--filter', 'name=^/' + name + '$', '--format', '{{.Names}}')
+    if remaining.stdout.strip():
+        raise RuntimeError('Container still exists after stop: ' + name)
+
+
+def capture_and_stop(command, path, limits, *containers):
     try:
         return run_bounded(command, path, limits['wall_seconds'], limits['tool_calls'])
     finally:
-        # Stop the container itself, not only its attached Docker client.
-        docker('rm', '-f', agent, check=False)
+        failures = []
+        for name in containers:
+            try:
+                stop_container(name)
+            except (RuntimeError, subprocess.SubprocessError) as exc:
+                failures.append(str(exc))
+        if failures:
+            raise RuntimeError('Could not confirm containers stopped: ' + '; '.join(failures))
 
 
 def run(args):
@@ -58,28 +73,35 @@ def run(args):
     for p in (root / 'service').iterdir():
         p.chmod(0o666)
     name = 'para-eval-' + uuid.uuid4().hex[:12]
-    network, gateway, agent = name + '-net', name + '-gateway', name + '-agent'
+    network, gateway, agent, worker = name + '-net', name + '-gateway', name + '-agent', name + '-worker'
     limits = {'wall_seconds': 1800 if args.case == 'multi_phase_lifecycle' else 1200 if args.case == 'simple_workflow_lifecycle' else 600,
               'tool_calls': 300 if args.case == 'multi_phase_lifecycle' else 200 if args.case == 'simple_workflow_lifecycle' else 100}
     harness_files = sorted(p for p in (SOURCE / 'tests/behavior').rglob('*') if p.is_file() and '__pycache__' not in p.parts)
     harness_files += [SOURCE / 'scripts' / name for name in ('run-skill-trial.py', 'evaluate-skills.py', 'measure-skill-context.py')]
     harness_hash = hashlib.sha256(b''.join(p.read_bytes() for p in harness_files)).hexdigest()
-    settings = {'limits': limits, 'effort': 'low', 'model': args.model, 'safe_mode': True,
-                'isolation': 'docker-internal-network-model-connect-proxy', 'harness_sha256': harness_hash,
+    settings = {'limits': limits, 'effort': 'low', 'model': args.model, 'safe_mode': False, 'setting_sources': [], 'native_skills': False,
+                'isolation': 'separate-collector-and-shell-containers-mcp-text-boundary', 'harness_sha256': harness_hash,
                 'skill_loading': 'explicit body/resource reads; metadata model hints not applied', 'image': docker('image', 'inspect', IMAGE, '--format', '{{.Id}}').stdout.strip()}
     manifest = {'host': 'claude-code', 'host_version': '2.1.289', 'model': args.model, 'settings': settings,
                 'skill_revision': revision, 'trial': args.trial, 'case_version': initial['case_version'],
                 'evidence_kind': 'native_agent', 'elapsed_seconds': 0, 'termination_reason': 'harness_error',
                 'installed_resources': {str(p.relative_to(skills)): hashlib.sha256(p.read_bytes()).hexdigest() for p in skills.rglob('*') if p.is_file()}}
-    base = ['run', '--rm', '--name', agent, '--network', network, '--cap-drop=ALL', '--security-opt=no-new-privileges',
-            '--pids-limit', '256', '--memory', '2g', '--cpus', '2',
+    common = ['--network', network, '--cap-drop=ALL', '--security-opt=no-new-privileges',
+              '--pids-limit', '256', '--memory', '2g', '--cpus', '2']
+    worker_args = ['run', '-d', '--name', worker, '--network-alias', 'worker', *common,
             '--mount', f'type=bind,source={root / "repo"},target={root / "repo"}',
             '--mount', f'type=bind,source={root / "remote.git"},target={root / "remote.git"}',
             '--mount', f'type=bind,source={skills},target=/opt/para-instructions,readonly',
             '--mount', f'type=bind,source={SOURCE / "tests/behavior/host/gh"},target=/usr/local/bin/gh,readonly',
-            '--workdir', str(root / 'repo'), '-e', 'ANTHROPIC_BASE_URL', '-e', 'ANTHROPIC_AUTH_TOKEN',
+            '--mount', f'type=bind,source={SOURCE / "tests/behavior/host/worker.py"},target=/worker.py,readonly',
+            '--workdir', str(root / 'repo'), IMAGE, 'python3', '/worker.py', str(root / 'repo')]
+    # The CLI has no fixture mounts or shell/file tools. Its sole filesystem
+    # adapter sends shell requests to a separate PID/mount namespace via MCP.
+    base = ['run', '--rm', '--name', agent, *common,
+            '--mount', f'type=bind,source={SOURCE / "tests/behavior/host/mcp.py"},target=/fixture-mcp.py,readonly',
+            '--workdir', '/tmp', '-e', 'ANTHROPIC_BASE_URL', '-e', 'ANTHROPIC_AUTH_TOKEN',
             '-e', 'ANTHROPIC_API_KEY', '-e', 'HTTPS_PROXY=http://gateway:8080', '-e', 'HTTP_PROXY=http://gateway:8080',
-            '-e', 'NO_PROXY=gateway,localhost,127.0.0.1', '-e', 'CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1', IMAGE]
+            '-e', 'NO_PROXY=gateway,worker,localhost,127.0.0.1', '-e', 'CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1', IMAGE]
     start = time.monotonic()
     try:
         docker('network', 'create', '--internal', network)
@@ -104,7 +126,8 @@ try:
 except urllib.error.HTTPError as e:
  assert e.code == 404 or e.code == 501
 print("ISOLATION_OK")'''
-        preflight = docker(*base, 'python3', '-c', probe)
+        docker(*worker_args)
+        preflight = docker('exec', worker, 'python3', '-c', probe)
         if 'ISOLATION_OK' not in preflight.stdout:
             raise ValueError('isolation preflight failed')
         (root / 'isolation.txt').write_text(preflight.stdout)
@@ -113,15 +136,29 @@ print("ISOLATION_OK")'''
         system += 'All PARA skills are under /opt/para-instructions/skills. Read the named SKILL.md and applicable resources to carry out requests. '
         system += 'Use the configured model for all subagents. Skills are instructions, not shell commands. '
         system += 'The gh command is a local substitute; all Git remotes are local fixtures. No services outside this fixture are needed. '
+        system += 'Use mcp__fixture__Bash for all shell and file operations; its cwd defaults to the primary checkout. Native Agent delegation remains available. '
         system += 'Native skills discovery and frontmatter model switching are disabled in this fixed-model evaluation. '
-        prompt = 'Use an independent Agent subagent to return HOST_OK, then report whether delegation succeeded. Do not change files.' if args.probe else initial['prompt']
+        prompt = 'Use mcp__fixture__Bash to print TOOL_OK. Then use an independent Agent subagent to run the same fixture tool printing HOST_OK, and report whether delegation and tool execution succeeded. Do not change files.' if args.probe else initial['prompt']
         manifest['evidence_kind'] = 'host_capability_probe' if args.probe else 'native_agent'
-        command = ['docker', *base, 'claude', '--safe-mode', '--setting-sources', '', '--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}',
-                   '--tools', 'Task,Bash,Read,Edit,Write', '--no-session-persistence', '--dangerously-skip-permissions', '--model', args.model, '--effort', 'low',
+        mcp_config = json.dumps({'mcpServers': {'fixture': {'command': 'python3', 'args': ['/fixture-mcp.py']}}})
+        command = ['docker', *base, 'claude', '--disable-slash-commands', '--setting-sources', '', '--strict-mcp-config', '--mcp-config', mcp_config,
+                   '--tools', 'Task', '--allowedTools', 'mcp__fixture__Bash', '--no-session-persistence', '--dangerously-skip-permissions', '--model', args.model, '--effort', 'low',
                    '--print', '--output-format', 'stream-json', '--verbose', '--forward-subagent-text',
                    '--append-system-prompt', system, prompt]
-        observed = capture_and_stop(command, root / 'transcript.jsonl', limits, agent)
+        observed = capture_and_stop(command, root / 'transcript.jsonl', limits, agent, worker)
         manifest.update(observed)
+        inits = []
+        for line in (root / 'transcript.jsonl').read_bytes().splitlines():
+            try:
+                event = json.loads(line)
+            except ValueError:
+                continue
+            if event.get('subtype') == 'init':
+                inits.append(event)
+        manifest['native_tool_scopes'] = [e.get('tools', []) for e in inits]
+        if not inits or any(set(e.get('tools', [])) != {'Task', 'mcp__fixture__Bash'} for e in inits):
+            raise ValueError('collector exposed unexpected native tool scope')
+        manifest['builtin_plugins'] = inits[0].get('plugins', [])
         if args.case in ('simple_workflow_no_pr', 'simple_workflow_lifecycle', 'multi_phase_lifecycle', 'resume_after_pr_created', 'stale_review_head', 'resume_after_merge', 'nondefault_base', 'direct_execute_scope') and not args.probe:
             validator = name + '-validator'
             validation_repo = root / 'remote.git'
@@ -164,7 +201,7 @@ sys.exit(r.returncode)'''
         raise
     finally:
         # Names are generated by this invocation; never stop unrelated containers.
-        docker('rm', '-f', agent, check=False);docker('rm', '-f', gateway, check=False)
+        docker('rm', '-f', agent, check=False);docker('rm', '-f', worker, check=False);docker('rm', '-f', gateway, check=False)
         docker('network', 'rm', network, check=False)
         dump(root / 'host.json', manifest)
     return manifest

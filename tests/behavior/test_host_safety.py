@@ -1,5 +1,7 @@
 import importlib.util
 from pathlib import Path
+import subprocess
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -8,15 +10,29 @@ runner = importlib.util.module_from_spec(spec);spec.loader.exec_module(runner)
 
 
 class HostSafetyTest(unittest.TestCase):
-    def test_agent_stopped_before_capture_returns_for_validation(self):
+    def test_agent_and_worker_stopped_before_validation(self):
         order = []
-        with patch.object(runner, 'run_bounded', side_effect=lambda *a: order.append('capture') or {'termination_reason': 'wall_timeout'}), patch.object(runner, 'docker', side_effect=lambda *a, **k: order.append('stop')):
-            runner.capture_and_stop([], Path('/unused'), {'wall_seconds': 1, 'tool_calls': 1}, 'owned-agent')
+        with patch.object(runner, 'run_bounded', side_effect=lambda *a: order.append('capture') or {'termination_reason': 'wall_timeout'}), patch.object(runner, 'stop_container', side_effect=lambda name: order.append(name)):
+            runner.capture_and_stop([], Path('/unused'), {'wall_seconds': 1, 'tool_calls': 1}, 'collector', 'worker')
             order.append('validation')
-        self.assertEqual(order, ['capture', 'stop', 'validation'])
+        self.assertEqual(order, ['capture', 'collector', 'worker', 'validation'])
 
     def test_capture_exception_still_stops_agent(self):
-        with patch.object(runner, 'run_bounded', side_effect=RuntimeError('capture failed')), patch.object(runner, 'docker') as docker:
+        with patch.object(runner, 'run_bounded', side_effect=RuntimeError('capture failed')), patch.object(runner, 'stop_container') as stop:
             with self.assertRaises(RuntimeError):
                 runner.capture_and_stop([], Path('/unused'), {'wall_seconds': 1, 'tool_calls': 1}, 'owned-agent')
-        docker.assert_called_once_with('rm', '-f', 'owned-agent', check=False)
+        stop.assert_called_once_with('owned-agent')
+
+    def test_failed_stop_blocks_validation_and_still_stops_other_container(self):
+        with patch.object(runner, 'run_bounded', return_value={}), patch.object(runner, 'stop_container', side_effect=[RuntimeError('still running'), None]) as stop:
+            with self.assertRaises(RuntimeError):
+                runner.capture_and_stop([], Path('/unused'), {'wall_seconds': 1, 'tool_calls': 1}, 'collector', 'worker')
+        self.assertEqual(stop.call_count, 2)
+
+    def test_container_absence_is_confirmed(self):
+        with patch.object(runner, 'docker', side_effect=[SimpleNamespace(returncode=1), SimpleNamespace(stdout='owned-agent\n')]):
+            with self.assertRaises(RuntimeError):
+                runner.stop_container('owned-agent')
+        with patch.object(runner, 'docker', side_effect=[SimpleNamespace(returncode=1), subprocess.CalledProcessError(1, 'docker ps')]):
+            with self.assertRaises(subprocess.CalledProcessError):
+                runner.stop_container('owned-agent')
