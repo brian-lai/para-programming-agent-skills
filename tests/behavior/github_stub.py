@@ -134,9 +134,11 @@ class GithubStub:
         if observed and observed['checks_pass'] is not None:
             # --jq can remove check fields after --json projection. Grade what left the stub.
             visible = re.search(r'"(?:conclusion|state|bucket)"\s*:\s*"(?:SUCCESS|FAILURE|pass|fail)"', output) or output.strip() in ('SUCCESS', 'FAILURE', 'pass', 'fail') or output.startswith('fixture-validation\t')
-            if not visible and query and code == 0 and output.strip() in ('true', 'false'):
-                # Test whether the boolean projection actually depends on check
-                # conclusions. A constant `true` is never sufficient evidence.
+            if query:
+                visible = False
+            if query and code == 0:
+                # Every jq projection must depend on actual check conclusions.
+                # Literal statuses/JSON and constant booleans prove nothing.
                 def flip(value):
                     if isinstance(value, list):
                         return [flip(v) for v in value]
@@ -146,7 +148,7 @@ class GithubStub:
                                 if k in ('conclusion', 'state', 'bucket') else flip(v) for k, v in value.items()}
                     return value
                 probe = subprocess.run(['jq', '-r', query], input=json.dumps(flip(projected_input)), text=True, capture_output=True, timeout=5)
-                visible = probe.returncode == 0 and probe.stdout.strip() in ('true', 'false') and probe.stdout.strip() != output.strip()
+                visible = probe.returncode == 0 and probe.stdout.strip() != output.strip()
             if not visible:
                 observed['checks_pass'] = None
                 # Explicit projection away from checks is known absence. Other

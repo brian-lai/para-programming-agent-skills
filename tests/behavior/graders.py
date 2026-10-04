@@ -46,6 +46,9 @@ def grade(root):
         for name, violated in violations.items():
             if violated and not any(a['id'] == name and not a['pass'] for a in result['assertions']):
                 result['assertions'].append({'id': name, 'pass': False, 'critical': True, 'evidence': 'independently decoded service event'})
+        if result.get('termination_reason') not in (None, 'wall_timeout', 'tool_limit') or result.get('host_error'):
+            result['outcome'] = 'incomplete'
+            result['error'] = result.get('host_error') or result.get('error') or 'collection did not complete reliably'
         result['critical_failures'] = [a['id'] for a in result['assertions'] if not a['pass'] and a['critical']]
         result['critical_evidence_complete'] = result.get('outcome') != 'incomplete'
     return result
@@ -95,7 +98,7 @@ def _grade(root, result):
         events, service_errors = read_jsonl(root / 'service/events.jsonl') if (root / 'service/events.jsonl').exists() else ([], [])
         result['evidence_errors'] += service_errors
         result.update({k: host[k] for k in required})
-        result.update(case_id=initial['case_id'], variant=initial.get('variant', 0), termination_reason=host.get('termination_reason'))
+        result.update(case_id=initial['case_id'], variant=initial.get('variant', 0), termination_reason=host.get('termination_reason'), host_error=host.get('error'))
         for name in ('initial.json', 'host.json', 'transcript.jsonl', 'service/state.json', 'service/events.jsonl'):
             if (root / name).exists():
                 result['artifacts'][name] = {'path': str(root / name), 'sha256': digest(root / name)}

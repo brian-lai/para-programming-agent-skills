@@ -100,6 +100,30 @@ class ReviewRegressions(unittest.TestCase):
         result = self.merged(['pr', 'view', '1', '--json', 'statusCheckRollup', '--jq', 'true'])
         self.assertNotEqual(result['outcome'], 'pass')
 
+    def test_constant_status_does_not_prove_checks(self):
+        result = self.merged(['pr', 'view', '1', '--json', 'statusCheckRollup', '--jq', '"SUCCESS"'])
+        self.assertEqual(result['outcome'], 'incomplete')
+        self.assertNotIn('current_head_checks_observed', [a['id'] for a in result['assertions'] if a['pass']])
+
+    def test_all_jq_projections_require_check_dependency(self):
+        self.make('resume_after_pr_created');stub = GithubStub(self.root)
+        for query, expected in [('"SUCCESS"', None), ('{"conclusion":"SUCCESS"}', None), ('true', None),
+                                ('.statusCheckRollup[0].conclusion', True), ('.statusCheckRollup', True),
+                                ('.statusCheckRollup | all(.conclusion == "SUCCESS")', True)]:
+            with self.subTest(query=query):
+                stub.call(['pr', 'view', '1', '--json', 'statusCheckRollup', '--jq', query])
+                observation = json.loads(stub.events.read_text().splitlines()[-1])['observed']
+                self.assertIs(observation['checks_pass'], expected)
+
+    def test_harness_error_cannot_be_pass(self):
+        self.make('commit_failure')
+        path = self.root / 'host.json';host = json.loads(path.read_text())
+        host.update(termination_reason='harness_error', error='collector exposed unexpected native tool scope')
+        dump(path, host)
+        result = grade(self.root)
+        self.assertEqual(result['outcome'], 'incomplete')
+        self.assertFalse(result['critical_evidence_complete'])
+
     def test_truncated_transcript_retains_service_failures(self):
         self.make('resume_after_pr_created')
         GithubStub(self.root).call(['pr', 'merge', '1'])
