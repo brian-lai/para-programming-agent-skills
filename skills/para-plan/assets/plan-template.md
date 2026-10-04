@@ -64,23 +64,15 @@
 > Each checklist item below maps to one git commit. The checkbox text is the commit message.
 > Tests come BEFORE the implementation they cover (TDD).
 
-- [ ] **Write contract tests for {boundary}**
-  - [Sub-task]
-  - **Tests:** `TestContractName` — [what it asserts]
+- [ ] **Implement {behavior} with its regression coverage**
+  - **Files:** `path/to/component`, `path/to/test`
+  - **Contract:** [Existing contract or changed interface]
+  - **Tests:** [Command, intended failing assertion, success condition]
+  - Write/observe the regression first, implement, pass required checks, then commit.
 
-- [ ] **Write acceptance test skeleton**
-  - [Sub-task]
-  - **Tests:** `TestAcceptanceName` — [stays red until step N]
-
-- [ ] **Implement {component}**
-  - [Sub-task]
-  - [Sub-task]
-  - **Makes green:** [Which contract tests now pass]
-
-- [ ] **Implement {component}**
-  - [Sub-task]
-  - [Sub-task]
-  - **Makes green:** [Which tests now pass, including acceptance test]
+- [ ] **Integrate {behavior} and validate acceptance**
+  - **Tests:** [Specific integration/acceptance assertions and commands]
+  - All required checks pass before this commit; record future coverage as pending work.
 
 ## Risks
 
@@ -120,10 +112,10 @@
 
 ### Acceptance Test
 
-[One or more end-to-end tests that verify the feature works from the user's perspective. Written as a skeleton on day 1 — stays red until implementation is complete.]
+[One or more end-to-end tests that verify the feature works from the user's perspective. Include when relevant; implement within a behavior-sized todo that ends green.]
 
 ```
-[Test skeleton — compiles/parses but assertions fail]
+[Acceptance assertions and required command]
 ```
 
 ## Review Checklist

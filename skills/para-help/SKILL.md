@@ -21,7 +21,7 @@ Determine how to render user-facing skill requests before displaying the referen
 2. Do not infer the host from ~/.agents/skills or another shared discovery path.
 3. For an unknown client, OpenCode, or Gemini CLI, use exact-name natural language such as: Use the `para-plan` skill to plan `<task>`.
 4. Treat the forms below as presentation only. The canonical request remains `para-<skill> [arguments]`.
-5. Preserve the exact `para-*` identifier on every line. Do not replace identifiers with generic labels such as “the plan review skill” or reorder/expand the Typical Flow.
+5. Preserve the exact `para-*` identifier on every line. Do not replace identifiers with generic labels such as “the plan review skill”.
 
 <!-- para-client-invocation-map:start -->
 | Client | User-facing form |
@@ -43,11 +43,7 @@ For natural-language clients, render the Typical Flow with this exact request se
 Use the `para-research` skill to research "Add user authentication".
 Use the `para-plan` skill to plan "Add user authentication".
 Use the `para-review` skill with `--plan`.
-Use the `para-workflow` skill. Or manually:
-  Use the `para-execute` skill.
-  Use the `para-review` skill with `--pr`.
-  Use the `para-summarize` skill.
-  Use the `para-archive` skill.
+Use the `para-workflow` skill to complete the reviewed simple or phased plan.
 ```
 
 ---
@@ -73,7 +69,7 @@ Detailed workflow: Research → Plan → Review Plan → Execute → Review PR �
 | `para-plan <task>` | Create a planning document through collaboration |
 | `para-review --plan\|--pr` | Staff+ review loop for plans and PRs |
 | `para-execute` | Create worktree, extract todos, start execution |
-| `para-workflow` | Orchestrate execute → PR → review → summarize → archive |
+| `para-workflow` | Orchestrate execute → PR → review → summarize → merge → archive |
 | `para-summarize` | Generate post-work summary |
 | `para-archive` | Archive context and start fresh |
 | `para-status` | Check current workflow state |
@@ -86,11 +82,7 @@ Detailed workflow: Research → Plan → Review Plan → Execute → Review PR �
 para-research Add user authentication
 para-plan Add user authentication
 para-review --plan
-para-workflow           # or manually:
-  para-execute          #   -> Creates worktree, implements with TDD
-  para-review --pr      #   -> Staff+ review loop
-  para-summarize        #   -> Generate summary
-  para-archive          #   -> Clean up worktree
+para-workflow           # simple or phased plan; use --auto for authorized continuation
 ```
 
 ## File Structure
@@ -110,3 +102,5 @@ context/
 - Use the `para-status` skill to see where you are in the workflow
 - Use the `para-check` skill if unsure whether a task needs PARA
 - Full methodology details are in `../../docs/METHODOLOGY.md`
+
+Direct skills perform their named operation only. Use the `para-workflow` skill to sequence the complete lifecycle, including PR preparation and verified merge.

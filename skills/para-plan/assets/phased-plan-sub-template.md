@@ -51,23 +51,15 @@
 > Each checklist item below maps to one git commit. The checkbox text is the commit message.
 > Tests come BEFORE the implementation they cover (TDD).
 
-- [ ] **Write {contract/unit} test suite for {component}**
-  - [Sub-task]
-  - **Tests:** `TestName` — [what it asserts]. Won't compile yet (no types). That's expected.
+- [ ] **Implement {behavior} with its regression coverage**
+  - **Files:** `path/to/component`, `path/to/test`
+  - **Contract:** [Existing contract or changed interface]
+  - **Tests:** [Command, intended failing assertion, success condition]
+  - Write/observe the regression first, implement, pass required checks, then commit.
 
-- [ ] **Write acceptance test skeleton for {feature}**
-  - [Sub-task]
-  - **Tests:** `TestAcceptanceName` — stays red until implementation is complete
-
-- [ ] **Implement {component}**
-  - **File(s):** `path/to/file.ext`
-  - [Sub-task]
-  - **Makes green:** [which tests from above now pass]
-
-- [ ] **Implement {component}**
-  - **File(s):** `path/to/file.ext`
-  - [Sub-task]
-  - **Makes green:** [which tests now pass]
+- [ ] **Integrate {behavior} and validate acceptance**
+  - **Tests:** [Specific integration/acceptance assertions and commands]
+  - All required checks pass before this commit; record future coverage as pending work.
 
 ---
 
@@ -83,12 +75,12 @@
 
 ## Green Tests After This Phase
 
-- {GREEN_OR_RED} {Test suite 1} — [brief description]
-- {GREEN_OR_RED} {Test suite 2} — [brief description]
-- {GREEN_OR_RED} {Test suite 3} — [brief description]
-- {GREEN_OR_RED} E2E acceptance test — [red if not yet, green if this phase completes it]
+- {STATUS} {Test suite 1} — [brief description]
+- {STATUS} {Test suite 2} — [brief description]
+- {STATUS} {Test suite 3} — [brief description]
+- {STATUS} E2E acceptance test — [required passing coverage or future work not yet introduced]
 
-[Use checkmarks for green, crosses for still-red. This should match the progressive regression rule in the master plan.]
+[Required suites pass. Describe future coverage separately; do not merge failing required tests.]
 
 ---
 

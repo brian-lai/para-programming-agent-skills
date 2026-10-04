@@ -18,4 +18,4 @@
 }
 ```
 
-See `../references/context-schema.md` for the full field reference.
+For field meanings, locate `references/context-schema.md` in the installed `para-init` skill.

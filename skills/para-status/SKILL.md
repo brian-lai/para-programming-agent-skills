@@ -5,75 +5,37 @@ model: haiku
 effort: low
 ---
 
-Display the current state of PARA context and workflow progress.
+Report workflow state and the next step without modifying files or removing worktrees.
 
-## Usage
-
-```
+```text
 para-status
-para-status --verbose         # Include file contents preview
-para-status --files           # List all context files
+para-status --verbose
+para-status --files
 ```
 
-## What It Does
+Resolve the primary context root using Git worktree metadata. Read its summary/JSON and reconcile branch, worktree and recorded PR evidence. Use `../para-init/references/context-schema.md` for field meanings.
 
-1. Reads and parses `context/context.md`
-2. Displays current work summary, active plans, and completed summaries
-3. Shows worktree status: path, branch, and existence
-4. Detects stale and orphaned worktrees
-5. Detects workflow state and suggests the next step
-
-See `../para-init/references/context-schema.md` for field meanings.
-
-If ../para-init/references/context-schema.md is not available in this install, the minimal fields needed are: `active_context`, `completed_summaries`, `research_docs`, `worktree_path`, `phased_execution`, and `last_updated`.
-
-## Output Format
-
-```
-PARA Status
-
-Current Work:
-   Implementing user authentication system
-
-Active Plans:
-   context/plans/2025-11-24-user-auth.md
-
-Worktree:
-   Path: .para-worktrees/user-auth
-   Branch: para/user-auth
-   Status: active
-
-Completed Summaries:
-   context/summaries/2025-11-23-api-setup-summary.md
-
-Last Updated: 2025-11-24T14:30:00Z
-
-Next Action:
-   Continue executing the plan, or use the `para-summarize` skill when complete
-```
+If ../para-init/references/context-schema.md is not available in this install, inspect active_context, research_docs, completed_summaries, execution_branch, worktree_path and phased_execution. Preserve unknowns in the report rather than guessing completion.
 
 ## State Detection
 
-| State | Detection | Next step |
+Use the first applicable row; summary presence never overrides unfinished work.
+
+| State | Evidence | Next step |
 |---|---|---|
-| **No context** | `context/context.md` does not exist | Use the `para-init` skill |
-| **Idle** | Context exists, no active plans, no active worktree | Use the `para-plan` skill with `<task>` or use the `para-check` skill |
-| **Planning** | `active_context` contains plan or research docs, no worktree path | Review plan, then use the `para-review` skill with `--plan` or use the `para-execute` skill |
-| **Executing** | `worktree_path` is set and worktree exists | Continue todos, then use the `para-review` skill with `--pr` and the `para-summarize` skill |
-| **Summarized** | Completed summary exists and no active work remains | Use the `para-archive` skill |
+| No context | Primary context is absent | Use the `para-init` skill |
+| Unresolved | Malformed metadata or ambiguous task/root | Report exact gap and recovery choice |
+| Executing | Active unmerged task, including branch-only or per-phase execution; known workflow step pending | Resume with the `para-workflow` skill from verified evidence |
+| Summarized | All work verified merged and summarized, cleanup remains | Use the `para-archive` skill |
+| Planning | Unexecuted active plan exists | Review plan, then use the `para-workflow` skill |
+| Research | research_docs exists without active work | Use the `para-plan` skill with relevant research |
+| Idle | No active work or applicable research | Use the `para-check` skill or the `para-plan` skill |
 
-## Worktree Health Checks
+Report current task/phase, plan, branch/worktree, PR/check/review/merge evidence when available, latest update and next action. `--verbose` adds relevant previews; `--files` lists context artifacts without loading their entire contents.
 
-- **Active:** `worktree_path` in metadata, directory exists, branch is valid
-- **Stale reference:** `worktree_path` in metadata but directory does not exist -- warn: "Worktree referenced in context.md but directory missing. Use the `para-execute` skill to recreate it or update context.md."
-- **Orphaned worktree:** Directory exists in `.para-worktrees/` but is not referenced in `context/context.md` -- warn: "Orphaned worktree found at `.para-worktrees/{name}`. Run `git worktree remove` to clean up or update context.md."
-- **No worktree:** No `worktree_path` in metadata -- normal for No context, Idle, Planning, or legacy `--no-worktree` execution
+## Worktree health
 
-## Implementation
-
-1. Check if `context/context.md` exists
-2. Parse JSON metadata from the fenced block
-3. Read the human-readable summary section
-4. Check worktree state against metadata
-5. Check git status for uncommitted changes
-6. Determine state and print next-step guidance
+- **Stale reference:** metadata points to a missing directory. Reconcile Git worktree registry and branch before suggesting recreation.
+- **Orphaned worktree:** registered/disk worktree is not referenced by this task. Report it; do not remove unrelated work.
+- A null worktree is valid for branch-only execution. Inspect phase entries as well as top-level metadata.
+- If remote evidence is unavailable, distinguish recorded state from fresh verification. Do not call unverified work complete.

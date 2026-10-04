@@ -52,7 +52,7 @@ Management commands list, reload, enable, or inspect skills; they are not portab
 | `para-plan <task>` | Create a planning document with self-review |
 | `para-review --plan\|--pr` | Review a plan or PR with Staff+ criteria |
 | `para-execute` | Create a worktree and execute one checklist item per commit |
-| `para-workflow` | Orchestrate execute, review, summarize, and merge across phases |
+| `para-workflow` | Orchestrate simple/phased execution, PR, review, summary, verified merge and archive |
 | `para-status` | Check current workflow state |
 | `para-summarize` | Generate a post-work summary |
 | `para-archive` | Archive context and start fresh |

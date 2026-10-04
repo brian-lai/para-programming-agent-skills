@@ -52,10 +52,10 @@ When `--plan` is specified:
 
 When `--pr` is specified:
 
-1. **Identify the PR** -- use the current branch's PR, or the PR number provided. Run `gh pr diff` to get the full diff.
+1. **Identify the PR** -- use the current branch's PR, or the PR number provided. If no PR exists, recommend the `para-workflow` skill to prepare one. Record the head SHA and run `gh pr diff` to get the full diff. Direct review does not create a PR or launch later skills.
 2. **Spawn a subagent** with the Staff+ persona. The subagent reads the diff, the changed files, and the active plan, then checks:
    - Does each commit match a plan checklist item?
-   - Are tests written before implementation, based on commit order?
+   - Does command/result evidence establish the intended regression failure and passing validation? Commit order alone cannot prove test-writing order.
    - Do tests actually test meaningful behavior, not just smoke tests?
    - Are there any untested code paths?
    - Does the code follow project conventions and patterns?
@@ -69,7 +69,7 @@ After the initial review, the loop proceeds:
 1. **Address issues** -- implement fixes for all MUST FIX items. Apply SHOULD FIX items where appropriate. NITs are optional.
 2. **Re-submit for review** -- spawn a **fresh subagent** with the Staff+ persona. Provide: the same source material as the initial review, the previous round's issue list, and a summary of what changed in response. This lets the fresh subagent verify fixes without anchoring on the previous reviewer's perspective.
 3. **Loop until approved** -- repeat until the reviewer explicitly states "APPROVED."
-4. **Record approval** -- note in `context/context.md` progress notes: "Staff+ review: APPROVED (N rounds)".
+4. **Record approval** -- save the reviewed head SHA, status and independent mode in execution.review; for plans record paths/content digests in progress notes. Note "Staff+ review: APPROVED (N rounds)" as a human-readable summary, not transferable approval. If the head changes, re-establish eligibility.
 
 ## Convergence & Escalation
 
@@ -87,8 +87,8 @@ After the initial review, the loop proceeds:
 When `--approve` is specified:
 
 1. Skip all remaining review rounds
-2. Record in `context/context.md` progress notes: "Staff+ review: OVERRIDDEN by user"
-3. Proceed to the next workflow step
+2. Record the explicit user override and reviewed target in context, separately from independent approval: "Staff+ review: OVERRIDDEN by user"
+3. Return the recorded override to the caller; workflow controls subsequent steps
 
 Use sparingly. The review loop exists to catch real issues. Override is for cases where:
 - The reviewer is flagging stylistic preferences that do not apply to this project
@@ -102,3 +102,5 @@ Use sparingly. The review loop exists to catch real issues. Override is for case
 - Plan reviews check the plan document(s); PR reviews check the diff and commit history
 - Review results are presented to the user, not silently applied
 - The `--approve` flag is a user-initiated override, not an automatic approval
+
+If independent subagents are unavailable, report that limitation; self-review must not be recorded as independent approval. Ask for an explicit user override if the independent gate cannot be satisfied. Keep author conversation out of the reviewer packet when supported; supply requirements, relevant artifacts/checks and issue ledger.

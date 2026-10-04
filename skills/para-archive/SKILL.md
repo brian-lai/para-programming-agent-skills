@@ -5,75 +5,31 @@ model: haiku
 effort: low
 ---
 
-Archive the current context to create a clean slate for the next task.
+Clean up verified completed work without losing pending tasks or user changes.
 
-## Usage
-
-```
+```text
 para-archive
-para-archive --fresh          # Completely empty context
-para-archive --seed           # Carry forward relevant context
+para-archive --phase=N
+para-archive --fresh
+para-archive --seed
 ```
 
-Default: create fresh context with references to completed summaries.
+Read primary context and `../para-init/references/context-schema.md`. Resolve each target worktree/branch and verify its task identity. Required checks, committed/pushed work, verified merge and summary must exist. Unknown remote status or an open PR is unfinished work.
 
-## What It Does
+## Phase cleanup
 
-1. Read `context/context.md` and extract worktree metadata, including top-level `worktree_path` and per-phase worktree paths.
-2. Verify work is complete:
-   - Summary exists in `context/summaries/`
-   - Tests have passed
-   - Branch has been pushed and PR created or merged
-3. **Clean up worktrees:**
-   - For each worktree path found in metadata, run `git worktree remove {worktree_path}`
-   - If the worktree has uncommitted changes, warn the user and require them to commit or stash first, then use the `para-archive` skill again; do NOT force-remove because that can permanently destroy uncommitted work
-   - After removal, run `git worktree prune` to clean up stale references
-   - Remove `.para-worktrees/` if empty
-4. Move `context/context.md` to `context/archives/YYYY-MM-DD-HHMM-context.md`
-5. Create a fresh `context/context.md` seeded from `../para-init/assets/context-template.md`
-6. Carry forward completed summary references unless `--fresh` was specified
-7. Display archive location, worktrees removed, fresh context confirmation, and readiness for the next task
+With `--phase=N`, verify that phase is merged and summarized. Remove only its clean worktree using `git worktree remove`, then prune stale Git metadata. Preserve master/pending plans, other worktrees, phase evidence and unknown fields. Clear only the removed phase's active worktree path. Reconcile an already-removed worktree as complete after identity verification. Do not reset context or perform final archive in this mode; reject --fresh/--seed combined with --phase.
 
-See `../para-init/references/context-schema.md` for the full context metadata field reference.
+## Final archive
 
-If ../para-init/assets/context-template.md is not available in this install, create a minimal fresh `context/context.md` with empty `active_context`, `completed_summaries`, and `research_docs` arrays plus a current `last_updated` timestamp.
+1. Verify the whole simple/phased task is merged and summarized. An already fresh context with no active task is a no-op. Never treat summary presence as merge evidence.
+2. Check recorded worktrees for user changes; do NOT force-remove. Preserve dirty work and report the blocker. Remove only verified task worktrees, retaining recoverable branches; prune afterward.
+3. Reserve an unused `context/archives/YYYY-MM-DD-HHMMSS-context.md` (add a suffix on collision) in archive_target. Save a snapshot before resetting context. On retry, reuse the recorded destination only after verifying it belongs to this task; never overwrite another archive.
+4. Create fresh context using `../para-init/assets/context-template.md`. Preserve completed summary references by default. `--fresh` omits carryover references; `--seed` also retains still-relevant research. Remove old execution/workflow/archive_target fields from fresh context.
+5. Report archived path, removed worktrees, carried references and any remaining blocker. The caller controls subsequent work.
 
-If ../para-init/references/context-schema.md is not available in this install, the minimal fields needed are: `active_context` (string[]), `completed_summaries` (string[]), `research_docs` (string[]), `worktree_path` (string or null), and `last_updated` (ISO 8601 string).
+If ../para-init/assets/context-template.md is not available in this install, create fresh context with active_context, completed_summaries and research_docs arrays, null worktree_path and current last_updated. Apply the selected carryover policy.
 
-## Fresh vs Seeded Context
+If ../para-init/references/context-schema.md is not available in this install, preserve unknown state and require observed merge/summary/clean-worktree evidence; never infer completion. Keep archive_target for interrupted archive recovery.
 
-### `--fresh`
-
-Create a clean context with no carryover references. Use this when all current work is complete and no summaries need to stay active.
-
-### `--seed`
-
-Create a clean context from `../para-init/assets/context-template.md`, then seed it with references to completed summaries and any still-relevant research docs.
-
-## When to Archive
-
-- Work is complete and summarized
-- All tests pass and changes are committed
-- Branch has been pushed and PR created or merged
-- Ready to start a new, unrelated task
-
-Do NOT archive if work is still in progress or you need the current context for continued work.
-
-## Recovery
-
-```bash
-ls -lt context/archives/
-cp context/archives/2025-11-24-1430-context.md context/context.md
-```
-
-To restore a worktree after archive if the branch still exists:
-
-```bash
-git worktree add .para-worktrees/{task-name} para/{task-name}
-```
-
-## Notes
-
-- Never delete archives; they are project memory
-- Archives are searchable: `grep -r "keyword" context/archives/`
-- Worktree cleanup is automatic during archive; branches are preserved for PR and merge workflows
+Archives and branches remain available for recovery. Inspect the saved snapshot before restoring context; do not overwrite active work. A removed worktree can be reattached with `git worktree add <path> <existing-branch>` after checking the destination.

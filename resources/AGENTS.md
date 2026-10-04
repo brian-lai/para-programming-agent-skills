@@ -1,155 +1,36 @@
-# Global AGENTS.md -- PARA Workflow Guide
+# Global PARA Workflow Guide
 
-> **Location:** `~/.agents/AGENTS.md`
-> **Purpose:** Defines the PARA workflow methodology for all projects.
-> Project-specific context belongs in each project's local `AGENTS.md`.
+Project-specific conventions belong in the project's AGENTS.md. Skill requests below are natural-language instructions, not shell commands.
 
----
+## Scope
 
-## Directory Structure
+All tracked implementation changes, including documentation/configuration fixes, go through plan → execution branch/worktree → PR → review → merge. Never commit directly to main. Respect explicit user instructions and existing authorization; do not infer a bypass from “quick fix.”
 
-Every project using PARA has a `context/` directory:
+Read-only questions can be answered directly. Research, plans and progress files under context/ are workflow artifacts; creating them does not recursively require another implementation plan.
 
-```
-project-root/
-├── context/
-│   ├── context.md              # Active session context (the master file)
-│   ├── data/                   # Input/output files, payloads, datasets
-│   ├── plans/                  # Pre-work plans
-│   ├── summaries/              # Post-work summaries
-│   ├── archives/               # Archived context.md snapshots
-│   └── servers/                # MCP tool wrappers
-├── .para-worktrees/            # Git worktree isolation (gitignored)
-└── AGENTS.md                   # Project-specific context
-```
+## Context
 
-**File naming:** All context files use `YYYY-MM-DD-descriptive-name.ext` prefixes for chronological sorting. Exception: files in `context/servers/` use descriptive names only.
+Primary checkout `context/context.md` records active plans, research, summary paths, todos and verified execution evidence. Preserve unrelated/unknown metadata. Source edits/tests/commits happen in the execution checkout. Resolve roots from Git worktree metadata, not a stale local context copy.
 
----
+Use dated files in context/data, context/plans, context/summaries and context/archives. Keep only decision-relevant evidence active; retrieve supporting files when needed. Initialization preserves existing context and guidance.
 
-## The Master File -- `context/context.md`
+## Lifecycle
 
-Tracks active work with a human-readable summary and a JSON metadata block:
+Use the `para-research` skill when exploration is needed, then the `para-plan` skill to capture scope, contracts and validation. Use the `para-review` skill with `--plan` for independent review.
 
-````markdown
-# Current Work Summary
-Enhancing payroll API with token-efficient MCP integration.
+Use the `para-workflow` skill for either a simple or phased plan:
 
----
-```json
-{
-  "active_context": [
-    "context/plans/2025-11-08-payroll-api.md"
-  ],
-  "completed_summaries": [
-    "context/summaries/2025-11-08-payroll-summary.md"
-  ],
-  "worktree_path": ".para-worktrees/payroll-api",
-  "last_updated": "2025-11-08T15:20:00Z"
-}
-```
-````
+1. Execute behavior-sized todos in the identified execution checkout. Reuse existing contracts; create necessary stubs there. Observe meaningful failures before implementation when applicable, pass required checks, commit, then record completion and SHA.
+2. Prepare/reuse the matching PR after pushing the execution branch.
+3. Review requirements, diff and check evidence; bind the result to the reviewed head. An explicit override is distinct from independent approval.
+4. Summarize actual committed changes and observed validation. A summary does not establish merge.
+5. Verify authorization, current-head review eligibility and required checks; issue a guarded merge and confirm the remote result.
+6. Clean up only the merged phase; retain pending work. Start dependent phases from a base containing predecessor merges. Archive the entire task once after all merges/summaries.
 
----
+Direct skills perform only their named operation. Workflow owns sequencing, PR preparation, retries and advancement. Auto mode carries the user's authorization through these transitions while retaining gates.
 
-## Non-Negotiable Rules
+## Recovery
 
-### Never commit directly to main
-**All code changes go through the full PARA workflow: plan → worktree branch → PR → review → merge.**
+Before retrying an effect, reconcile actual Git/GitHub results. A changed head invalidates transferable approval; queued merge is pending. Never force-remove a dirty worktree, overwrite another archive, or replace unrelated context. Preserve recoverable branches and record archive destination before reset.
 
-This includes small changes: version bumps, one-liner fixes, config tweaks, documentation updates. There is no such thing as "too small for a PR."
-
-If a request sounds like it could bypass this (e.g. "make a quick update", "just bump the version", "minor fix"), **always ask the user for explicit confirmation before proceeding outside the workflow.** Only skip if the user explicitly and directly instructs otherwise.
-
----
-
-## When to Use PARA
-
-**Use PARA** for any task that results in git changes: features, bug fixes, refactoring, config changes, migrations, tests, complex debugging.
-
-**Skip PARA** for read-only or informational tasks: "What does X do?", "Show me the auth logic", "Explain how caching works."
-
----
-
-## Workflow Loop
-
-```
-Research → Plan → Review Plan → Execute → Review PR → Summarize → Archive
-```
-
-For multi-phase work, use the `para-workflow` skill to orchestrate the full cycle automatically.
-
-### 1. Research (Optional but Recommended)
-
-Use the `para-research` skill to perform deep codebase exploration before planning:
-- Produces a structured research doc at `context/data/YYYY-MM-DD-task-name-research.md`
-- Covers architecture, components, API contracts, patterns, graceful degradation, gaps
-- Becomes primary input for the planning phase
-
-### 2. Plan (Collaborative)
-
-1. **Ensure context directory exists:**
-   ```bash
-   mkdir -p context/{data,plans,summaries,archives,servers}
-   ```
-
-2. **Check for research doc** — use as primary input if available
-
-3. **Ask clarifying questions (CRITICAL):**
-   - Ask 1-4 focused questions about scope, approach, constraints, and preferences
-   - Skip only if the task is trivially simple with no meaningful choices
-
-4. **Explore codebase:**
-   - Identify existing patterns, conventions, and affected components
-   - Identify interface boundaries between systems and existing graceful degradation patterns
-
-5. **Draft plan** applying Staff+ engineering criteria:
-   - Core principles, architecture decisions, interface boundaries, graceful degradation
-   - Implementation steps as checklist items (each item = one git commit message)
-   - TDD ordering: tests before implementation
-   - For complex work, propose a phased plan (master + sub-plans)
-   - Complex plans undergo 2-3 automatic self-review rounds before being presented for human review
-
-**Default to asking questions.** Plans created collaboratively succeed more often than plans based on assumptions.
-
-### 3. Review Plan
-
-Use the `para-review` skill with `--plan` for an independent Staff+ reviewer:
-- Spawns a separate reviewer with Staff+ FAANG engineer persona
-- Reviews architecture, TDD ordering, completeness, scope
-- Loops until approved (MUST FIX → address → re-review)
-
-### 4. Execute
-
-**Git workflow (mandatory in git repositories):**
-
-1. **Create an isolated worktree:** `git fetch origin main && git worktree add .para-worktrees/{task-name} -b para/{task-name} origin/main`
-   - For phased plans: `.para-worktrees/{task-name}-phase-N` on branch `para/{task-name}-phase-N`
-
-2. **Track todos in `context/context.md`** — extract checklist items from the plan. Each item's text becomes the commit message.
-
-3. **Commit after EVERY completed todo (TDD cycle):**
-   - Confirm spec + stubs exist
-   - Write tests first (red)
-   - Implement to make tests pass (green)
-   - Mark `[x]` in `context/context.md`
-   - Commit with the checklist item text as the message
-
-### 5. Review PR
-
-Use the `para-review` skill with `--pr` for an independent Staff+ reviewer of the implementation:
-- Checks commit-plan alignment, test quality, conventions
-- Loops until approved
-
-### 6. Summarize
-
-Write a report to `context/summaries/YYYY-MM-DD-task-name-summary.md` covering:
-- What changed and why
-- Key learnings
-- Staff+ review results
-
-### 7. Archive
-
-- Remove worktrees: `git worktree remove .para-worktrees/{task-name}` and `git worktree prune`
-- Move `context/context.md` to `context/archives/YYYY-MM-DD-context.md`
-- Create a fresh `context/context.md` seeded with any ongoing references
+The installed para-init skill's references/context-schema.md is the canonical field and transition contract. Missing evidence is unknown; it cannot authorize a destructive cleanup or falsely complete work.

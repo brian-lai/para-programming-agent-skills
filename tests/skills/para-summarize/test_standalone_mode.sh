@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
-body=$(awk '/^---$/{c++; next} c>=2' skills/para-summarize/SKILL.md)
-if echo "$body" | grep -qi 'standalone' && echo "$body" | grep -q 'git .*push' && echo "$body" | grep -q 'gh pr create'; then
-  echo "PASS standalone PR flow documented"
-else
-  echo "FAIL missing standalone PR flow"
-  exit 1
-fi
+python3 - <<'PY'
+from pathlib import Path
+s=Path('skills/para-summarize/SKILL.md').read_text()
+assert 'standalone' in s.lower()
+assert 'gh pr create' not in s and 'git push' not in s
+assert 'merge-base' in s and 'summary path' in s
+print('PASS standalone report scope and committed-diff guidance')
+PY

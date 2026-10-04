@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
-body=$(awk '/^---$/{c++; next} c>=2' skills/para-status/SKILL.md)
-if echo "$body" | grep -q 'Worktree referenced in context.md but directory missing'; then
-  echo "PASS stale-reference warning present"
-else
-  echo "FAIL missing stale-reference warning"
-  exit 1
-fi
+python3 - <<'PY'
+from pathlib import Path
+s=Path('skills/para-status/SKILL.md').read_text()
+assert 'Stale reference' in s and 'missing directory' in s
+assert 'Orphaned worktree' in s and 'do not remove' in s
+print('PASS missing and unrelated worktree guidance')
+PY
