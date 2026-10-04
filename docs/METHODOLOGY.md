@@ -101,7 +101,7 @@ This matters for agent workflows because it means you can continue working in yo
 
 ### Spec-Driven TDD
 
-Before writing any code, the plan creates a spec file (OpenAPI, TypeScript interfaces, or markdown contract) and stub source files with signatures matching the spec. Tests are written against the stubs. Only then does implementation begin.
+Planning references existing contracts or records changed interfaces. Execution creates only necessary stubs in its isolated checkout, observes meaningful failing tests, and implements each behavior with required checks green before committing.
 
 The TDD cycle in PARA is explicit about the "red" and "green" phases:
 

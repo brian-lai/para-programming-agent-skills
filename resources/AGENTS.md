@@ -123,17 +123,17 @@ Use the `para-review` skill with `--plan` for an independent Staff+ reviewer:
 
 **Git workflow (mandatory in git repositories):**
 
-1. **Create an isolated worktree:** `git fetch origin main && git worktree add .para-worktrees/{task-name} -b para/{task-name} origin/main`
+1. **Create an isolated worktree:** resolve/fetch the repository base, then create `.para-worktrees/{task-name}` on `para/{task-name}` from that base
    - For phased plans: `.para-worktrees/{task-name}-phase-N` on branch `para/{task-name}-phase-N`
 
 2. **Track todos in `context/context.md`** — extract checklist items from the plan. Each item's text becomes the commit message.
 
 3. **Commit after EVERY completed todo (TDD cycle):**
-   - Confirm spec + stubs exist
+   - Reuse the contract; create necessary stubs only in the execution checkout
    - Write tests first (red)
    - Implement to make tests pass (green)
-   - Mark `[x]` in `context/context.md`
-   - Commit with the checklist item text as the message
+   - Pass required checks and commit with the checklist item text as the message
+   - After commit succeeds, mark `[x]` in primary `context/context.md` and record its SHA
 
 ### 5. Review PR
 

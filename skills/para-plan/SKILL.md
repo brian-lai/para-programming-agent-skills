@@ -37,8 +37,8 @@ When the `para-plan` skill is invoked:
    - **Existing graceful degradation patterns** (how the codebase currently handles external dependency failures, timeouts, retries)
 
 5. **Draft spec + stubs:**
-   - Create a spec file in `context/data/YYYY-MM-DD-task-name-spec.yaml` (OpenAPI/Swagger YAML for HTTP APIs; TypeScript interface file or markdown contract for UI components, modules, and scripts)
-   - Create stub source files in the project tree with signatures matching the spec but no implementation (return `null`, `{}`, or `501 Not Implemented` as appropriate)
+   - Reuse existing contracts where adequate; otherwise create a spec file in `context/data/YYYY-MM-DD-task-name-spec.yaml` (OpenAPI/Swagger YAML for HTTP APIs; TypeScript interface file or markdown contract for UI components, modules, and scripts)
+   - Describe anticipated source interfaces and stub locations in the plan; create necessary source stubs only during execution in its isolated checkout
    - Reference the spec and stub file paths in the plan
 
 6. **Determine plan type:**
@@ -70,7 +70,7 @@ When the `para-plan` skill is invoked:
    **Round 2 -- Testing & TDD:**
    - Do tests come BEFORE implementation in the ordering? (Contract tests and acceptance test skeleton should be written first.)
    - Is there a contract test suite for every interface boundary?
-   - Is there an E2E acceptance test defined on day 1 (even if it stays red until later phases)?
+   - Is user-facing acceptance coverage planned, with required checks green at each merge boundary?
    - Does the progressive regression rule make sense? (Which test suites go green at each step/phase?)
    - Are test annotations concrete (function signatures, test names, key assertions) rather than vague?
 

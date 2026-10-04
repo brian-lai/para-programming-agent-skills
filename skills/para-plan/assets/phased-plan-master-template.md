@@ -101,7 +101,7 @@ Each phase uses an isolated git worktree alongside a dedicated branch:
 | Phase 2 | `para/{task-name}-phase-2` | `.para-worktrees/{task-name}-phase-2` |
 | Phase 3 | `para/{task-name}-phase-3` | `.para-worktrees/{task-name}-phase-3` |
 
-Each branch starts from `main` (with previous phases already merged). Worktrees are created by the `para-execute` skill and cleaned up by the `para-archive` skill.
+Each branch starts from the resolved repository base with previous phases already merged. Worktrees are created by the `para-execute` skill and cleaned up by the `para-archive` skill.
 
 ---
 
