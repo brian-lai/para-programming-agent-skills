@@ -24,7 +24,9 @@ class GithubStub:
                 return default
         try:
             command = args[:2]
-            if command == ['auth', 'status']:
+            if '--help' in args or '-h' in args or args == ['--version']:
+                output = 'Fixture gh: pr list/create/view/diff/checks/merge; repo view; auth status. Options: --repo fixture/repo --head BRANCH --base BRANCH --json FIELDS --jq QUERY. Merge requires --match-head-commit SHA. Create supports --title TITLE --body BODY or --body-file PATH.'
+            elif command == ['auth', 'status']:
                 output = 'Fixture authenticated (no external service)'
             elif command == ['repo', 'view']:
                 output = {'nameWithOwner': 'fixture/repo', 'defaultBranchRef': {'name': state['base']}}
@@ -103,6 +105,12 @@ class GithubStub:
                 effect = 'rejected'
         dump(self.state, state)
         if isinstance(output, (dict, list)):
+            fields = option('--json')
+            if fields:
+                keys = fields.split(',')
+                def project(value):
+                    return {k: value.get(k) for k in keys}
+                output = project(output) if isinstance(output, dict) else [project(v) for v in output]
             output = json.dumps(output)
             query = option('--jq') or option('-q')
             if query:

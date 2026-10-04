@@ -33,6 +33,20 @@ class FixturesTest(unittest.TestCase):
         events = [json.loads(x) for x in s.events.read_text().splitlines()]
         self.assertEqual(sum(x['effect'] == 'created' for x in events), 1)
 
+    def test_help_has_no_effects(self):
+        self.make('simple_workflow_no_pr')
+        s = GithubStub(self.root / 'trial')
+        original = s.state.read_text()
+        for operation in ('create', 'merge', 'view'):
+            self.assertEqual(s.call(['pr', operation, '--help'])[0], 0)
+            self.assertEqual(s.state.read_text(), original)
+
+    def test_json_projection_does_not_supply_unrequested_checks(self):
+        self.make('resume_after_pr_created')
+        code, output = GithubStub(self.root / 'trial').call(['pr', 'view', '1', '--json', 'url'])
+        self.assertEqual(code, 0)
+        self.assertEqual(set(json.loads(output)), {'url'})
+
     def test_stub_rejects_unknown_operation(self):
         self.make()
         self.assertNotEqual(GithubStub(self.root / 'trial').call(['api', '/delete-everything'])[0], 0)
