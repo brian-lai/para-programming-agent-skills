@@ -5,85 +5,17 @@ model: haiku
 effort: low
 ---
 
-Initialize PARA-Programming structure in the current project.
+Initialize only missing PARA structure, preserving existing context and project guidance.
 
-## Usage
-
-```
-para-init
-para-init --template=basic    # Minimal project AGENTS.md (default)
-para-init --template=full     # Comprehensive project AGENTS.md
+```text
+para-init [--template=basic|full]
 ```
 
-## What It Does
+1. Resolve the primary project/context root; inspect existing AGENTS.md, context, repository facts and check commands. Parse existing context before any mutation. Preserve its contents, active progress and unknown fields; malformed state requires reconciliation, not a reset.
+2. Create missing directories: context/data, context/plans, context/summaries, context/archives and context/servers. Create context/context.md from `assets/context-template.md` only if absent, with the actual timestamp. See `references/context-schema.md` for field meanings; do not replace existing context from a template.
+3. If project AGENTS.md is absent, fill `assets/agents-basic-template.md` (default) or `assets/agents-full-template.md` from inspected project facts. Omit inapplicable sections and label unknown facts. Do not invent tools, commands, coverage targets or credentials. Preserve an existing AGENTS.md; propose additions separately only when needed.
+4. If global ~/.agents/AGENTS.md is missing and the bundle includes resources/AGENTS.md, copy that methodology. This operation never overwrites existing global guidance. In a single-skill install without that resource, report the missing optional guidance and continue with the local skill contract.
+5. Append .para-worktrees/ to .gitignore only if not already covered. This is a tracked project change: use an existing authorized execution branch/worktree or the project branch/PR workflow. Missing primary-context artifacts themselves do not recursively require a plan.
+6. Report created, preserved and pending files accurately. Recommend the `para-plan` skill for work, the `para-status` skill for current state, or the `para-help` skill for invocation help.
 
-1. **Set up global methodology file** at `~/.agents/AGENTS.md` (copied from `resources/AGENTS.md` if missing; never overwrites existing).
-2. **Create context directory structure:**
-   ```bash
-   mkdir -p context/{data,plans,summaries,archives,servers}
-   ```
-3. **Create `context/context.md`** seeded from `assets/context-template.md`:
-   ````markdown
-   # Current Work Summary
-
-   Ready to start first task.
-
-   ---
-   ```json
-   {
-     "active_context": [],
-     "completed_summaries": [],
-     "last_updated": "TIMESTAMP"
-   }
-   ```
-   ````
-   See `references/context-schema.md` for the full field reference.
-4. **Create project `AGENTS.md`** (if missing) from `assets/agents-basic-template.md` (default, `--template=basic`) or `assets/agents-full-template.md` (`--template=full`).
-5. **Update `.gitignore`** to include `.para-worktrees/`:
-   - If `.gitignore` exists, check for `.para-worktrees/` entry; append if missing.
-   - If `.gitignore` does not exist, create it with `.para-worktrees/` as its content.
-   - This prevents worktree directories from being tracked by git.
-
-## Graceful Degradation (partial-install fallback)
-
-If `references/context-schema.md` is not available in this install (single-skill copy without the bundled resource), the minimal required context.md JSON schema is:
-
-```json
-{
-  "active_context": [],
-  "completed_summaries": [],
-  "last_updated": "ISO-8601"
-}
-```
-
-Required fields: `active_context` (string[]), `completed_summaries` (string[]), `last_updated` (ISO 8601 string). Optional fields include `research_docs` (string[]), `worktree_path`, `execution_branch`, `execution_started`, `phased_execution`, and `workflow` — all documented in the full schema.
-
-## Success Output
-
-After initialization, display:
-
-```
-PARA-Programming Structure Initialized
-
-context/
-├── archives/     # Historical context snapshots
-├── data/         # Input files, payloads, datasets
-├── plans/        # Pre-work planning documents
-├── servers/      # MCP tool wrappers
-├── summaries/    # Post-work reports
-└── context.md    # Active session context
-
-.para-worktrees/  # Git worktree isolation (gitignored)
-
-Files created/updated:
-- ~/.agents/AGENTS.md (global methodology, if it didn't exist)
-- context/context.md (fresh context file)
-- AGENTS.md (project-specific context, if it didn't exist)
-- .gitignore (added .para-worktrees/ entry)
-
-Next steps:
-1. Edit AGENTS.md with your project-specific context
-2. Create your first plan: use the `para-plan` skill with `<task-description>`
-3. Check status: use the `para-status` skill
-4. Get help: use the `para-help` skill
-```
+If `references/context-schema.md` is not available in this install, fresh context requires active_context and completed_summaries string arrays and last_updated as an ISO timestamp. Preserve all optional/unknown existing fields, including research_docs, execution, phased_execution and workflow. Initialization does not infer completion or reset execution evidence.

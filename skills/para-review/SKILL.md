@@ -1,106 +1,43 @@
 ---
 name: para-review
-description: Spawn an independent reviewer with a Staff+ FAANG engineer persona to review a plan or PR. Review loops until approval, capped at 5 rounds with convergence detection.
+description: Independently review a plan or existing PR against requirements and evidence, with target-bound results and a capped correction loop.
 model: opus
 effort: high
 ---
 
-Spawn an independent subagent with a Staff+ FAANG engineer persona to review a plan or PR. The review loops until the reviewer explicitly approves.
+Review the requested artifact for consequential defects. Return the result to the caller; workflow owns subsequent lifecycle steps.
 
 ## Usage
 
+```text
+para-review --plan
+para-review --plan=path/to/plan.md
+para-review --pr
+para-review --pr=123
+para-review --approve
 ```
-para-review --plan                    # Review the active plan
-para-review --plan=path/to/plan.md    # Review a specific plan file
-para-review --pr                      # Review the current branch's changes as a PR
-para-review --pr=123                  # Review a specific PR number
-para-review --approve                 # Override: skip remaining review rounds and approve
-```
 
-## Staff+ FAANG Engineer Reviewer Persona
+## Target and packet
 
-The subagent receives the following persona instructions:
+1. Resolve the primary context and explicit/active plan or existing PR. Plan mode includes all sub-plans and records paths/content digests. PR mode verifies repository/head/base, reads the diff and relevant files/check results, and records the head SHA. If no PR exists, recommend the `para-workflow` skill to prepare it; direct review never creates one.
+2. Spawn a fresh subagent with a small packet: requirements, artifact/diff, relevant source/check evidence and prior issue ledger. Exclude author conversation when the host supports it; report capability limits. A fresh context reduces shared assumptions but does not guarantee correctness or eliminate anchoring from the ledger; never continue a previous reviewer as a new independent round.
+3. If independent review is unavailable, report it. A disclosed self-review can provide feedback but cannot satisfy the independent gate without an explicit user override. Do not fabricate a reviewer or approval.
 
-> You are a Staff+ engineer at a FAANG company reviewing this work. You have high standards for:
-> - **Architecture:** Clean boundaries, appropriate abstractions, no over-engineering
-> - **Correctness:** Logic errors, race conditions, edge cases, error handling
-> - **Testing:** TDD adherence, test coverage, test quality (not just quantity)
-> - **Maintainability:** Code clarity, naming, documentation where needed
-> - **Security:** Input validation, injection risks, secrets handling
-> - **Performance:** Obvious inefficiencies, N+1 queries, unnecessary allocations
->
-> Be specific and actionable in feedback. Reference exact file paths and line numbers.
-> Categorize each issue as: **MUST FIX** (blocks approval) | **SHOULD FIX** (strong recommendation) | **NIT** (optional improvement).
-> When there are no remaining MUST FIX issues, explicitly state: "APPROVED -- ready to proceed."
+## Evidence rubric
 
-## Plan Review Process
+For each finding provide location, trigger, violated requirement, impact and supporting evidence. Label uncertainty and the check needed to resolve it. Classify:
+- **MUST FIX:** a demonstrated correctness, security, data-preservation or required-contract defect that blocks proceeding.
+- **SHOULD FIX:** a supported improvement with concrete benefit, without a blocking violation.
+- **NIT:** an optional preference; never block for style alone.
 
-When `--plan` is specified:
+Check applicable boundaries, failure/recovery paths, scope, acceptance criteria, validation and maintainability. Plan reviews verify implementation readiness and mergeable phases. PR reviews check actual changes against the plan and meaningful regression coverage. Command/result evidence can support RED→GREEN; commit order alone cannot prove TDD. No persona/title is evidence of review quality. Return APPROVED when no MUST FIX remains; do not invent changes to make the review appear useful.
 
-1. **Identify the plan** -- read from `context/context.md` active plan, or use the path provided.
-2. **Spawn a subagent** with the Staff+ persona. The subagent reads the full plan, and all sub-plans for phased plans, then checks:
-   - Are all interface boundaries identified with contracts?
-   - Is TDD ordering correct, with tests before implementation?
-   - Are checklist items atomic and commit-message-ready?
-   - Is graceful degradation addressed for external dependencies?
-   - Is scope appropriate, without over-engineering?
-   - Are architecture decisions documented with rationale?
-   - Are test annotations concrete, with function signatures rather than vague descriptions?
-3. **Present review results** to the user with issues categorized as MUST FIX / SHOULD FIX / NIT.
+## Correction loop and convergence
 
-## PR Review Process
+Present findings with stable issue IDs. Apply supported fixes, record disposition and relevant checks in the issue ledger, then spawn a fresh reviewer. Recheck affected parts and interactions after material fixes, with the original requirements available. Resolve unsupported findings explicitly with evidence.
 
-When `--pr` is specified:
+**5-round maximum:** Escalate unresolved blockers after five rounds. If two consecutive rounds produce the same MUST FIX issues, escalate immediately with the remaining evidence and options to revise, continue, or explicitly override. Never silently skip a failed gate.
 
-1. **Identify the PR** -- use the current branch's PR, or the PR number provided. If no PR exists, recommend the `para-workflow` skill to prepare one. Record the head SHA and run `gh pr diff` to get the full diff. Direct review does not create a PR or launch later skills.
-2. **Spawn a subagent** with the Staff+ persona. The subagent reads the diff, the changed files, and the active plan, then checks:
-   - Does each commit match a plan checklist item?
-   - Does command/result evidence establish the intended regression failure and passing validation? Commit order alone cannot prove test-writing order.
-   - Do tests actually test meaningful behavior, not just smoke tests?
-   - Are there any untested code paths?
-   - Does the code follow project conventions and patterns?
-   - Are there any security concerns, such as input validation, secrets, or injection?
-3. **Present review results** to the user with issues categorized as MUST FIX / SHOULD FIX / NIT.
+Record plan approval against plan digests in progress notes. For a PR write execution.review as {status, target, mode} at the task/phase evidence location: status approved/changes_requested/overridden; target = reviewed head SHA; mode independent/self/user. Preserve unrelated metadata. Approval does not transfer to a changed head; verify resulting head and required checks after fixes. Missing or ambiguous execution identity requires reconciliation before writing.
 
-## Review Loop
-
-After the initial review, the loop proceeds:
-
-1. **Address issues** -- implement fixes for all MUST FIX items. Apply SHOULD FIX items where appropriate. NITs are optional.
-2. **Re-submit for review** -- spawn a **fresh subagent** with the Staff+ persona. Provide: the same source material as the initial review, the previous round's issue list, and a summary of what changed in response. This lets the fresh subagent verify fixes without anchoring on the previous reviewer's perspective.
-3. **Loop until approved** -- repeat until the reviewer explicitly states "APPROVED."
-4. **Record approval** -- save the reviewed head SHA, status and independent mode in execution.review; for plans record paths/content digests in progress notes. Note "Staff+ review: APPROVED (N rounds)" as a human-readable summary, not transferable approval. If the head changes, re-establish eligibility.
-
-## Convergence & Escalation
-
-**5-round maximum:** If the review has not converged after 5 rounds, escalate to the user:
-
-> "Review has not converged after 5 rounds. Here are the remaining issues: [list]. Would you like to:
-> 1. Continue addressing issues
-> 2. Override and approve (use the `para-review` skill with `--approve`)
-> 3. Revise the approach"
-
-**Convergence check:** If two consecutive rounds produce the same MUST FIX issues, escalate immediately rather than waiting for round 5. This prevents infinite loops where fixes for one issue reintroduce another.
-
-## Override
-
-When `--approve` is specified:
-
-1. Skip all remaining review rounds
-2. Record the explicit user override and reviewed target in context, separately from independent approval: "Staff+ review: OVERRIDDEN by user"
-3. Return the recorded override to the caller; workflow controls subsequent steps
-
-Use sparingly. The review loop exists to catch real issues. Override is for cases where:
-- The reviewer is flagging stylistic preferences that do not apply to this project
-- The remaining issues are known and intentionally deferred
-- Time pressure requires proceeding despite open items
-
-## Notes
-
-- Each review round spawns a fresh reviewer for independence -- never continue a previous reviewer's context
-- The reviewer sees the same persona instructions every round for consistency
-- Plan reviews check the plan document(s); PR reviews check the diff and commit history
-- Review results are presented to the user, not silently applied
-- The `--approve` flag is a user-initiated override, not an automatic approval
-
-If independent subagents are unavailable, report that limitation; self-review must not be recorded as independent approval. Ask for an explicit user override if the independent gate cannot be satisfied. Keep author conversation out of the reviewer packet when supported; supply requirements, relevant artifacts/checks and issue ledger.
+`--approve` is an explicit user override for the identified target. Record overridden/user separately from independent approval and return it to the caller. It does not waive required checks or merge authorization. Never supply this flag on the user's behalf to bypass findings.

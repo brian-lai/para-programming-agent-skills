@@ -1,20 +1,9 @@
 # Phased plans quick reference
 
-Use the `para-research` skill when the task needs exploration, then the `para-plan` skill to capture scope, contracts and validation. Review the plan using the `para-review` skill with `--plan`.
+Use the `para-plan` skill to define independently mergeable outcomes and dependencies. Each sub-plan contains the facts and validation needed for its phase. Use the `para-review` skill with `--plan` before execution.
 
-## Skill requests
+Use the `para-workflow` skill to run the lifecycle; `--auto` authorizes merge and phase progression while retaining review/check gates. `--phase=N` resumes a selected phase only after predecessor merges are included in its base. Simple plans use the same orchestrator without phase metadata.
 
-```text
-para-research Add authentication
-para-plan Add authentication
-para-review --plan
-para-workflow --auto
-```
+Phase cleanup uses the `para-archive` skill with `--phase=N`. One final archive follows all merged/summarized phases. A summary alone does not complete a phase.
 
-Workflow supports both simple and phased plans. A simple plan runs once without phase files. Split a larger change into independently mergeable phases when dependencies or review scope justify it; for example, session storage, API integration, then UI integration.
-
-For every execution unit: implement behavior-sized todos with required checks green, prepare/reuse a PR, review its head, summarize actual changes, verify an authorized guarded merge, then clean up. A summary is not merge evidence. The next dependent phase starts from the updated base. Final archive happens once after all work is merged and summarized.
-
-State lives in primary `context/context.md`; source edits and commits happen in the execution checkout. Unknown fields and unrelated work survive updates. Directly invoking execute or summarize performs only that operation; workflow resumes from verified results.
-
-If interrupted after PR creation, find the existing PR before retrying. If review's head changed, re-establish eligibility. Never force-remove dirty worktrees. See the [context contract](../skills/para-init/references/context-schema.md) for fields and recovery.
+See the [worked example](phased-plan-example.md) and [context contract](../skills/para-init/references/context-schema.md) for evidence and recovery.

@@ -1,0 +1,169 @@
+{
+  "revision": "b3c4aa587c0a0e31ecc6ce8ef75c80c41f97253f",
+  "metric_note": "UTF-8 bytes and whitespace words; static unique-file loading scenarios, not model tokens or observed runtime usage. Actual transcripts must measure repeated reads and generated artifacts.",
+  "files": {
+    "docs/METHODOLOGY.md": {
+      "bytes": 21693,
+      "words": 3162,
+      "sha256": "4f39c327272aa35f54d28eebde37b1d30d11103b65520cbc5e6b05d629bcebd2"
+    },
+    "resources/AGENTS.md": {
+      "bytes": 5796,
+      "words": 754,
+      "sha256": "217792e1b59958d585ab3b296b06e4a25f640771dd4698341b0c119ce50996a9"
+    },
+    "skills/para-archive/SKILL.md": {
+      "bytes": 3324,
+      "words": 444,
+      "sha256": "5bffe62f1c3eec862480ac840d7bc806e8e8d31c2b7f3cdcc25fc739caa20f5b"
+    },
+    "skills/para-check/SKILL.md": {
+      "bytes": 1683,
+      "words": 257,
+      "sha256": "9524a88dde9d7886691a045aa88d951737ac13fb845103cc281c1a682f42daab"
+    },
+    "skills/para-execute/SKILL.md": {
+      "bytes": 6929,
+      "words": 1012,
+      "sha256": "55d943fe47f8a4020005a11271676475ff1e244fb99f3163480b2fc60fc3b20d"
+    },
+    "skills/para-help/SKILL.md": {
+      "bytes": 4567,
+      "words": 630,
+      "sha256": "bc4330c49a050918aad61ea9109717c9fef82a1d811e9234e955c42837ddfa8e"
+    },
+    "skills/para-init/SKILL.md": {
+      "bytes": 3102,
+      "words": 355,
+      "sha256": "2bb801ef24df4931413502654ea41aa09631e656fbc60878d5f2e86fc54b4b4d"
+    },
+    "skills/para-init/assets/agents-basic-template.md": {
+      "bytes": 472,
+      "words": 65,
+      "sha256": "0b8ace7c02f333233e4c26a595528755107c81b1ba39d973a9af356661ad05e6"
+    },
+    "skills/para-init/assets/agents-full-template.md": {
+      "bytes": 3999,
+      "words": 555,
+      "sha256": "d04da0a32d0cddb3d717d9a1a66790d255faa1af22a3c7cf01adad8cbf3bf543"
+    },
+    "skills/para-init/assets/context-template.md": {
+      "bytes": 314,
+      "words": 31,
+      "sha256": "bdecffc3013bfb2f290816e7fc7b97d338422653f97e35cb0618e9a0774e9525"
+    },
+    "skills/para-init/references/context-schema.md": {
+      "bytes": 4800,
+      "words": 591,
+      "sha256": "5042041c98a15efd4ccccb5466264d882c26556efd419b80016de04578886a7e"
+    },
+    "skills/para-plan/SKILL.md": {
+      "bytes": 10428,
+      "words": 1471,
+      "sha256": "412a445df2b2984c23a5d91022e006794ccb41a551617482903b39b143cc387e"
+    },
+    "skills/para-plan/assets/phased-plan-master-template.md": {
+      "bytes": 4221,
+      "words": 589,
+      "sha256": "3d5c42f70f62c65b88b13d41e81745b9b62b8815a38d517a271a817c93802812"
+    },
+    "skills/para-plan/assets/phased-plan-sub-template.md": {
+      "bytes": 2874,
+      "words": 413,
+      "sha256": "3b6328584814ee6e87a89b67eb881978dbde623c50dbd4cbaccf3568ee586643"
+    },
+    "skills/para-plan/assets/plan-template.md": {
+      "bytes": 4481,
+      "words": 662,
+      "sha256": "ca4acab2a06e00baeab7114412ea2769eca412f35a6b8a0007a5166be6fec07f"
+    },
+    "skills/para-research/SKILL.md": {
+      "bytes": 5162,
+      "words": 698,
+      "sha256": "b7de07384db2fa076bd83543ce2724e363b9611d09bed457a071d2347dc84d48"
+    },
+    "skills/para-research/assets/research-template.md": {
+      "bytes": 2941,
+      "words": 399,
+      "sha256": "48360b9b0197b4949c4a3be649bc2cc4bbdd5544d5f39df92e38e5e42e2dd3af"
+    },
+    "skills/para-review/SKILL.md": {
+      "bytes": 5570,
+      "words": 837,
+      "sha256": "acce7f33bbbfd146206b801b370a0bda22f7ee17f4ac83f9465096f8205d66a7"
+    },
+    "skills/para-status/SKILL.md": {
+      "bytes": 3153,
+      "words": 420,
+      "sha256": "8a11f766cdce73b801b8e88120c66d7a33a4cf90c66b9b516c2be496dce04145"
+    },
+    "skills/para-summarize/SKILL.md": {
+      "bytes": 2730,
+      "words": 386,
+      "sha256": "0bfee3c117744a1d20e248734a1baacef3f9b35283c3f832c270370ded49b6e4"
+    },
+    "skills/para-summarize/assets/summary-template.md": {
+      "bytes": 1364,
+      "words": 189,
+      "sha256": "50d914a70ddab2eda0314bcfe1c40c4e41052c48c0a9da31d54f5d71b961ef31"
+    },
+    "skills/para-workflow/SKILL.md": {
+      "bytes": 5120,
+      "words": 774,
+      "sha256": "d1348117700770848523998c47ae38c36162a465f8a247e109287f2e12c73858"
+    }
+  },
+  "scenarios": {
+    "research": {
+      "paths": [
+        "resources/AGENTS.md",
+        "skills/para-research/SKILL.md",
+        "skills/para-research/assets/research-template.md"
+      ],
+      "bytes": 13899,
+      "words": 1851
+    },
+    "simple_plan": {
+      "paths": [
+        "resources/AGENTS.md",
+        "skills/para-plan/SKILL.md",
+        "skills/para-plan/assets/plan-template.md",
+        "skills/para-init/references/context-schema.md"
+      ],
+      "bytes": 25505,
+      "words": 3478
+    },
+    "phase_workflow": {
+      "paths": [
+        "resources/AGENTS.md",
+        "skills/para-workflow/SKILL.md",
+        "skills/para-execute/SKILL.md",
+        "skills/para-review/SKILL.md",
+        "skills/para-summarize/SKILL.md",
+        "skills/para-summarize/assets/summary-template.md",
+        "skills/para-archive/SKILL.md",
+        "skills/para-init/assets/context-template.md",
+        "skills/para-init/references/context-schema.md"
+      ],
+      "bytes": 35947,
+      "words": 5018
+    },
+    "status": {
+      "paths": [
+        "resources/AGENTS.md",
+        "skills/para-status/SKILL.md",
+        "skills/para-init/references/context-schema.md"
+      ],
+      "bytes": 13749,
+      "words": 1765
+    },
+    "help": {
+      "paths": [
+        "resources/AGENTS.md",
+        "skills/para-help/SKILL.md"
+      ],
+      "bytes": 10363,
+      "words": 1384
+    }
+  }
+}
