@@ -8,6 +8,29 @@ from fixtures import dump
 from safe_git import git, ancestor
 
 
+def supported_check_projection(command, query):
+    # Exact deterministic forms only. Preserve whitespace inside string literals.
+    compact = re.sub(r'"(?:\\.|[^"\\])*"|\s+', lambda m: m[0] if m[0].startswith('"') else '', query)
+    if command == ['pr', 'view']:
+        root = '.statusCheckRollup'
+        fields = ('conclusion', 'status')
+        predicates = ('.conclusion=="SUCCESS"', '.status=="COMPLETED"and.conclusion=="SUCCESS"')
+    elif command == ['pr', 'checks']:
+        root = '.'
+        fields = ('state', 'bucket')
+        predicates = ('.state=="SUCCESS"', '.bucket=="pass"')
+    else:
+        return False
+    forms = {'.', root, root + '[]'}
+    for field in fields:
+        # Status alone (COMPLETED) is not a passing conclusion.
+        if field == 'status':
+            continue
+        forms.update({root + '[].' + field, root + '[]|.' + field, root + '|map(.' + field + ')'})
+    forms.update(root + '|all(' + predicate + ')' for predicate in predicates)
+    return compact in forms
+
+
 class GithubStub:
     def __init__(self, root):
         self.root = Path(root).resolve()
@@ -135,20 +158,8 @@ class GithubStub:
             # --jq can remove check fields after --json projection. Grade what left the stub.
             visible = re.search(r'"(?:conclusion|state|bucket)"\s*:\s*"(?:SUCCESS|FAILURE|pass|fail)"', output) or output.strip() in ('SUCCESS', 'FAILURE', 'pass', 'fail') or output.startswith('fixture-validation\t')
             if query:
-                visible = False
-            if query and code == 0:
-                # Every jq projection must depend on actual check conclusions.
-                # Literal statuses/JSON and constant booleans prove nothing.
-                def flip(value):
-                    if isinstance(value, list):
-                        return [flip(v) for v in value]
-                    if isinstance(value, dict):
-                        return {k: ('FAILURE' if v == 'SUCCESS' else 'SUCCESS' if v == 'FAILURE' else
-                                    'fail' if v == 'pass' else 'pass' if v == 'fail' else flip(v))
-                                if k in ('conclusion', 'state', 'bucket') else flip(v) for k, v in value.items()}
-                    return value
-                probe = subprocess.run(['jq', '-r', query], input=json.dumps(flip(projected_input)), text=True, capture_output=True, timeout=5)
-                visible = probe.returncode == 0 and probe.stdout.strip() != output.strip()
+                source_has_checks = re.search(r'"(?:conclusion|state|bucket)"\s*:\s*"(?:SUCCESS|FAILURE|pass|fail)"', json.dumps(projected_input))
+                visible = code == 0 and bool(source_has_checks) and supported_check_projection(command, query)
             if not visible:
                 observed['checks_pass'] = None
                 # Explicit projection away from checks is known absence. Other

@@ -120,9 +120,12 @@ stdout, confirms that it appears only in worker logs, and verifies it cannot
 become a collector event. Offline tests also verify arbitrary worker bytes remain
 inside a text result. Legacy native runs without this boundary are incomplete.
 
-Boolean jq check aggregations are supported when the result changes after check
-conclusions are inverted. Constant or unrecognized projections cannot establish
-passing checks; unsupported projections produce incomplete evidence. Explicitly
+Jq evidence supports an explicit deterministic subset: full check objects/arrays,
+conclusion/state/bucket field projections and maps, and all-success predicates
+listed in `supported_check_projection`. Whitespace outside string literals is
+ignored. Time-dependent, constant and other unrecognized expressions cannot
+establish passing checks; unsupported projections produce incomplete evidence.
+No comparison between two arbitrary jq executions is used to infer dependency. Explicitly
 projecting away checks remains an observed lack of a check read. Malformed native
 JSONL is parsed line by line and does not discard independently recorded service
 failures. Missing or invalid host evidence likewise cannot erase a logged unsafe

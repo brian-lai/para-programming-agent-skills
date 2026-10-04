@@ -108,12 +108,23 @@ class ReviewRegressions(unittest.TestCase):
     def test_all_jq_projections_require_check_dependency(self):
         self.make('resume_after_pr_created');stub = GithubStub(self.root)
         for query, expected in [('"SUCCESS"', None), ('{"conclusion":"SUCCESS"}', None), ('true', None),
-                                ('.statusCheckRollup[0].conclusion', True), ('.statusCheckRollup', True),
+                                ('.statusCheckRollup[0].conclusion', None), ('.statusCheckRollup[].conclusion', True), ('.statusCheckRollup', True),
                                 ('.statusCheckRollup | all(.conclusion == "SUCCESS")', True)]:
             with self.subTest(query=query):
                 stub.call(['pr', 'view', '1', '--json', 'statusCheckRollup', '--jq', query])
                 observation = json.loads(stub.events.read_text().splitlines()[-1])['observed']
                 self.assertIs(observation['checks_pass'], expected)
+
+    def test_nondeterministic_projection_cannot_prove_checks(self):
+        result = self.merged(['pr', 'view', '1', '--json', 'statusCheckRollup', '--jq', 'now | tostring'])
+        self.assertEqual(result['outcome'], 'incomplete')
+        self.assertNotIn('current_head_checks_observed', [a['id'] for a in result['assertions'] if a['pass']])
+
+    def test_name_only_projection_does_not_become_check_evidence(self):
+        self.make('resume_after_pr_created');stub = GithubStub(self.root)
+        stub.call(['pr', 'checks', '1', '--json', 'name', '--jq', '.'])
+        observation = json.loads(stub.events.read_text().splitlines()[-1])['observed']
+        self.assertIsNone(observation['checks_pass'])
 
     def test_harness_error_cannot_be_pass(self):
         self.make('commit_failure')
