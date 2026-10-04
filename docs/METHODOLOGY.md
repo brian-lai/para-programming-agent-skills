@@ -116,7 +116,7 @@ This isn't TDD as an aspiration. It's TDD as a structural constraint enforced by
 
 ### Context as Persistent Memory
 
-All PARA artifacts live in the `context/` directory: plans, summaries, archives, research docs, specs. The master file (`context/context.md`) tracks what's active, what's completed, and what state the workflow is in. This metadata enables resumability — if a workflow is interrupted, it can pick up exactly where it left off.
+All PARA artifacts live in the `context/` directory: plans, summaries, archives, research docs, specs. The master file (`context/context.md`) tracks what's active, what's completed, and what state the workflow is in. Metadata records a resume hint. Reconcile Git/GitHub effects before repeating a step; the context schema defines evidence and ownership.
 
 Archives are never deleted. They form a searchable project memory: what was planned, what was built, what was learned, and what decisions were made. This is especially valuable for agent workflows where the agent may not have access to previous conversation history.
 

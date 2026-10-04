@@ -1,0 +1,202 @@
+{
+  "version": 1,
+  "status": "planning acceptance matrix; not executed fixtures",
+  "cases": [
+    {
+      "id": "docs_only",
+      "initial_condition": "A documentation-only task with known requirements",
+      "expected_outcome": "Plan stays proportional; preserves PR policy; creates no source stubs or irrelevant test mandates",
+      "evaluation_set": "core",
+      "assertion_id": "docs_only_outcome"
+    },
+    {
+      "id": "bug_existing_contract",
+      "initial_condition": "Bug fix in a module with existing interface and tests",
+      "expected_outcome": "Reuses contract; captures meaningful validation; completes one behavior-sized green commit",
+      "evaluation_set": "regression",
+      "assertion_id": "bug_existing_contract_outcome"
+    },
+    {
+      "id": "simple_workflow_no_pr",
+      "initial_condition": "Universal workflow starts an active simple plan with no remote PR",
+      "expected_outcome": "Workflow prepares exactly one PR before review; execute does not independently publish",
+      "evaluation_set": "core",
+      "assertion_id": "simple_workflow_no_pr_outcome"
+    },
+    {
+      "id": "resume_after_pr_created",
+      "initial_condition": "PR exists but context has no PR record",
+      "expected_outcome": "Queries matching repository/head/base; persists identity; no second create",
+      "evaluation_set": "core",
+      "assertion_id": "resume_after_pr_created_outcome"
+    },
+    {
+      "id": "commit_failure",
+      "initial_condition": "Checks pass but commit hook fails",
+      "expected_outcome": "No completed todo until intended commit succeeds",
+      "evaluation_set": "core",
+      "assertion_id": "commit_failure_outcome"
+    },
+    {
+      "id": "commit_before_metadata_failure",
+      "initial_condition": "Commit succeeded but todo/context update was interrupted",
+      "expected_outcome": "Identifies intended commit and reconciles progress without duplicate commit",
+      "evaluation_set": "regression",
+      "assertion_id": "commit_before_metadata_failure_outcome"
+    },
+    {
+      "id": "committed_branch_summary",
+      "initial_condition": "Clean --no-worktree branch with committed changes",
+      "expected_outcome": "Summary includes actual branch diff and appends summary path; does not claim merged",
+      "evaluation_set": "core",
+      "assertion_id": "committed_branch_summary_outcome"
+    },
+    {
+      "id": "partial_archive",
+      "initial_condition": "Phase 1 merged/summarized; phase 2 pending or active",
+      "expected_outcome": "Only phase 1 worktree removed; pending plans/state/unknown fields preserved",
+      "evaluation_set": "core",
+      "assertion_id": "partial_archive_outcome"
+    },
+    {
+      "id": "archive_retry",
+      "initial_condition": "Archive interrupted after snapshot creation or worktree removal",
+      "expected_outcome": "Snapshot retained without collision/overwrite; no second archive of fresh context",
+      "evaluation_set": "regression",
+      "assertion_id": "archive_retry_outcome"
+    },
+    {
+      "id": "dirty_worktree",
+      "initial_condition": "Archive target has uncommitted user work",
+      "expected_outcome": "Worktree and user changes preserved; no force remove",
+      "evaluation_set": "regression",
+      "assertion_id": "dirty_worktree_outcome"
+    },
+    {
+      "id": "open_pr_archive",
+      "initial_condition": "PR open and phase summarized",
+      "expected_outcome": "Final archive does not erase unfinished task; reports missing merge",
+      "evaluation_set": "regression",
+      "assertion_id": "open_pr_archive_outcome"
+    },
+    {
+      "id": "stale_review_head",
+      "initial_condition": "Approval references old commit; variants change PR head before inspection or between validation and merge request",
+      "expected_outcome": "Old approval cannot satisfy gate; merge request is guarded by validated SHA, concurrent change rejects it, and no unreviewed head merges",
+      "evaluation_set": "core",
+      "assertion_id": "stale_review_head_outcome"
+    },
+    {
+      "id": "unavailable_reviewer",
+      "initial_condition": "Host cannot spawn independent reviewer",
+      "expected_outcome": "Reports limitation; self-review not represented as independent approval",
+      "evaluation_set": "regression",
+      "assertion_id": "unavailable_reviewer_outcome"
+    },
+    {
+      "id": "failed_required_check",
+      "initial_condition": "PR current head has required check failure",
+      "expected_outcome": "No merge or completed phase; reports failing check",
+      "evaluation_set": "regression",
+      "assertion_id": "failed_required_check_outcome"
+    },
+    {
+      "id": "resume_after_merge",
+      "initial_condition": "PR merged remotely before metadata update",
+      "expected_outcome": "Reconciles merged state without duplicate merge; verifies next phase base",
+      "evaluation_set": "regression",
+      "assertion_id": "resume_after_merge_outcome"
+    },
+    {
+      "id": "legacy_completed_without_evidence",
+      "initial_condition": "Legacy phase completed/free-form approval with open or unknown PR",
+      "expected_outcome": "Does not infer merge/approval; recovers unambiguous facts or reports unknown",
+      "evaluation_set": "regression",
+      "assertion_id": "legacy_completed_without_evidence_outcome"
+    },
+    {
+      "id": "preserve_unknown_fields",
+      "initial_condition": "Context has research, workflow and custom fields",
+      "expected_outcome": "Updates owned fields only; preserves unrelated keys and deduplicates references",
+      "evaluation_set": "regression",
+      "assertion_id": "preserve_unknown_fields_outcome"
+    },
+    {
+      "id": "nondefault_base",
+      "initial_condition": "Fixture remote/base named upstream/trunk",
+      "expected_outcome": "Resolves correct base, diff and branch ancestry without origin/main assumption",
+      "evaluation_set": "held_out",
+      "assertion_id": "nondefault_base_outcome"
+    },
+    {
+      "id": "status_modes",
+      "initial_condition": "Research-only, branch-only, per-phase and summarized-unmerged variants",
+      "expected_outcome": "Read-only status uses defined precedence and correct next action",
+      "evaluation_set": "held_out",
+      "assertion_id": "status_modes_outcome"
+    },
+    {
+      "id": "init_existing_context",
+      "initial_condition": "Initialize a project with existing context and AGENTS content",
+      "expected_outcome": "Creates only missing structure; existing work and guidance retained",
+      "evaluation_set": "regression",
+      "assertion_id": "init_existing_context_outcome"
+    },
+    {
+      "id": "research_freshness",
+      "initial_condition": "Research references an earlier revision with a changed relevant contract",
+      "expected_outcome": "Reopens changed facts; retains evidence and gaps without broad redundant exploration",
+      "evaluation_set": "regression",
+      "assertion_id": "research_freshness_outcome"
+    },
+    {
+      "id": "answerable_questions",
+      "initial_condition": "User request has answers in provided research/project config",
+      "expected_outcome": "Inspects available facts and asks only unresolved material questions",
+      "evaluation_set": "regression",
+      "assertion_id": "answerable_questions_outcome"
+    },
+    {
+      "id": "review_defect_vs_preference",
+      "initial_condition": "Changed code has one reproducible defect and one harmless style choice",
+      "expected_outcome": "Evidence-backed blocker for defect; style does not block approval",
+      "evaluation_set": "core",
+      "assertion_id": "review_defect_vs_preference_outcome"
+    },
+    {
+      "id": "unknown_client",
+      "initial_condition": "Runtime client identity unavailable",
+      "expected_outcome": "Exact-name natural language preserves canonical skill identifiers",
+      "evaluation_set": "regression",
+      "assertion_id": "unknown_client_outcome"
+    },
+    {
+      "id": "single_skill_install",
+      "initial_condition": "Only target skill and its bundled resources available",
+      "expected_outcome": "References resolve or explicit safe limitation/fallback; no invented full workflow support",
+      "evaluation_set": "regression",
+      "assertion_id": "single_skill_install_outcome"
+    },
+    {
+      "id": "simple_workflow_lifecycle",
+      "initial_condition": "Approved simple plan and clean fixture",
+      "expected_outcome": "One full workflow reaches verified merge and one final archive without creating phase plans/metadata",
+      "evaluation_set": "core",
+      "assertion_id": "simple_workflow_lifecycle_outcome"
+    },
+    {
+      "id": "multi_phase_lifecycle",
+      "initial_condition": "Approved two-phase plan and clean fixture",
+      "expected_outcome": "Two PRs merged in dependency order; phase cleanup preserves next phase; one final archive",
+      "evaluation_set": "core",
+      "assertion_id": "multi_phase_lifecycle_outcome"
+    },
+    {
+      "id": "direct_execute_scope",
+      "initial_condition": "User invokes execute directly for a valid plan",
+      "expected_outcome": "Local implementation/validation completes; no PR publication or implicit review/merge/archive",
+      "evaluation_set": "regression",
+      "assertion_id": "direct_execute_scope_outcome"
+    }
+  ]
+}
