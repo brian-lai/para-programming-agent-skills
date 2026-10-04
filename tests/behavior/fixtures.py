@@ -139,6 +139,8 @@ def prepare(case_id, out, variant=0):
             (work / 'user-note.txt').write_text('keep me\n')
     if case_id == 'status_modes' and variant == 0:
         data['research_docs'] = ['context/data/research.md'];data['active_context'] = []
+        data.pop('execution')
+        (repo / plan_path).unlink()
         (repo / 'context/data').mkdir(exist_ok=True)
         (repo / 'context/data/research.md').write_text('# Research\nGreeting project findings.\n')
     if case_id == 'status_modes' and variant in (1, 2):
@@ -150,7 +152,10 @@ def prepare(case_id, out, variant=0):
             (repo / summary).write_text('# Summary\nUnmerged branch.\n')
             data['completed_summaries'] = [summary]
             data['phased_execution'] = {'master_plan': plan_path, 'current_phase': 1, 'phases': [{'phase': 1, 'plan': plan_path, 'status': 'in_progress', 'branch': data.pop('execution_branch'), 'worktree_path': None, 'execution': data.pop('execution')}]}
-    context(repo / 'context/context.md', data, '- [x] Add greeting behavior' if checkpoint and case_id != 'commit_before_metadata_failure' else '- [ ] Add greeting behavior')
+    todo = '- [x] Add greeting behavior' if checkpoint and case_id != 'commit_before_metadata_failure' else '- [ ] Add greeting behavior'
+    if case_id == 'status_modes' and variant == 0:
+        todo = 'Research findings ready for planning; no active task.'
+    context(repo / 'context/context.md', data, todo)
     if case_id == 'malformed_metadata':
         (repo / 'context/context.md').write_text('# Preserve this\n```json\n{"broken":\n```\n')
     if case_id == 'archive_retry':

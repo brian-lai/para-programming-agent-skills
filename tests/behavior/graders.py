@@ -218,7 +218,8 @@ def _grade(root, result):
         branch = ctx.get('execution_branch')
         work = local_path(repo, ctx['worktree_path']) if ctx.get('worktree_path') else repo
         head = git(work, 'rev-parse', 'HEAD')
-        check('implementation_committed', head != initial['initial_head'] and bool(branch), 'execution commit')
+        check('implementation_committed', head != initial['initial_head'], 'execution commit')
+        check('canonical_execution_branch', bool(branch) and branch == git(work, 'branch', '--show-current'), 'execution_branch matches execution checkout')
         check('selected_base_ancestry', ancestor(work, initial['initial_head'], head), 'initial selected base is ancestor')
         validation = root / 'validation.json'
         if not validation.exists():

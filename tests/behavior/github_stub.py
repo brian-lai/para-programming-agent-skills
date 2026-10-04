@@ -101,7 +101,7 @@ class GithubStub:
                     raise ValueError('unknown fixture repository')
             command = args[:2]
             if '--help' in args or '-h' in args or args == ['--version']:
-                output = 'Fixture gh: pr list/create/view/diff/checks/merge; repo view; auth status. Options: --repo fixture/repo --head BRANCH --base BRANCH --json FIELDS --jq QUERY. Merge requires --match-head-commit SHA. Create supports --title TITLE --body BODY or --body-file PATH.'
+                output = 'Fixture gh: pr list/create/view/diff/checks/edit/merge; repo view; auth status. Options: --repo fixture/repo --head BRANCH --base BRANCH --json FIELDS --jq QUERY. Merge requires --match-head-commit SHA. Create supports --title TITLE --body BODY or --body-file PATH. Edit supports --title/-t and --body/-b only.'
             elif command == ['auth', 'status']:
                 output = 'Fixture authenticated (no external service)'
             elif command == ['repo', 'view']:
@@ -127,7 +127,7 @@ class GithubStub:
                     'headRefName': head, 'baseRefName': base, 'headRefOid': sha, 'state': 'OPEN', 'mergeCommit': None,
                     'baseAtCreate': git(self.remote, 'rev-parse', base)})
                 output = state['prs'][-1]['url'];effect = 'created'
-            elif command in (['pr', 'view'], ['pr', 'checks'], ['pr', 'diff'], ['pr', 'merge']):
+            elif command in (['pr', 'view'], ['pr', 'checks'], ['pr', 'diff'], ['pr', 'edit'], ['pr', 'merge']):
                 identity = args[2] if len(args) > 2 and not args[2].startswith('-') else None
                 if identity and identity.startswith('https://fixture.invalid/pull/'):
                     identity = identity.rsplit('/', 1)[1]
@@ -154,6 +154,24 @@ class GithubStub:
                     code = 0 if state['checks_pass'] else 1
                 elif command == ['pr', 'diff']:
                     output = git(self.remote, 'diff', pr['baseRefName'] + '...' + pr['headRefName'])
+                elif command == ['pr', 'edit']:
+                    tail = args[3:] if len(args) > 2 and not args[2].startswith('-') else args[2:]
+                    changes = {}
+                    fields = {'--title': 'title', '-t': 'title', '--body': 'body', '-b': 'body'}
+                    while tail:
+                        if len(tail) < 2:
+                            raise ValueError('edit option requires a value')
+                        key, value = tail[:2];tail = tail[2:]
+                        if key in ('--repo', '-R'):
+                            if value != 'fixture/repo':
+                                raise ValueError('unknown fixture repository')
+                        elif key in fields:
+                            changes[fields[key]] = value
+                        else:
+                            effect = 'unsupported';raise ValueError('unsupported edit option: ' + key)
+                    if not changes:
+                        raise ValueError('edit requires title or body')
+                    pr.update(changes);effect = 'edited';output = pr['url']
                 else:
                     if pr['state'] == 'MERGED':
                         output = 'Already merged'

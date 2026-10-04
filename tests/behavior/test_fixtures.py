@@ -63,6 +63,37 @@ class FixturesTest(unittest.TestCase):
         for args in (['--repo'], ['--repo', 'other/repo', 'pr', 'view', '1']):
             self.assertNotEqual(stub.call(args)[0], 0)
 
+    def test_edit_changes_metadata_without_lifecycle_effects(self):
+        self.make('resume_after_pr_created');stub = GithubStub(self.root / 'trial')
+        before = json.loads(stub.state.read_text())
+        args = ['pr', 'edit', '1', '--title', 'Greeting', '--body', 'Problem and validation.']
+        self.assertEqual(stub.call(args)[0], 0)
+        after = json.loads(stub.state.read_text())
+        self.assertEqual(len(after['prs']), 1)
+        self.assertEqual(after['prs'][0]['title'], 'Greeting')
+        self.assertEqual(after['prs'][0]['body'], 'Problem and validation.')
+        for key in ('headRefOid', 'headRefName', 'baseRefName', 'state', 'mergeCommit'):
+            self.assertEqual(after['prs'][0][key], before['prs'][0][key])
+        self.assertEqual(after['checks_pass'], before['checks_pass'])
+        event = json.loads(stub.events.read_text().splitlines()[-1])
+        self.assertEqual(event['args'], args)
+        self.assertEqual(event['effect'], 'edited')
+        self.assertIsNone(event['observed']['checks_pass'])
+        for flags in (['--base', 'other'], ['--title', 'partial', '--add-label', 'unsafe'], ['--body']):
+            self.assertNotEqual(stub.call(['pr', 'edit', '1'] + flags)[0], 0)
+            current = json.loads(stub.state.read_text())
+            self.assertEqual(current['prs'][0]['title'], 'Greeting')
+        self.assertNotEqual(stub.call(['pr', 'merge', '1'])[0], 0)
+
+    def test_research_only_status_has_no_active_task_signals(self):
+        self.make('status_modes')
+        repo = self.root / 'trial/repo'
+        text = (repo / 'context/context.md').read_text()
+        self.assertNotIn('- [ ]', text)
+        self.assertNotIn('"execution"', text)
+        self.assertFalse(list((repo / 'context/plans').glob('*.md')))
+        self.assertTrue((repo / 'context/data/research.md').exists())
+
     def test_stub_rejects_unknown_operation(self):
         self.make()
         self.assertNotEqual(GithubStub(self.root / 'trial').call(['api', '/delete-everything'])[0], 0)

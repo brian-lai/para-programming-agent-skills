@@ -106,6 +106,24 @@ class ReviewRegressions(unittest.TestCase):
         self.assertFalse(independent_approval(raw, prefix, head, self.root / 'remote.git'))
         self.assertTrue(independent_approval(raw, len(raw), head, self.root / 'remote.git'))
 
+    def test_commit_and_canonical_branch_are_distinct_assertions(self):
+        p = self.make('nondefault_base');repo = self.root / 'repo'
+        git(repo, 'checkout', '-b', 'para/task')
+        (repo / 'greeting.py').write_text('def greet(): return "Hello from PARA."\n')
+        git(repo, 'add', '.');git(repo, 'commit', '-m', 'Add greeting')
+        head = git(repo, 'rev-parse', 'HEAD')
+        dump(self.root / 'validation.json', {'returncode': 0, 'head': head})
+        data = read_context(p);data['execution']['branch'] = 'para/task';context(p, data)
+        checks = {a['id']: a['pass'] for a in grade(self.root)['assertions']}
+        self.assertTrue(checks['implementation_committed'])
+        self.assertFalse(checks['canonical_execution_branch'])
+        data['execution_branch'] = 'para/wrong';context(p, data)
+        checks = {a['id']: a['pass'] for a in grade(self.root)['assertions']}
+        self.assertFalse(checks['canonical_execution_branch'])
+        data['execution_branch'] = 'para/task';context(p, data)
+        checks = {a['id']: a['pass'] for a in grade(self.root)['assertions']}
+        self.assertTrue(checks['canonical_execution_branch'])
+
     def test_plain_view_is_valid_current_head_check(self):
         result = self.merged()
         gates = [a for a in result['assertions'] if a['id'] in ('current_head_checks_observed', 'merge_review_target', 'independent_review_observed')]

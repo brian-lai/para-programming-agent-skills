@@ -6,7 +6,7 @@ These development tools evaluate instructions; installed skills do not depend on
 
 `python3 scripts/evaluate-skills.py prepare --case CASE --out NEW_DIRECTORY [--variant 0|1|2]` creates a disposable real Git repository, local bare remote, primary context and a private service record. It refuses an existing destination. The acceptance matrix is `tests/fixtures/workflow-cases.json`; fixture code and matrix jointly determine case_version. Status variants cover research-only, branch-only, and per-phase summarized-but-unmerged states.
 
-The local GitHub substitute supports repository identity, PR lookup/create/view/diff/checks and guarded merge. Unknown operations fail without contacting GitHub. Merge updates the bare repository's real base and can inject a concurrent head change. It does not validate real GitHub API compatibility, authentication or branch protections.
+The local GitHub substitute supports repository identity, PR lookup/create/view/diff/checks, title/body edits and guarded merge. Unknown operations fail without contacting GitHub. Merge updates the bare repository's real base and can inject a concurrent head change. It does not validate real GitHub API compatibility, authentication or branch protections.
 
 A host adapter runs in native filesystem/network isolation with only fixture inputs, selected skill revision, matching global methodology and a local bare remote. Grading runs outside agent-writable storage. The agent cannot write native transcripts, host manifests, judgments or service events. Never execute fixture code on the user's host as part of grading.
 
@@ -42,7 +42,7 @@ Run three paired trials for each of the ten core cases and the two held-out case
 
 ## Verified host adapter
 
-The local adapter uses Claude Code 2.1.289 with the configured `claude-sonnet-5-5` model, low effort, empty setting sources, no external MCP servers, and safe mode. A capability probe verified independent delegation. Bare mode exposed only Bash/Edit/Read and was rejected for lifecycle trials. We explicitly read the selected revision's skills/resources and inject its matching global methodology; this evaluates body guidance, not native skill discovery or metadata-driven model switching. Built-in host instructions remain consistent across arms.
+The local adapter uses Claude Code 2.1.289 with the configured `claude-sonnet-5-5` model, low effort, empty setting sources and one explicitly configured fixture MCP server. A capability probe verified independent delegation. Native safe/bare modes do not expose the required tool combination; the explicit collector/worker controls below provide isolation. We explicitly read the selected revision's skills/resources and inject its matching global methodology; this evaluates body guidance, not native skill discovery or metadata-driven model switching. Built-in host instructions remain consistent across arms.
 
 Build the optional live-trial image (not needed by CI):
 
@@ -51,7 +51,7 @@ docker build -t para-skill-eval:claude-2.1.289 tests/behavior/host
 python3 scripts/run-skill-trial.py --case simple_workflow_lifecycle --revision BASELINE_OR_CANDIDATE_SHA --trial 0 --out NEW_TEMP_DIRECTORY
 ```
 
-The adapter accepts the already configured HTTPS model endpoint/auth environment without printing credentials. It creates an internal Docker network, mounts only the disposable repository/local remote plus read-only skill instructions and gh shim into the agent, and restricts outbound CONNECT traffic to the model endpoint. A separate gateway owns service state/events; the agent cannot mount them. Direct outbound access is probed before launching the host. Only generated container/network names are cleaned up. Transcripts and manifests stay on the host outside agent mounts; trial directories remain for inspection. Remove only a positively identified disposable trial directory after exporting evidence.
+The adapter accepts the already configured HTTPS model endpoint/auth environment without printing credentials. It creates an internal Docker network. The credential-free worker mounts the disposable repository/local remote plus read-only skill instructions and gh shim. The collector has model credentials and no fixture mounts; its outbound CONNECT traffic is restricted to the model endpoint. A separate gateway owns service state/events; the agent cannot mount them. Direct outbound access is probed before launching the host. Only generated container/network names are cleaned up. Transcripts and manifests stay on the host outside agent mounts; trial directories remain for inspection. Remove only a positively identified disposable trial directory after exporting evidence.
 
 Pin the resulting image ID and archive it with the report: the Dockerfile pins CLI/Node versions, while OS package resolution can change on rebuild. Native streaming output and observed model names must be retained. Run `--probe` only for a delegation capability check; it is labeled separately and is not a task trial.
 
@@ -66,7 +66,7 @@ HEAD and index data only. Agent-owned config, hooks, external diff/merge drivers
 fsmonitor commands and object alternates are never loaded by the collector.
 The gateway mounts only the fixture checkout (read-only), remote, service state,
 and native transcript (read-only); it has no write access to host manifests,
-validation results or transcripts. The agent container is removed before
+validation results or transcripts. Both collector and worker are removed before
 independent validation starts, including on timeout or capture errors.
 
 Each merge event saves the context **before** mutation and the native transcript
@@ -156,3 +156,22 @@ and `--repo=fixture/repo` before its declared commands; event logs retain both
 original and normalized arguments. An interrupted development campaign exposed
 these compatibility gaps; its affected runs are retained separately from final
 measurements.
+
+### Corrections after the first complete campaign
+
+Measured-v3 collected all 72 rows before changes. Two nondefault-base candidate
+runs committed valid implementations but wrote the branch into `execution.branch`,
+which is outside the schema. Execution guidance now names the canonical simple
+and phase fields explicitly. Grading separates an actual commit from a correct
+`execution_branch` matching the checkout, preserving the original failure records.
+
+The research-only status fixture also retained an approved plan, implementation
+todo and execution-base record; those conflicting active-task signals are removed.
+Both original variant 0 outputs are unsuitable for grading the intended research-only
+condition. No status instruction was tuned on that ambiguous fixture. The GitHub
+fixture now accepts metadata-only `pr edit --title/-t --body/-b`; unsupported
+edit options fail without changing PR lifecycle identity, checks or merge gates.
+
+These fixes require a new frozen campaign. Retain all original 72 results and report
+them separately; the previously exposed held-out cases are regression cases on
+rerun, not unseen holdouts. Human-calibrated quality remains a separate gate.
