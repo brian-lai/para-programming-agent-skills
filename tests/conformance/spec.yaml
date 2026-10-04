@@ -444,3 +444,10 @@ workflow_contract:
   reference: skills/para-init/references/context-schema.md
   acceptance_cases: tests/fixtures/workflow-cases.json
   validation_scope: documented contracts; actual agent compliance requires behavioral evals
+
+context_budget:
+  manifest: tests/fixtures/skill-context-budget.json
+  baseline: tests/fixtures/skill-context-baseline.json
+  metric: UTF-8 bytes of each declared unique-file loading path, including required resources
+  limitation: Explicit manifest reviewed for completeness; actual agent reads are measured separately
+  gate: all five scenarios at or below baseline

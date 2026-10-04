@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "metric": "UTF-8 bytes, unique files, not model tokens",
+  "scenarios": {
+    "research": {
+      "paths": [
+        "resources/AGENTS.md",
+        "skills/para-research/SKILL.md",
+        "skills/para-research/assets/research-template.md"
+      ],
+      "required_resources": [
+        "skills/para-research/assets/research-template.md"
+      ]
+    },
+    "simple_plan": {
+      "paths": [
+        "resources/AGENTS.md",
+        "skills/para-plan/SKILL.md",
+        "skills/para-plan/assets/plan-template.md",
+        "skills/para-init/references/context-schema.md"
+      ],
+      "required_resources": [
+        "skills/para-plan/assets/plan-template.md",
+        "skills/para-init/references/context-schema.md"
+      ]
+    },
+    "phase_workflow": {
+      "paths": [
+        "resources/AGENTS.md",
+        "skills/para-workflow/SKILL.md",
+        "skills/para-execute/SKILL.md",
+        "skills/para-review/SKILL.md",
+        "skills/para-summarize/SKILL.md",
+        "skills/para-summarize/assets/summary-template.md",
+        "skills/para-archive/SKILL.md",
+        "skills/para-init/assets/context-template.md",
+        "skills/para-init/references/context-schema.md"
+      ],
+      "required_resources": [
+        "skills/para-summarize/assets/summary-template.md",
+        "skills/para-init/assets/context-template.md",
+        "skills/para-init/references/context-schema.md"
+      ]
+    },
+    "status": {
+      "paths": [
+        "resources/AGENTS.md",
+        "skills/para-status/SKILL.md",
+        "skills/para-init/references/context-schema.md"
+      ],
+      "required_resources": [
+        "skills/para-init/references/context-schema.md"
+      ]
+    },
+    "help": {
+      "paths": [
+        "resources/AGENTS.md",
+        "skills/para-help/SKILL.md"
+      ],
+      "required_resources": []
+    }
+  },
+  "optional_resources": {
+    "skills/para-plan/assets/phased-plan-master-template.md": "Only drafting a phased plan, excluded from simple-plan scenario",
+    "skills/para-plan/assets/phased-plan-sub-template.md": "Only drafting a phase sub-plan",
+    "skills/para-init/assets/agents-basic-template.md": "Only initializing absent basic project guidance",
+    "skills/para-init/assets/agents-full-template.md": "Only initializing absent full project guidance",
+    "docs/METHODOLOGY.md": "Human reference when user asks for methodology; not normal help load"
+  },
+  "targets": {
+    "simple_plan": 20404,
+    "phase_workflow": 28757
+  }
+}
