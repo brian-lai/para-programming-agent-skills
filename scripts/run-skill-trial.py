@@ -14,6 +14,8 @@ import uuid
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tests/behavior'))
 from fixtures import prepare, dump
 from comparison import run_bounded
+from safe_git import snapshot, git
+from graders import read_context, SUPPORTED
 
 SOURCE = Path(__file__).resolve().parents[1]
 IMAGE = 'para-skill-eval:claude-2.1.289'
@@ -23,9 +25,19 @@ def docker(*args, check=True):
     return subprocess.run(['docker', *args], capture_output=True, text=True, check=check)
 
 
+def capture_and_stop(command, path, limits, agent):
+    try:
+        return run_bounded(command, path, limits['wall_seconds'], limits['tool_calls'])
+    finally:
+        # Stop the container itself, not only its attached Docker client.
+        docker('rm', '-f', agent, check=False)
+
+
 def run(args):
     if not os.environ.get('ANTHROPIC_BASE_URL', '').startswith('https://'):
         raise ValueError('Set the authorized HTTPS model endpoint before running trials')
+    if args.case not in SUPPORTED:
+        raise ValueError('case lacks validated live fixture/grader coverage')
     revision = subprocess.check_output(['git', '-C', str(SOURCE), 'rev-parse', args.revision], text=True).strip()
     root = Path(args.out).resolve()
     initial = prepare(args.case, root, args.variant)
@@ -41,6 +53,10 @@ def run(args):
         for p in [mount, *mount.rglob('*')]:
             if not p.is_symlink():
                 p.chmod(0o777 if p.is_dir() or os.access(p, os.X_OK) else 0o666)
+    (root / 'transcript.jsonl').touch()
+    (root / 'service').chmod(0o777)
+    for p in (root / 'service').iterdir():
+        p.chmod(0o666)
     name = 'para-eval-' + uuid.uuid4().hex[:12]
     network, gateway, agent = name + '-net', name + '-gateway', name + '-agent'
     limits = {'wall_seconds': 1800 if args.case == 'multi_phase_lifecycle' else 1200 if args.case == 'simple_workflow_lifecycle' else 600,
@@ -67,8 +83,12 @@ def run(args):
     start = time.monotonic()
     try:
         docker('network', 'create', '--internal', network)
-        docker('run', '-d', '--name', gateway, '--user', '0', '--network', 'bridge', '--cap-drop=ALL',
-               '--security-opt=no-new-privileges', '--mount', f'type=bind,source={root},target={root}',
+        docker('run', '-d', '--name', gateway, '--user', '1001', '--network', 'bridge', '--cap-drop=ALL',
+               '--security-opt=no-new-privileges',
+               '--mount', f'type=bind,source={root / "repo"},target={root / "repo"},readonly',
+               '--mount', f'type=bind,source={root / "remote.git"},target={root / "remote.git"}',
+               '--mount', f'type=bind,source={root / "service"},target={root / "service"}',
+               '--mount', f'type=bind,source={root / "transcript.jsonl"},target={root / "transcript.jsonl"},readonly',
                '--mount', f'type=bind,source={SOURCE / "tests/behavior"},target=/harness,readonly',
                '-e', 'ANTHROPIC_BASE_URL', IMAGE, 'python3', '/harness/host/gateway.py', str(root))
         docker('network', 'connect', '--alias', 'gateway', network, gateway)
@@ -100,12 +120,25 @@ print("ISOLATION_OK")'''
                    '--tools', 'Task,Bash,Read,Edit,Write', '--no-session-persistence', '--dangerously-skip-permissions', '--model', args.model, '--effort', 'low',
                    '--print', '--output-format', 'stream-json', '--verbose', '--forward-subagent-text',
                    '--append-system-prompt', system, prompt]
-        observed = run_bounded(command, root / 'transcript.jsonl', limits['wall_seconds'], limits['tool_calls'])
+        observed = capture_and_stop(command, root / 'transcript.jsonl', limits, agent)
         manifest.update(observed)
-        if args.case in ('simple_workflow_no_pr', 'simple_workflow_lifecycle', 'multi_phase_lifecycle', 'resume_after_pr_created', 'stale_review_head', 'resume_after_merge') and not args.probe:
+        if args.case in ('simple_workflow_no_pr', 'simple_workflow_lifecycle', 'multi_phase_lifecycle', 'resume_after_pr_created', 'stale_review_head', 'resume_after_merge', 'nondefault_base', 'direct_execute_scope') and not args.probe:
             validator = name + '-validator'
+            validation_repo = root / 'remote.git'
+            validation_head = git(validation_repo, 'rev-parse', initial['base'])
+            if args.case in ('nondefault_base', 'direct_execute_scope'):
+                ctx = read_context(root / 'repo/context/context.md')
+                validation_repo = (root / 'repo' / (ctx.get('worktree_path') or '')).resolve()
+                if not validation_repo.is_relative_to(root / 'repo'):
+                    raise ValueError('out-of-fixture validation path')
+                validation_head = git(validation_repo, 'rev-parse', 'HEAD')
+            trusted = root / 'validation.git';trusted.mkdir()
+            snapshot(validation_repo, trusted)
             validation_code = '''import json, subprocess, sys
-subprocess.run(['git', 'clone', '--branch', sys.argv[2], sys.argv[1], '/tmp/validate-code'], check=True, capture_output=True)
+subprocess.run(['git', 'clone', '--no-checkout', sys.argv[1], '/tmp/validate-code'], check=True, capture_output=True)
+subprocess.run(['git', '-C', '/tmp/validate-code', 'checkout', sys.argv[2]], check=True, capture_output=True)
+from pathlib import Path
+assert Path('/tmp/validate-code/test_greeting.py').is_file()
 sys.path.insert(0, '/tmp/validate-code')
 from greeting import greet
 assert greet() == 'Hello from PARA.'
@@ -118,11 +151,11 @@ sys.exit(r.returncode)'''
             try:
                 check = subprocess.run(['docker', 'run', '--rm', '--name', validator, '--network', 'none',
                     '--cap-drop=ALL', '--security-opt=no-new-privileges', '--memory', '512m', '--pids-limit', '64',
-                    '--mount', f'type=bind,source={root / "remote.git"},target=/fixture.git,readonly',
-                    IMAGE, 'python3', '-c', validation_code, '/fixture.git', initial['base'], args.case],
+                    '--mount', f'type=bind,source={trusted},target=/fixture.git,readonly',
+                    IMAGE, 'python3', '-c', validation_code, '/fixture.git', validation_head, args.case],
                     capture_output=True, text=True, timeout=30)
                 dump(root / 'validation.json', {'returncode': check.returncode, 'stdout': check.stdout, 'stderr': check.stderr,
-                    'isolation': 'fresh container, no network or credentials, read-only bare remote', 'base': initial['base']})
+                    'isolation': 'fresh container, no network or credentials, read-only bare remote', 'base': initial['base'], 'head': validation_head})
             finally:
                 docker('rm', '-f', validator, check=False)
         manifest['isolation_sha256'] = hashlib.sha256((root / 'isolation.txt').read_bytes()).hexdigest()

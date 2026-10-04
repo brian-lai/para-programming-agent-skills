@@ -58,3 +58,40 @@ Pin the resulting image ID and archive it with the report: the Dockerfile pins C
 CI runs Python standard-library fixture/grader/measurement/comparison tests through `scripts/validate-skills.sh`, alongside existing conformance and installation checks. Layout compatibility remains a separate CI step. CI requires no model credentials, Docker daemon or network access for these deterministic tests; live trials are an explicit evaluation job.
 
 For lifecycle cases, the adapter also clones the resulting bare base into a fresh validation container with no network or credentials, calls the required greeting/farewell functions, and runs unittest discovery. It saves `validation.json` outside agent mounts. This independently checks implemented behavior without executing agent-written code on the user's host. Missing collection is incomplete harness evidence; failed function/tests are task failures.
+
+### Evidence boundary and current coverage
+
+Git inspection runs against private snapshots containing regular objects, refs,
+HEAD and index data only. Agent-owned config, hooks, external diff/merge drivers,
+fsmonitor commands and object alternates are never loaded by the collector.
+The gateway mounts only the fixture checkout (read-only), remote, service state,
+and native transcript (read-only); it has no write access to host manifests,
+validation results or transcripts. The agent container is removed before
+independent validation starts, including on timeout or capture errors.
+
+Each merge event saves the context **before** mutation and the native transcript
+byte boundary. Eligibility requires checks actually returned for that PR/head,
+a matching recorded approval already present, and a completed independent
+reviewer for that head in the preceding native events. This adapter supports
+Claude's forwarded child messages and completed task notifications, or a
+synchronous tool result. Other exports require an adapter; a generic delegation
+or a later approval cannot establish eligibility.
+
+The 30-row acceptance matrix is a specification. Live fixture/grader coverage is
+explicitly listed in `tests/behavior/graders.py:SUPPORTED` (the 12 measured cases
+and four additional regression cases). Other rows currently return incomplete
+and the live runner rejects them; generic seed creation is not validated coverage.
+Existing conformance checks cover additional instruction contracts, but do not
+establish agent behavior on those scenarios. Reports must retain this distinction.
+
+Direct execution is validated at the committed execution head in a fresh,
+network-free container; an empty commit or merely recording the base is
+insufficient. Known critical failures remain recorded even when another part of
+the evidence is incomplete. Missing critical counts are unknown in comparison
+reports, and incomplete critical evidence is reported separately.
+
+Interrupted `measured-v1` runs were development runs: independent review found
+collector isolation and grading flaws before the campaign completed. Retain those
+artifacts with the reason for exclusion; do not combine them with a new frozen
+campaign. Simple-plan retry/stale-head fixtures and explicit partial archive are
+extended workflow capabilities and reported separately from common tasks.

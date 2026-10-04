@@ -15,6 +15,11 @@ def compare(baseline, candidate):
         if len(set(keys)) != len(keys):
             raise ValueError('duplicate trial')
         return dict(zip(keys, rows))
+    for row in baseline + candidate:
+        if 'assertions' in row:
+            derived = [a['id'] for a in row['assertions'] if a.get('critical') and not a['pass']]
+            if row.get('critical_failures') != derived:
+                raise ValueError('critical failure summary disagrees with assertions')
     a, b = keyed(baseline), keyed(candidate)
     if a.keys() != b.keys():
         raise ValueError('unpaired or missing trials')
@@ -22,14 +27,15 @@ def compare(baseline, candidate):
         for field in ('host', 'host_version', 'model', 'settings', 'evidence_kind', 'observed_models'):
             if a[key].get(field) != b[key].get(field):
                 raise ValueError(f'pair mismatch: {key} {field}')
-    added = {'simple_workflow_no_pr', 'simple_workflow_lifecycle'}
+    added = {'simple_workflow_no_pr', 'simple_workflow_lifecycle', 'resume_after_pr_created', 'stale_review_head', 'partial_archive'}
     def summary(rows):
         revisions = sorted({r['skill_revision'] for r in rows})
         def total(field):
             values = [r.get('usage', {}).get(field) for r in rows]
             return sum(values) if all(v is not None for v in values) else None
         return {'trials': len(rows), 'outcomes': dict(Counter(r['outcome'] for r in rows)),
-                'critical_failures': sum(len(r.get('critical_failures', [])) for r in rows),
+                'critical_failures': sum(len(r['critical_failures']) for r in rows) if all(r.get('critical_failures') is not None for r in rows) else None,
+                'incomplete_critical_evidence': sum(r.get('critical_evidence_complete') is not True for r in rows),
                 'input_tokens': total('input_tokens'), 'output_tokens': total('output_tokens'),
                 'tool_calls': sum(r['tool_calls'] for r in rows) if all(r.get('tool_calls') is not None for r in rows) else None,
                 'questions': sum(r['questions'] for r in rows) if all(r.get('questions') is not None for r in rows) else None,
@@ -41,7 +47,7 @@ def compare(baseline, candidate):
     return {'pairs': len(a), 'baseline': summary(baseline), 'candidate': summary(candidate),
             'groups': {name: {'baseline': summary([r for r in baseline if (r['case_id'] in added) == is_added]),
                               'candidate': summary([r for r in candidate if (r['case_id'] in added) == is_added])}
-                       for name, is_added in [('common_tasks', False), ('added_simple_workflow_capability', True)]},
+                       for name, is_added in [('common_tasks', False), ('added_or_extended_workflow_capability', True)]},
             'trial_results': {'baseline': baseline, 'candidate': candidate},
             'limitation': 'Diagnostic sample; incomplete harness evidence and failures are retained. Mixed revisions are not one fully tested candidate.'}
 

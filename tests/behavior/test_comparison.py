@@ -26,6 +26,10 @@ class ComparisonTest(unittest.TestCase):
     def test_null_usage_not_zero(self):
         self.assertIsNone(compare([trial()], [trial()])['candidate']['input_tokens'])
 
+    def test_missing_critical_counts_remain_unknown(self):
+        a = trial();a.pop('critical_failures')
+        self.assertIsNone(compare([a], [a])['candidate']['critical_failures'])
+
     def test_timeout_preserves_evidence(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / 'native.jsonl'

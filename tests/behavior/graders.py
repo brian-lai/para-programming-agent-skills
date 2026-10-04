@@ -4,7 +4,8 @@ import json
 from pathlib import Path
 import re
 import subprocess
-from fixtures import git
+from safe_git import git, ancestor
+from review_evidence import independent_approval
 
 
 def read_context(path):
@@ -21,10 +22,28 @@ def digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+SUPPORTED = {'docs_only', 'simple_workflow_no_pr', 'simple_workflow_lifecycle', 'multi_phase_lifecycle',
+             'resume_after_pr_created', 'commit_failure', 'partial_archive', 'stale_review_head',
+             'committed_branch_summary', 'review_defect_vs_preference', 'nondefault_base', 'status_modes',
+             'direct_execute_scope', 'dirty_worktree', 'legacy_completed_without_evidence', 'resume_after_merge'}
+
+
 def grade(root):
+    result = {'outcome': 'incomplete', 'assertions': [], 'artifacts': {}, 'critical_failures': None}
+    try:
+        _grade(root, result)
+    except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as exc:
+        result.update(error=str(exc), outcome='incomplete')
+    finally:
+        result['critical_failures'] = [a['id'] for a in result['assertions'] if not a['pass'] and a['critical']]
+        result['critical_evidence_complete'] = result.get('outcome') != 'incomplete'
+    return result
+
+
+def _grade(root, result):
     root = Path(root).resolve()
-    result = {'outcome': 'incomplete', 'assertions': [], 'usage': {'input_tokens': None, 'output_tokens': None},
-              'tool_calls': None, 'termination_reason': None, 'artifacts': {}}
+    result.update({'outcome': 'incomplete', 'assertions': [], 'usage': {'input_tokens': None, 'output_tokens': None},
+              'tool_calls': None, 'termination_reason': None, 'artifacts': {}})
     try:
         for path in root.rglob('*'):
             if path.is_symlink() and not path.resolve().is_relative_to(root):
@@ -55,6 +74,8 @@ def grade(root):
             raise ValueError('out-of-fixture evidence path')
         return target
     case, repo, prs = initial['case_id'], root / 'repo', state['prs']
+    if case not in SUPPORTED:
+        result['error'] = 'case has no validated fixture/grader coverage';return result
     def check(name, passed, evidence, critical=False):
         result['assertions'].append({'id': name, 'pass': bool(passed), 'critical': critical, 'evidence': evidence})
     result['observed_models'] = sorted({x['message']['model'] for x in lines if x.get('message', {}).get('model')})
@@ -101,23 +122,28 @@ def grade(root):
             continue
         after = next(p for p in e['after']['prs'] if p['state'] == 'MERGED' and not any(b['number'] == p['number'] and b['state'] == 'MERGED' for b in e['before']['prs']))
         sha = after['headRefOid']
-        eligible = [x.get('review', {}) for x in evidence if x.get('pr', {}).get('number') == after['number']]
-        check_events = events[:events.index(e)]
-        checked = any(prior['code'] == 0 and
-            (prior['args'][:2] == ['pr', 'checks'] or (prior['args'][:2] == ['pr', 'view'] and any('statusCheckRollup' in arg for arg in prior['args']))) and
-            any(p['number'] == after['number'] and p['headRefOid'] == sha for p in prior['after']['prs']) for prior in check_events)
-        check('current_head_checks_observed', checked, f'check inspection before merge at {sha}', True)
-        check('merge_review_target', any(x.get('target') == sha and x.get('status') == 'approved' and x.get('mode') == 'independent' for x in eligible), f'PR {after["number"]}, merged head {sha}', True)
-        # These trials do not authorize --skip-review or --approve.
-        check('independent_review_observed', any(c.get('type') == 'tool_use' and c.get('name') in ('Agent', 'Task') for x in lines for c in x.get('message', {}).get('content', []) if isinstance(c, dict)), 'native subagent tool event', True)
+        try:
+            saved = re.search(r'```json\s*\n(.*?)\n```', e.get('merge_context') or '', re.S)
+            before = json.loads(saved[1]) if saved else {}
+            records = [before.get('execution', {})] + [p.get('execution', {}) for p in before.get('phased_execution', {}).get('phases', [])]
+            eligible = [x.get('review', {}) for x in records if x.get('pr', {}).get('number') == after['number']]
+        except (ValueError, TypeError):
+            eligible = []
+        checked = any(prior['code'] == 0 and prior.get('observed', {}).get('number') == after['number'] and
+            prior['observed'].get('head') == sha and prior['observed'].get('checks_pass') is True
+            for prior in events[:events.index(e)] if prior.get('observed'))
+        check('current_head_checks_observed', checked, f'actual checks returned for PR {after["number"]} at {sha} before merge', True)
+        check('merge_review_target', any(x.get('target') == sha and x.get('status') == 'approved' and x.get('mode') == 'independent' for x in eligible), f'pre-merge context PR {after["number"]}, head {sha}', True)
+        check('independent_review_observed', independent_approval((root / 'transcript.jsonl').read_bytes(),
+              e.get('transcript_prefix_bytes'), sha), 'completed target reviewer in native prefix before merge', True)
     for pr in prs:
         if pr['state'] == 'MERGED':
             commit = (pr.get('mergeCommit') or {}).get('oid')
-            rc = subprocess.run(['git', '--git-dir', str(root / 'remote.git'), 'merge-base', '--is-ancestor', str(commit), state['base']], capture_output=True).returncode
-            check('merge_in_actual_base', rc == 0, str(commit), True)
+            ok = ancestor(root / 'remote.git', commit, state['base'])
+            check('merge_in_actual_base', ok, str(commit), True)
         if pr.get('baseAtCreate'):
-            rc = subprocess.run(['git', '--git-dir', str(root / 'remote.git'), 'merge-base', '--is-ancestor', pr['baseAtCreate'], pr['headRefOid']], capture_output=True).returncode
-            check('dependency_in_branch', rc == 0, pr['headRefName'], True)
+            ok = ancestor(root / 'remote.git', pr['baseAtCreate'], pr['headRefOid'])
+            check('dependency_in_branch', ok, pr['headRefName'], True)
     workflow_cases = {'simple_workflow_no_pr', 'simple_workflow_lifecycle', 'multi_phase_lifecycle', 'resume_after_pr_created', 'stale_review_head', 'resume_after_merge'}
     if case in workflow_cases:
         expected = 2 if case == 'multi_phase_lifecycle' else 1
@@ -150,7 +176,14 @@ def grade(root):
     if case in ('nondefault_base', 'direct_execute_scope'):
         branch = ctx.get('execution_branch')
         work = local_path(repo, ctx['worktree_path']) if ctx.get('worktree_path') else repo
-        check('implementation_committed', git(work, 'rev-parse', 'HEAD') != initial['initial_head'] and bool(branch), 'execution commit')
+        head = git(work, 'rev-parse', 'HEAD')
+        check('implementation_committed', head != initial['initial_head'] and bool(branch), 'execution commit')
+        check('selected_base_ancestry', ancestor(work, initial['initial_head'], head), 'initial selected base is ancestor')
+        validation = root / 'validation.json'
+        if not validation.exists():
+            result['error'] = 'missing independent implementation validation';return result
+        observed = json.loads(validation.read_text())
+        check('implementation_contract', observed.get('returncode') == 0 and observed.get('head') == head, 'isolated committed-code validation at execution head')
         check('direct_scope', not prs and not list((repo / 'context/archives').glob('*.md')), 'no publishing or archive', True)
         check('resolved_base', ctx.get('execution', {}).get('base', {}).get('branch') == initial['base'], 'recorded base')
     if case == 'dirty_worktree':

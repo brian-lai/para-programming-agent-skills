@@ -1,9 +1,11 @@
 """Observable fixture-only GitHub operations. No real GitHub or authentication calls."""
 import json
+import re
 from pathlib import Path
 import subprocess
 import time
-from fixtures import dump, git
+from fixtures import dump
+from safe_git import git, ancestor
 
 
 class GithubStub:
@@ -16,6 +18,9 @@ class GithubStub:
     def call(self, args, cwd=None):
         state = json.loads(self.state.read_text())
         effect, code, output = 'read', 0, ''
+        observed = None
+        merge_context = None
+        transcript_prefix = None
         before = json.loads(json.dumps(state))
         def option(key, default=None):
             try:
@@ -62,9 +67,17 @@ class GithubStub:
                 if len(candidates) != 1:
                     raise ValueError('PR identity missing or ambiguous')
                 pr = self.refresh(candidates[0], state)
+                observed = {'number': pr['number'], 'head': pr['headRefOid'], 'checks_pass': None}
+                if command == ['pr', 'merge']:
+                    merge_context = (self.root / 'repo/context/context.md').read_text()
+                    path = self.root / 'transcript.jsonl'
+                    transcript_prefix = path.stat().st_size if path.exists() else None
                 if command == ['pr', 'view']:
                     output = pr
+                    if '--json' not in args or 'statusCheckRollup' in option('--json', '').split(','):
+                        observed['checks_pass'] = state['checks_pass']
                 elif command == ['pr', 'checks']:
+                    observed['checks_pass'] = state['checks_pass']
                     output = [{'name': 'fixture-validation', 'state': 'SUCCESS' if state['checks_pass'] else 'FAILURE',
                                'bucket': 'pass' if state['checks_pass'] else 'fail'}] if '--json' in args else ('fixture-validation\tpass' if state['checks_pass'] else 'fixture-validation\tfail')
                     code = 0 if state['checks_pass'] else 1
@@ -88,8 +101,7 @@ class GithubStub:
                             effect = 'rejected_checks';raise ValueError('required checks failed')
                         base_sha = git(self.remote, 'rev-parse', pr['baseRefName'])
                         # A real Git merge result, including the current base ancestry.
-                        ancestor = subprocess.run(['git', '--git-dir', str(self.remote), 'merge-base', '--is-ancestor', base_sha, guard], capture_output=True).returncode == 0
-                        if ancestor:
+                        if ancestor(self.remote, base_sha, guard):
                             merged = guard
                         else:
                             tree = git(self.remote, 'merge-tree', '--write-tree', base_sha, guard).splitlines()[0]
@@ -116,8 +128,14 @@ class GithubStub:
             if query:
                 result = subprocess.run(['jq', '-r', query], input=output, text=True, capture_output=True)
                 code, output = result.returncode, result.stdout or result.stderr
+        if observed and observed['checks_pass'] is not None:
+            # --jq can remove check fields after --json projection. Grade what left the stub.
+            visible = re.search(r'"(?:conclusion|state|bucket)"\s*:\s*"(?:SUCCESS|FAILURE|pass|fail)"', output) or output.strip() in ('SUCCESS', 'FAILURE', 'pass', 'fail') or output.startswith('fixture-validation\t')
+            if not visible:
+                observed['checks_pass'] = None
         event = {'time': time.time(), 'args': args, 'code': code, 'effect': effect,
-                 'before': before, 'after': state}
+                 'before': before, 'after': state, 'observed': observed,
+                 'merge_context': merge_context, 'transcript_prefix_bytes': transcript_prefix, 'output': output}
         with self.events.open('a') as f:
             f.write(json.dumps(event) + '\n')
         return code, output
