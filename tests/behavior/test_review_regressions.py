@@ -66,17 +66,23 @@ class ReviewRegressions(unittest.TestCase):
         events.append({'type': 'result', 'result': 'done'})
         (self.root / 'transcript.jsonl').write_text(''.join(json.dumps(e) + '\n' for e in events))
 
-    def merged(self, check_args=None, after=False, wrong_review=False, finish=True, short=False):
+    def merged(self, check_args=None, after=False, wrong_review=False, finish=True, short=False, corrupt=False, late_summary=False):
         p = self.make('resume_after_pr_created');s = GithubStub(self.root)
         head = json.loads(s.state.read_text())['prs'][0]['headRefOid']
         data = read_context(p)
-        data['execution'].update(pr={'number': 1}, review={'target': head, 'mode': 'independent', 'status': 'approved'})
+        data['execution'].update(pr={'number': 1}, review={'target': head, 'mode': 'independent', 'status': 'approved'}, summary='context/summaries/task.md')
+        data['completed_summaries'] = ['context/summaries/task.md']
         self.reviewer('f' * 40 if wrong_review else head[:7] if short else head, finish)
         if not after:
             context(p, data)
+        if late_summary:
+            pending = json.loads(json.dumps(data));pending['execution'].pop('summary')
+            pending['completed_summaries'] = [];context(p, pending)
+        if corrupt:
+            p.write_text('Broken JSON fence\n' + json.dumps(data) + '\n```\n')
         s.call(check_args or ['pr', 'view', '1'])
         s.call(['pr', 'merge', '1', '--match-head-commit', head])
-        if after:
+        if after or corrupt or late_summary:
             context(p, data)
         return grade(self.root)
 
@@ -124,10 +130,22 @@ class ReviewRegressions(unittest.TestCase):
         checks = {a['id']: a['pass'] for a in grade(self.root)['assertions']}
         self.assertTrue(checks['canonical_execution_branch'])
 
+    def test_repaired_context_cannot_erase_invalid_premerge_context(self):
+        result = self.merged(corrupt=True)
+        self.assertIn('merge_review_target', result['critical_failures'])
+        self.assertIn('merge_summary_recorded', result['critical_failures'])
+        self.assertNotIn('independent_review_observed', result['critical_failures'])
+        self.assertNotIn('current_head_checks_observed', result['critical_failures'])
+
+    def test_summary_recorded_after_merge_cannot_pass(self):
+        result = self.merged(late_summary=True)
+        self.assertIn('merge_summary_recorded', result['critical_failures'])
+        self.assertNotIn('merge_review_target', result['critical_failures'])
+
     def test_plain_view_is_valid_current_head_check(self):
         result = self.merged()
-        gates = [a for a in result['assertions'] if a['id'] in ('current_head_checks_observed', 'merge_review_target', 'independent_review_observed')]
-        self.assertEqual(len(gates), 3)
+        gates = [a for a in result['assertions'] if a['id'] in ('current_head_checks_observed', 'merge_summary_recorded', 'merge_review_target', 'independent_review_observed')]
+        self.assertEqual(len(gates), 4)
         self.assertTrue(all(a['pass'] for a in gates), gates)
 
     def test_projected_view_without_checks_is_not_check_evidence(self):

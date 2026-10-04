@@ -175,3 +175,18 @@ edit options fail without changing PR lifecycle identity, checks or merge gates.
 These fixes require a new frozen campaign. Retain all original 72 results and report
 them separately; the previously exposed held-out cases are regression cases on
 rerun, not unseen holdouts. Human-calibrated quality remains a separate gate.
+
+A subsequent candidate run corrupted the primary JSON fence and continued to
+merge before repairing context and recording its summary. The captured pre-merge
+snapshot correctly fails the persisted-review gate even though the native review
+and checks were valid. A regression test preserves this distinction after later
+context repair. Workflow guidance now requires a successful saved-JSON verification
+in a separate tool call before merge; an appended merge cannot run past a failed
+context update. The interrupted measured-v4 campaign remains development evidence,
+including its critical failure and interrupted runs. A new shared-workflow revision
+requires another frozen lifecycle campaign; previous successes do not transfer.
+
+Merge grading also requires the task/phase summary path in both the matching
+execution record and completed_summaries in the pre-merge snapshot. Recording it
+after merge cannot satisfy this gate. This checks persisted references; it does
+not independently certify the summary prose at the time of merge.

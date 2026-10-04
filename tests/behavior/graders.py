@@ -163,9 +163,12 @@ def _grade(root, result):
             saved = re.search(r'```json\s*\n(.*?)\n```', e.get('merge_context') or '', re.S)
             before = json.loads(saved[1]) if saved else {}
             records = [before.get('execution', {})] + [p.get('execution', {}) for p in before.get('phased_execution', {}).get('phases', [])]
-            eligible = [x.get('review', {}) for x in records if x.get('pr', {}).get('number') == after['number']]
+            matching = [x for x in records if x.get('pr', {}).get('number') == after['number']]
+            eligible = [x.get('review', {}) for x in matching]
+            summary_recorded = any(isinstance(x.get('summary'), str) and bool(x['summary']) and
+                                   x['summary'] in before.get('completed_summaries', []) for x in matching)
         except (ValueError, TypeError):
-            eligible = []
+            eligible = [];summary_recorded = False
         checked = any(prior['code'] == 0 and prior.get('observed', {}).get('number') == after['number'] and
             prior['observed'].get('head') == sha and prior['observed'].get('checks_pass') is True
             for prior in events[:events.index(e)] if prior.get('observed'))
@@ -174,6 +177,7 @@ def _grade(root, result):
             result['evidence_errors'].append('unsupported check projection')
         else:
             check('current_head_checks_observed', checked, f'actual checks returned for PR {after["number"]} at {sha} before merge', True)
+        check('merge_summary_recorded', summary_recorded, f'pre-merge summary evidence for PR {after["number"]}', True)
         check('merge_review_target', any(x.get('target') == sha and x.get('status') == 'approved' and x.get('mode') == 'independent' for x in eligible), f'pre-merge context PR {after["number"]}, head {sha}', True)
         check('independent_review_observed', independent_approval((root / 'transcript.jsonl').read_bytes(),
               e.get('transcript_prefix_bytes'), sha, root / 'remote.git'), 'completed target reviewer in native prefix before merge', True)
