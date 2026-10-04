@@ -1,60 +1,19 @@
 ---
 name: para-summarize
-description: Generate a summary document from the current work session. Supports simple and phased plans. Handles PR creation when run standalone.
+description: Summarize actual branch changes and validation for a task or phase, preserving unmerged work and returning the report to its caller.
 model: sonnet
 effort: medium
 ---
 
-Generate a summary document from the current work session. Supports both simple and phased plans.
+Record the actual changes, rationale, validation and remaining work for a task or phase.
 
-## Usage
-
-```
-para-summarize                   # Auto-detect active plan/phase
-para-summarize --phase=N         # Summarize specific phase
+```text
+para-summarize
+para-summarize --phase=N
 ```
 
-## What It Does
-
-1. Reads `worktree_path` from `context/context.md` JSON metadata
-2. Analyzes git changes from the worktree using `git -C {worktree_path} diff main...HEAD` and `git -C {worktree_path} log main..HEAD`
-3. Reviews the active plan or phase from `context/context.md`
-4. Creates summary in the main working tree: `context/summaries/YYYY-MM-DD-task-name-summary.md` or `...-phase-N-summary.md`
-5. Uses `assets/summary-template.md` as the summary structure
-6. Updates `context/context.md`: moves plan from active context to completed summaries, updates timestamp, and marks phase status as completed when relevant
-
-## Summary Sections
-
-- **Date & Status** -- when completed, success/failure
-- **Changes Made** -- files modified/created with line references from the worktree diff
-- **Rationale** -- why these changes were made
-- **MCP Tools Used** -- preprocessing tools utilized
-- **Key Learnings** -- insights, follow-up tasks, gotchas
-- **Test Results** -- pass/fail status and coverage metrics
-
-## Implementation
-
-1. Get current date in `YYYY-MM-DD` format
-2. Read `context/context.md` to find active plan and `worktree_path`
-3. If `worktree_path` is set, analyze changes with:
-   - `git -C {worktree_path} diff main...HEAD` for file-level changes
-   - `git -C {worktree_path} log main..HEAD --oneline` for commit history
-4. If no `worktree_path` exists, fall back to `git diff` and `git status` on the current branch
-5. Extract task name from plan filename
-6. Create summary file in the main working tree with template from `assets/summary-template.md`
-7. Update `context/context.md` metadata
-8. Display summary location
-
-## Post-Summarize Guidance
-
-### Standalone Mode
-
-If the `para-summarize` skill was used standalone, not as part of the `para-workflow` skill, the next steps are:
-
-1. Push the branch: `git -C {worktree_path} push -u origin para/{task-name}`
-2. Create a PR: `gh pr create` from the worktree branch
-3. Use the `para-archive` skill to clean up the worktree and archive context
-
-### Orchestrated Mode
-
-If `para-summarize` was invoked as Step 4 of the `para-workflow` skill, the PR was already created in Step 2 of the workflow. Skip the manual push/PR instructions above and return control to the `para-workflow` skill for merge and archive handling.
+1. Resolve the primary context, active plan and execution branch/worktree. If phased, select the requested/current phase; ask only if ambiguous.
+2. Inspect committed changes against the PR base, or the recorded/resolved base and its merge-base with the execution branch. Use the same branch comparison with `--no-worktree`; plain working-tree `git diff` misses committed changes. If the branch was deleted after merge, recover the recorded PR diff/commits. Report missing evidence instead of an empty result.
+3. Write primary `context/summaries/YYYY-MM-DD-task-name[-phase-N]-summary.md` using `assets/summary-template.md`. Include only observed checks/results; unknown coverage or timing is not a measured value.
+4. Preserve context, append/deduplicate the actual summary path in completed_summaries, record execution.summary and timestamp. This does not mark the task/phase merged or remove unmerged plans from active context.
+5. Return to the orchestrator when called by workflow. In standalone mode, return the report and missing lifecycle prerequisites; do not publish a PR or launch later skills. Use the `para-workflow` skill to continue the lifecycle.

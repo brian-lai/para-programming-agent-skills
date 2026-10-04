@@ -1,124 +1,38 @@
 ---
 name: para-workflow
-description: Orchestrate the full PARA execution cycle across phases with automatic execute, PR creation, review, summarize, merge, and archive. Designed for multi-phase plans.
+description: Orchestrate simple or phased plans through execution, PR preparation, review, summary, merge and archival, with resumable evidence and optional auto mode.
 model: sonnet
 effort: medium
 ---
 
-Orchestrate the full PARA execution cycle across phases: execute -> PR -> review -> summarize -> archive -> next phase. Supports manual mode and autonomous (`--auto`) mode.
+Run the lifecycle for an active simple or phased plan: execute → prepare PR → review → summarize → merge → cleanup. Use the same procedure for one task or each phase.
 
 ## Usage
 
+```text
+para-workflow
+para-workflow --auto
+para-workflow --phase=N
+para-workflow --skip-review
 ```
-para-workflow                     # Run workflow for active plan, pausing at phase boundaries
-para-workflow --auto              # Fully autonomous, no pause between phases
-para-workflow --phase=N           # Start from a specific phase
-para-workflow --skip-review       # Skip Staff+ review loops
-```
 
-## Prerequisites
+Read primary `context/context.md`, the active plan and `../para-init/references/context-schema.md`. Resolve any ambiguous task/root before writing. A simple plan uses top-level execution evidence and null current_phase, without synthetic phases; reject `--phase` for it. For phased work verify predecessor merges before starting the selected phase.
 
-- `context/context.md` must exist with an active phased plan
-- For simple non-phased plans, use the `para-execute` skill directly
-- Git repository must be clean, or the user must confirm proceeding with dirty state
+If ../para-init/references/context-schema.md is not available in this install, preserve context and record plan/branch/base, PR identity, reviewed head, summary and verified merge evidence. Missing evidence is unknown, never completion; stop dependent operations when it cannot be recovered.
 
-## Process Per Phase
+## Run or resume
 
-For each phase in the plan, the workflow runs these steps in order:
+Record mode/current_step/current_phase/started and reconcile actual Git/GitHub state before each side effect. Preserve unrelated fields. Reuse already verified effects, including work completed through a directly invoked skill.
 
-### Step 1: Execute
+1. **Execute:** Use the `para-execute` skill for the selected task/phase. Wait for its commits and required validation.
+2. **Prepare PR:** This step owns PR creation for workflow runs, both simple and phased. Push the execution branch. Query the selected repository/head/base for a matching PR; reuse it, create only if absent, and reconcile ambiguous responses before retrying. Record PR identity. Describe the problem, outcome, validation and plan objective in its body; do not link to local-only plan files as though published.
+3. **Review:** Use the `para-review` skill with `--pr` and the PR identity. Apply supported fixes, rerun affected checks, push, and establish review eligibility for the resulting head. Respect its five-round/repeated-blocker limit. `--skip-review` records a user-requested skip against this target; it does not waive checks or merge authorization.
+4. **Summarize:** Use the `para-summarize` skill for the task/phase. Record its summary path; a summary does not complete a phase.
+5. **Merge:** Confirm authorization, required checks and eligible review for the current PR head. Submit the guarded merge described in the context contract and verify remote merge before marking completed. A queued merge stays pending.
+6. **Cleanup:** For phased work, use the `para-archive` skill with `--phase=N`; keep pending plans active. Fetch the updated base including the verified merge, then advance. Once the whole simple/phased task is merged and summarized, use the `para-archive` skill once for final archive.
 
-Use the `para-execute` skill with `--phase=N`.
+## Authorization and failures
 
-- Creates a worktree and branch for the phase
-- Extracts checklist items as todos
-- Implements each todo following the TDD cycle (RED -> GREEN -> commit)
-- Each checklist item text becomes the commit message
+Default mode asks before merge and before advancing to the next phase unless already authorized. `--auto` authorizes those transitions for this run; continue without redundant permission prompts. It does not waive review/check gates. Record explicit user overrides rather than inventing them.
 
-### Step 2: Create PR
-
-Create a pull request for the phase branch. This step owns PR creation for workflow runs. The `para-summarize` skill in Step 4 detects that it is running inside the orchestrator and skips its standalone push/PR guidance.
-
-- **PR title:** `para/{task-name} phase N: {phase title}`
-- **PR body:** generated from:
-  - Phase objective from sub-plan
-  - Commit list with descriptions
-  - Checklist of implementation steps, checked off
-  - Link to plan file
-
-### Step 3: Review
-
-Use the `para-review` skill with `--pr` unless `--skip-review` is specified.
-
-- Staff+ reviewer reviews the PR
-- Loop until approved or user override
-- Respect the `para-review` skill's 5-round cap and convergence rules
-- Apply fixes, create additional commits as needed, and push fixes to the PR branch
-
-### Step 4: Summarize
-
-Use the `para-summarize` skill with `--phase=N`.
-
-- Generate phase summary to `context/summaries/`
-- Record what changed, rationale, key learnings, and tests
-- Mark phase as completed in `context/context.md`
-- Do not create a second PR; Step 2 already owns that
-
-### Step 5: Merge
-
-Merge the PR.
-
-- **Default mode:** Pause and ask user "Ready to merge Phase N PR? (Y/n)"
-- **`--auto` mode:** Merge automatically after Staff+ review approval
-- Use `gh pr merge --merge --delete-branch`
-
-### Step 6: Archive
-
-Use the `para-archive` skill for cleanup.
-
-- For mid-workflow, perform partial archive behavior: update `context/context.md` to reflect completed phase but keep remaining phases active
-- For final phase, perform full archive: move context to archives and create fresh context
-
-### Step 7: Next Phase
-
-If more phases remain:
-
-- **Default mode:** Pause and ask "Ready to start Phase {N+1}? (Y/n)"
-- **`--auto` mode:** Proceed immediately
-- Pull latest main with the merged phase
-- Update `context/context.md` to reflect the next active phase
-- Loop back to Step 1
-
-## State Tracking
-
-Track workflow progress in `context/context.md` metadata with a workflow state object. See `../para-init/references/context-schema.md` for the full field reference.
-
-If ../para-init/references/context-schema.md is not available in this install, the minimal workflow state fields are: mode, current_step, current_phase, phases_completed, and started.
-
-This enables resumability. If the workflow is interrupted, using the `para-workflow` skill again picks up from the current step of the current phase.
-
-## Error Handling
-
-- **Step failure:** If any step fails, such as tests failing, PR conflicts, or review non-convergence, pause and present the error with options to fix and continue, skip the current step, or abort.
-- **Merge conflicts:** If the PR cannot be merged, pause and ask the user to resolve conflicts manually. After resolution, resume with the `para-workflow` skill.
-- **Review non-convergence:** If Staff+ review hits the 5-round limit, escalate per the `para-review` skill's convergence rules. The workflow pauses until the user decides.
-
-## Completion
-
-When all phases are complete:
-
-1. Use the `para-archive` skill for a full archive
-2. Display summary of all phases:
-   - Total phases completed
-   - Total commits across all phases
-   - PRs merged with links
-   - Staff+ review rounds per phase
-3. Suggest next steps, such as tagging a release or updating documentation
-
-## Notes
-
-- The workflow skill is an orchestrator; it delegates to `para-execute`, `para-review`, `para-summarize`, and `para-archive`
-- `--auto` mode still requires Staff+ review approval as a quality gate unless `--skip-review` is also specified
-- Each phase creates its own PR, enabling incremental review and merge
-- The workflow is resumable; state is tracked in `context/context.md`
-- For single-phase plans, the workflow still works but is equivalent to running the skills manually
+A failed or uncertain step blocks its dependents. Fix recoverable errors within scope, reconcile conflicts and resume from verified state; ask only for unresolved authorization or design choices. Never use a generic skip to bypass a downstream invariant. Return phase results, merged PR links, validation and remaining blockers. Preserve pending work if interrupted.
