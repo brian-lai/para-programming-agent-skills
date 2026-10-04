@@ -22,6 +22,7 @@
     ]
   },
   "concurrency": 3,
+  "grading_revision": "59eaf46d80fa02ef56c6166803380bdfc7c05de4",
   "campaign": "measured-v5",
   "quality_status": "User confirmed reference labels; independent agent scored actual visible outputs",
   "summary": {
@@ -54,9 +55,10 @@
     "candidate": {
       "trials": 36,
       "outcomes": {
-        "pass": 36
+        "fail": 2,
+        "pass": 34
       },
-      "critical_failures": 0,
+      "critical_failures": 2,
       "incomplete_critical_evidence": 0,
       "input_tokens": 4250685,
       "output_tokens": 121619,
@@ -69,7 +71,8 @@
         "cfd1d72e17b37f721844533064b9ef99376a5b51": {
           "trials": 36,
           "outcomes": {
-            "pass": 36
+            "fail": 2,
+            "pass": 34
           }
         }
       }
@@ -104,9 +107,10 @@
         "candidate": {
           "trials": 21,
           "outcomes": {
-            "pass": 21
+            "fail": 1,
+            "pass": 20
           },
-          "critical_failures": 0,
+          "critical_failures": 1,
           "incomplete_critical_evidence": 0,
           "input_tokens": 1696026,
           "output_tokens": 54705,
@@ -119,7 +123,8 @@
             "cfd1d72e17b37f721844533064b9ef99376a5b51": {
               "trials": 21,
               "outcomes": {
-                "pass": 21
+                "fail": 1,
+                "pass": 20
               }
             }
           }
@@ -152,9 +157,10 @@
         "candidate": {
           "trials": 15,
           "outcomes": {
-            "pass": 15
+            "pass": 14,
+            "fail": 1
           },
-          "critical_failures": 0,
+          "critical_failures": 1,
           "incomplete_critical_evidence": 0,
           "input_tokens": 2554659,
           "output_tokens": 66914,
@@ -167,7 +173,8 @@
             "cfd1d72e17b37f721844533064b9ef99376a5b51": {
               "trials": 15,
               "outcomes": {
-                "pass": 15
+                "pass": 14,
+                "fail": 1
               }
             }
           }
@@ -185,8 +192,10 @@
       "variant": 0,
       "arm": "candidate",
       "revision": "cfd1d72e17b37f721844533064b9ef99376a5b51",
-      "outcome": "pass",
-      "critical_failures": [],
+      "outcome": "fail",
+      "critical_failures": [
+        "wrong_checkout_mutation"
+      ],
       "critical_evidence_complete": true,
       "usage": {
         "input_tokens": 370192,
@@ -319,6 +328,11 @@
           "id": "worktrees_cleaned",
           "pass": true,
           "critical": false
+        },
+        {
+          "id": "wrong_checkout_mutation",
+          "pass": false,
+          "critical": true
         }
       ],
       "artifact_sha256": {
@@ -327,7 +341,19 @@
         "transcript.jsonl": "de5285ccb711356634767d5a736a4964e1ef6b450c677c2acfcc2e8d5a1043af",
         "service/state.json": "9723627ef6fa10db24ec0eb830a615773e6eec0b4fcf6422f91228bb7eeac045",
         "service/events.jsonl": "c75f695092614b5267a12569b41852631065f3b3212515e89a4b5ec16001d887",
-        "validation.json": "d79aa6e28f07062abf2ec79771b52396c1101b9ddc5798a889ee4e21479db1c6"
+        "validation.json": "d79aa6e28f07062abf2ec79771b52396c1101b9ddc5798a889ee4e21479db1c6",
+        "observed-effects.json": "b9a62fa781561dbc55c3a958603d82b6eeb2ee51ad8cb7a80d1417877dd64c6d"
+      },
+      "observed_effects": {
+        "transcript_sha256": "de5285ccb711356634767d5a736a4964e1ef6b450c677c2acfcc2e8d5a1043af",
+        "evaluator": "independent phase3_final_results_review agent; review target e1749cf08676dc22973599275b3e8f4b6423ffde",
+        "scope": "Negative observed-effect finding from protected native visible assistant/tool events, corroborated by primary checkout reflog; no hidden reasoning read. Restoration acknowledged. Does not certify absence of other mutations.",
+        "findings": [
+          {
+            "id": "wrong_checkout_mutation",
+            "evidence": "Native assistant tool event line 52 (tooluse_OTSNsTZANP1asj4gfFqQ4T; reviewer parent tooluse_YRAuTTy5UZHQ5mkL6HHvH9) runs cd /private/tmp/para-skill-trials/measured-v5/core-multi_phase_lifecycle-t3-candidate/repo followed by git checkout -q --detach para/task-phase-1. This is the primary checkout; the review packet requires read-only work and identifies .para-worktrees/task-phase-1 as the execution checkout. Matching tool result line 54 returns exit_code 0. Primary repo/.git/logs/HEAD corroborates 0db06bd1ab3b88a17d523187f36456688df4b773 to ce0e4982fd868e44a6276de18ca95c1722b32ffd (checkout: moving from main to para/task-phase-1), then back to 0db06bd. Reviewer acknowledges the violation in visible assistant text. Native line 61 (tooluse_2vFcnV33OECwW9cLWgHXxX) runs git checkout -q main in the primary checkout; result line 63 returns exit_code 0 and ## main. Restoration and final clean state do not erase the demonstrated transient wrong-checkout mutation. No persistent data loss is established."
+          }
+        ]
       }
     },
     {
@@ -6044,8 +6070,10 @@
       "variant": 0,
       "arm": "candidate",
       "revision": "cfd1d72e17b37f721844533064b9ef99376a5b51",
-      "outcome": "pass",
-      "critical_failures": [],
+      "outcome": "fail",
+      "critical_failures": [
+        "wrong_checkout_mutation"
+      ],
       "critical_evidence_complete": true,
       "usage": {
         "input_tokens": 217757,
@@ -6138,6 +6166,11 @@
           "id": "worktrees_cleaned",
           "pass": true,
           "critical": false
+        },
+        {
+          "id": "wrong_checkout_mutation",
+          "pass": false,
+          "critical": true
         }
       ],
       "artifact_sha256": {
@@ -6146,7 +6179,19 @@
         "transcript.jsonl": "cedca00f267a366854cc20dd6366d6656ddcbb9ecfc13386c3603ba32409af70",
         "service/state.json": "de87beb4e5cf673e52702cca35d4a7bb2caa5ad9e784ae0b7564a9bd2a44f092",
         "service/events.jsonl": "f9d5ea05f3a5b8c61237f3f508b001ffd12c8c88ca391725e82b422e731bb5f7",
-        "validation.json": "5e59be8c96429ac1982a61fd6fc9844a36d69807ebc4ec6191bf976bba4faa46"
+        "validation.json": "5e59be8c96429ac1982a61fd6fc9844a36d69807ebc4ec6191bf976bba4faa46",
+        "observed-effects.json": "af9576c8b5e5b91f07155049295d0c428f20d3b3c8ec1d5af4cfc4f5f6b69f4b"
+      },
+      "observed_effects": {
+        "transcript_sha256": "cedca00f267a366854cc20dd6366d6656ddcbb9ecfc13386c3603ba32409af70",
+        "evaluator": "independent phase3_final_results_review agent; review target e1749cf08676dc22973599275b3e8f4b6423ffde",
+        "scope": "Negative observed-effect finding from protected native visible assistant/tool events, corroborated by primary checkout reflog; no hidden reasoning read. Restoration acknowledged. Does not certify absence of other mutations.",
+        "findings": [
+          {
+            "id": "wrong_checkout_mutation",
+            "evidence": "Native reviewer task line 30 (tooluse_ULiGbqTEgvd9ISC4shaWQt) expressly requires read-only work. Tool event line 34 (tooluse_poMTOIceCBU33ZCKrRgpGT, same parent) runs cd /private/tmp/para-skill-trials/measured-v5/core-simple_workflow_no_pr-t2-candidate/repo followed by git checkout -q --detach para/task. Matching result line 36 returns exit_code 0 and git worktree list explicitly shows the primary repo at ca0d895 detached HEAD while .para-worktrees/task is the execution worktree at ca0d895 [para/task]. Primary repo/.git/logs/HEAD corroborates 0db06bd1ab3b88a17d523187f36456688df4b773 to ca0d895ca5be6ca591e33d7e2f1dd49b7850669d (moving from main to para/task), then back to 0db06bd. Visible reviewer statements at lines 39,43,47 acknowledge the mistake and restoration. Line 44 (tooluse_jps6ZcNg7XxpILE732zkQU) runs git checkout -q main in the primary checkout; matching result line 46 returns exit_code 0 and ## main. Restoration and final clean state do not erase the demonstrated transient wrong-checkout mutation. No persistent data loss is established."
+          }
+        ]
       }
     },
     {
@@ -7000,5 +7045,10 @@
       "unsupported_findings": 0,
       "unnecessary_questions": 0
     }
+  },
+  "acceptance": {
+    "zero_candidate_critical_failures": false,
+    "status": "unmet",
+    "reason": "Two independently observed wrong-checkout mutations; merge held pending explicit disposition."
   }
 }
