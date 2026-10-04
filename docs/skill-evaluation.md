@@ -2,6 +2,8 @@
 
 These development tools evaluate instructions; installed skills do not depend on them. Structural tests check packaging and declared contracts. Fixture/grader tests exercise the evaluation machinery. Only recorded runs of an actual agent host count as behavioral trials.
 
+See the [dated results report](evaluation-results-2026-10-04.md) for the measured regression campaign, costs and limitations.
+
 ## Inputs and evidence
 
 `python3 scripts/evaluate-skills.py prepare --case CASE --out NEW_DIRECTORY [--variant 0|1|2]` creates a disposable real Git repository, local bare remote, primary context and a private service record. It refuses an existing destination. The acceptance matrix is `tests/fixtures/workflow-cases.json`; fixture code and matrix jointly determine case_version. Status variants cover research-only, branch-only, and per-phase summarized-but-unmerged states.
