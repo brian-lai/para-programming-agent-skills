@@ -5,7 +5,7 @@ REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 tmp_home="$(mktemp -d)"
 trap 'rm -rf "$tmp_home"' EXIT
 
-HOME="$tmp_home" bash "$REPO_ROOT/scripts/install.sh" --dry-run >/dev/null
+AGENTS_HOME="$tmp_home/.agents" CODEX_HOME="$tmp_home/.codex" HOME="$tmp_home" bash "$REPO_ROOT/scripts/install.sh" --dry-run >/dev/null
 
 if [ -e "$tmp_home/.agents" ]; then
   echo "FAIL dry-run wrote to HOME"

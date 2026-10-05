@@ -80,6 +80,7 @@ for client in "${clients[@]}"; do
   mkdir -p "$client/skills"
   cp -R skills/. "$client/skills/"
   cp -R docs "$client/docs"
+  cp -R resources "$client/resources"
   verify_skill_tree "$client/skills"
 
   help_file="$client/skills/para-help/SKILL.md"

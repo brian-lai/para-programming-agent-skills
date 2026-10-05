@@ -5,6 +5,14 @@ REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 tmp_home="$(mktemp -d)"
 trap 'rm -rf "$tmp_home"' EXIT
 
+export AGENTS_HOME="$tmp_home/.agents" CODEX_HOME="$tmp_home/.codex"
+mkdir -p "$AGENTS_HOME" "$CODEX_HOME"
+printf 'custom user guidance\n' > "$AGENTS_HOME/AGENTS.md"
+printf 'custom compatibility guidance\n' > "$CODEX_HOME/AGENTS.md"
+cp "$AGENTS_HOME/AGENTS.md" "$tmp_home/user-guide"
+cp "$CODEX_HOME/AGENTS.md" "$tmp_home/compat-guide"
+cp "$REPO_ROOT/resources/AGENTS.md" "$tmp_home/source-guide"
+
 output="$(HOME="$tmp_home" bash "$REPO_ROOT/scripts/install.sh")"
 
 if echo "$output" | grep -Fq 'Use the para-init skill to initialize PARA in a project.' &&
@@ -37,12 +45,12 @@ if [ ! -f "$tmp_home/.codex/docs/METHODOLOGY.md" ]; then
   exit 1
 fi
 
-if [ ! -f "$tmp_home/.agents/skills/para-init/resources/AGENTS.md" ]; then
+if [ ! -f "$tmp_home/.agents/resources/AGENTS.md" ]; then
   echo "FAIL missing installed user para-init resources"
   exit 1
 fi
 
-if [ ! -f "$tmp_home/.codex/skills/para-init/resources/AGENTS.md" ]; then
+if [ ! -f "$tmp_home/.codex/resources/AGENTS.md" ]; then
   echo "FAIL missing compatibility para-init resources mirror"
   exit 1
 fi
@@ -62,3 +70,15 @@ else
 fi
 
 echo "PASS install script installs Codex skills and support files"
+
+for root in "$AGENTS_HOME" "$CODEX_HOME"; do
+  cmp "$root/skills/para-init/../../resources/AGENTS.md" "$tmp_home/source-guide"
+  [ ! -e "$root/skills/para-init/resources" ]
+done
+cmp "$AGENTS_HOME/AGENTS.md" "$tmp_home/user-guide"
+cmp "$CODEX_HOME/AGENTS.md" "$tmp_home/compat-guide"
+cmp "$REPO_ROOT/resources/AGENTS.md" "$tmp_home/source-guide"
+[ ! -e "$REPO_ROOT/skills/para-init/resources" ]
+grep -Fq '../../resources/AGENTS.md' "$REPO_ROOT/skills/para-init/SKILL.md"
+grep -Fq 'missing optional guidance' "$REPO_ROOT/skills/para-init/SKILL.md"
+echo "PASS shared resources resolve without source or global guidance changes"

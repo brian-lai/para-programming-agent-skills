@@ -352,6 +352,9 @@ cross_skill_references:
     - from: skills/para-help/SKILL.md
       to: ../../docs/METHODOLOGY.md
       reason: "human-readable methodology reference"
+    - from: skills/para-init/SKILL.md
+      to: ../../resources/AGENTS.md
+      reason: "optional global guidance outside linked skill directories"
   cross_skill_invocations:
     # Orchestration references use canonical bare skill identifiers.
     # must include graceful-degradation fallback. Phase-7 E2E single-skill-copy test verifies this.
