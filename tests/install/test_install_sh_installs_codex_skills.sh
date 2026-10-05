@@ -5,6 +5,12 @@ REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 tmp_home="$(mktemp -d)"
 trap 'rm -rf "$tmp_home"' EXIT
 
+# Exercise the current payload from a disposable primary checkout, never a live install.
+INSTALL_SOURCE="$tmp_home/source"
+mkdir -p "$INSTALL_SOURCE"
+cp -R "$REPO_ROOT/skills" "$REPO_ROOT/docs" "$REPO_ROOT/resources" "$REPO_ROOT/scripts" "$INSTALL_SOURCE/"
+git init -q "$INSTALL_SOURCE"
+
 export AGENTS_HOME="$tmp_home/.agents" CODEX_HOME="$tmp_home/.codex"
 mkdir -p "$AGENTS_HOME" "$CODEX_HOME"
 printf 'custom user guidance\n' > "$AGENTS_HOME/AGENTS.md"
@@ -13,7 +19,7 @@ cp "$AGENTS_HOME/AGENTS.md" "$tmp_home/user-guide"
 cp "$CODEX_HOME/AGENTS.md" "$tmp_home/compat-guide"
 cp "$REPO_ROOT/resources/AGENTS.md" "$tmp_home/source-guide"
 
-output="$(HOME="$tmp_home" bash "$REPO_ROOT/scripts/install.sh")"
+output="$(HOME="$tmp_home" bash "$INSTALL_SOURCE/scripts/install.sh")"
 
 if echo "$output" | grep -Fq 'Use the para-init skill to initialize PARA in a project.' &&
    echo "$output" | grep -Fq 'Use /skills to browse installed skills.'; then
@@ -60,7 +66,7 @@ if ! jq -e '.plugins[] | select(.name == "para-programming")' "$tmp_home/.agents
   exit 1
 fi
 
-reinstall_output="$(HOME="$tmp_home" bash "$REPO_ROOT/scripts/install.sh")"
+reinstall_output="$(HOME="$tmp_home" bash "$INSTALL_SOURCE/scripts/install.sh")"
 if echo "$reinstall_output" | grep -Fq 'Use the para-init skill to initialize PARA in a project.' &&
    echo "$reinstall_output" | grep -Fq 'Use /skills to browse installed skills.'; then
   echo "PASS idempotent install output preserves portable guidance"
