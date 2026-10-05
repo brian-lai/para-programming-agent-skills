@@ -225,14 +225,14 @@ def _grade(root, result):
             check('current_head_checks_observed', checked, f'actual checks returned for PR {after["number"]} at {sha} before merge', True)
         check('merge_summary_recorded', summary_recorded, f'pre-merge summary evidence for PR {after["number"]}', True)
         check('merge_review_target', any(x.get('target') == sha and x.get('status') == 'approved' and x.get('mode') == 'independent' for x in eligible), f'pre-merge context PR {after["number"]}, head {sha}', True)
-        check('independent_review_observed', independent_approval((root / 'transcript.jsonl').read_bytes(),
-              e.get('transcript_prefix_bytes'), sha, root / 'remote.git'), 'completed target reviewer in native prefix before merge', True)
-        if isolated:
-            try:
-                approved = isolated_approval(root, (root / 'transcript.jsonl').read_bytes(), e.get('transcript_prefix_bytes'), sha)
+        try:
+            raw = (root / 'transcript.jsonl').read_bytes()
+            approved = isolated_approval(root, raw, e.get('transcript_prefix_bytes'), sha) if isolated else independent_approval(raw, e.get('transcript_prefix_bytes'), sha, root / 'remote.git')
+            check('independent_review_observed', approved, 'completed target reviewer in native prefix before merge', True)
+            if isolated:
                 check('isolated_review_verified', approved, 'native task, protected tool events and immutable exact-head capsule', True)
-            except ValueError as exc:
-                result['evidence_errors'].append(str(exc))
+        except ValueError as exc:
+            result['evidence_errors'].append(str(exc))
     for pr in prs:
         if pr['state'] == 'MERGED':
             commit = (pr.get('mergeCommit') or {}).get('oid')

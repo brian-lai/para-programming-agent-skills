@@ -122,3 +122,13 @@ class IsolatedEvidenceTest(unittest.TestCase):
         with patch('github_stub.validate_isolation', return_value={}):
             code, message = GithubStub(self.root).call(['pr', 'merge', '1', '--match-head-commit', self.head])
         self.assertEqual(code, 0, message)
+
+    def test_explicit_lowercase_verdict_counts(self):
+        self.events[-1]['message']['content'][0]['content'] = '**Verdict: approve. I found no blockers.**\nReviewed target: ' + self.head
+        self.assertTrue(self.eligible())
+
+    def test_conditional_or_negative_verdict_does_not_count(self):
+        for text in ('NOT APPROVED', 'Not APPROVED', 'Do not approve', 'APPROVED if tests pass', 'APPROVED after fixes', 'Verdict: approve once corrected', 'I hope this is APPROVED', 'CHANGES REQUESTED. APPROVED by somebody else.'):
+            with self.subTest(text=text):
+                self.events[-1]['message']['content'][0]['content'] = text + '\n' + self.head
+                self.assertFalse(self.eligible())

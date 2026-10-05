@@ -56,6 +56,34 @@ def independent_approval(raw, prefix_bytes, head, repository=None):
                for key, prompt in tasks.items())
 
 
+
+def approved_verdict(text):
+    """Recognize explicit unconditional decisions, not mentions of approval."""
+    lines = [re.sub(r'[*`#]', '', line).strip() for line in text.splitlines()]
+    for line in lines:
+        if re.match(r'^(?:Verdict:\s*)?approve(?:d)?\b', line, re.I):
+            if re.search(r'\b(if|after|once|pending|provided)\b|subject to|with fixes', line, re.I):
+                return False
+            return not re.search(r'\b(?:not approved|do not approve|changes requested)\b', text, re.I)
+    return False
+
+
+def completed_isolated_review(events, task, prompt, head, repository):
+    answer, complete = '', False
+    for event in events:
+        for part in event.get('message', {}).get('content', []):
+            if event.get('type') == 'assistant' and event.get('parent_tool_use_id') == task and part.get('type') == 'text':
+                answer = part['text']
+            if part.get('type') == 'tool_result' and part.get('tool_use_id') == task and not part.get('is_error'):
+                content = part.get('content', '')
+                text = content if isinstance(content, str) else '\n'.join(c.get('text', '') for c in content if isinstance(c, dict))
+                if 'Async agent launched' not in text and approved_verdict(text):
+                    answer, complete = text, True
+        if event.get('subtype') == 'task_notification' and event.get('tool_use_id') == task and event.get('status') == 'completed':
+            complete = True
+    return complete and approved_verdict(answer) and names_target(prompt + '\n' + answer, head, repository)
+
+
 def isolated_approval(root, raw, prefix_bytes, head, bindings=None):
     """Require protected adapter events from a completed target-bound native reviewer.
 
@@ -85,11 +113,8 @@ def isolated_approval(root, raw, prefix_bytes, head, bindings=None):
             if part.get('type') == 'tool_result' and parent:
                 responses[part['tool_use_id']] = (parent, part)
     for task, spawn in tasks.items():
-        subset = [spawn] + [e for e in events if e.get('parent_tool_use_id') == task or
-            e.get('subtype') == 'task_notification' and e.get('tool_use_id') == task or
-            any(p.get('type') == 'tool_result' and p.get('tool_use_id') == task for p in e.get('message', {}).get('content', []))]
-        packet = b''.join(json.dumps(e).encode() + b'\n' for e in subset)
-        if not independent_approval(packet, len(packet), head, root / 'remote.git'):
+        prompt = next(p['input'].get('prompt', '') for p in spawn['message']['content'] if p.get('id') == task)
+        if not completed_isolated_review(events, task, prompt, head, root / 'remote.git'):
             continue
         task_calls = [(key, part) for key, (parent, part) in calls.items() if parent == task]
         if not task_calls or any(p.get('name') != 'mcp__review__Bash' for _, p in task_calls):

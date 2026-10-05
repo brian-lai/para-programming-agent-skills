@@ -10,7 +10,7 @@ def role_definitions():
         },
         'para-reviewer': {
             'description': 'Independently review a supplied artifact using the isolated review tool.',
-            'prompt': 'Review the supplied target independently. Use only mcp__review__Bash; return evidence and the reviewed target. Do not delegate further.',
+            'prompt': 'Review the supplied target independently. Use only mcp__review__Bash; return verdict APPROVED or CHANGES REQUESTED, target identity and evidence. Do not delegate further.',
             'tools': ['mcp__review__Bash'],
             'disallowedTools': ['Agent', 'Task', 'Bash', 'Read', 'Write', 'Edit', 'mcp__fixture__Bash'],
         },
