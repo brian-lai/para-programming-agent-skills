@@ -16,6 +16,8 @@ from fixtures import prepare, dump
 from comparison import run_bounded
 from safe_git import snapshot, git
 from graders import read_context, SUPPORTED
+from review_isolation import role_definitions, assess_role_probe, validate_review_capability
+from review_host import worker_arguments, ready, preflight
 
 SOURCE = Path(__file__).resolve().parents[1]
 IMAGE = 'para-skill-eval:claude-2.1.289'
@@ -60,6 +62,17 @@ def run(args):
         raise ValueError('Set the authorized HTTPS model endpoint before running trials')
     if args.case not in SUPPORTED:
         raise ValueError('case lacks validated live fixture/grader coverage')
+    isolated = getattr(args, 'isolated_review', False)
+    capability = None
+    if isolated:
+        probe_root = Path(args.capability_record).resolve().parent
+        capability = json.loads((probe_root / 'probe.json').read_text())
+        native = [json.loads(line) for line in (probe_root / 'transcript.jsonl').read_text().splitlines()]
+        pools = [json.loads(line) for line in (probe_root / 'model-events.jsonl').read_text().splitlines()]
+        validate_review_capability(assess_role_probe(native, pools))
+        image = docker('image', 'inspect', IMAGE, '--format', '{{.Id}}').stdout.strip()
+        if capability['status'] != 'verified' or capability['roles'] != role_definitions() or capability.get('image_id') != image:
+            raise ValueError('capability probe does not match current roles/image')
     revision = subprocess.check_output(['git', '-C', str(SOURCE), 'rev-parse', args.revision], text=True).strip()
     root = Path(args.out).resolve()
     initial = prepare(args.case, root, args.variant)
@@ -75,12 +88,17 @@ def run(args):
         for p in [mount, *mount.rglob('*')]:
             if not p.is_symlink():
                 p.chmod(0o777 if p.is_dir() or os.access(p, os.X_OK) else 0o666)
+    if isolated:
+        for folder in ('review-capsules', 'review-evidence'):
+            (root / folder).mkdir();(root / folder).chmod(0o777)
+        dump(root / 'review-capability.json', capability)
     (root / 'transcript.jsonl').touch()
     (root / 'service').chmod(0o777)
     for p in (root / 'service').iterdir():
         p.chmod(0o666)
     name = 'para-eval-' + uuid.uuid4().hex[:12]
     network, gateway, agent, worker = name + '-net', name + '-gateway', name + '-agent', name + '-worker'
+    review_net, reviewer = name + '-review-net', name + '-reviewer'
     limits = {'wall_seconds': 1800 if args.case == 'multi_phase_lifecycle' else 1200 if args.case == 'simple_workflow_lifecycle' else 600,
               'tool_calls': 300 if args.case == 'multi_phase_lifecycle' else 200 if args.case == 'simple_workflow_lifecycle' else 100}
     harness_files = sorted(p for p in (SOURCE / 'tests/behavior').rglob('*') if p.is_file() and '__pycache__' not in p.parts)
@@ -89,6 +107,8 @@ def run(args):
     settings = {'limits': limits, 'effort': 'low', 'model': args.model, 'safe_mode': False, 'setting_sources': [], 'native_skills': False, 'subagent_model_forced': True,
                 'isolation': 'separate-collector-and-shell-containers-mcp-text-boundary', 'harness_sha256': harness_hash,
                 'skill_loading': 'explicit body/resource reads; metadata model hints not applied', 'image': docker('image', 'inspect', IMAGE, '--format', '{{.Id}}').stdout.strip()}
+    if isolated:
+        settings.update(isolation='immutable-review-worker-v1', review_roles=role_definitions(), review_evidence_version=1)
     manifest = {'host': 'claude-code', 'host_version': '2.1.289', 'model': args.model, 'settings': settings,
                 'skill_revision': revision, 'trial': args.trial, 'case_version': initial['case_version'],
                 'evidence_kind': 'native_agent', 'elapsed_seconds': 0, 'termination_reason': 'harness_error',
@@ -109,11 +129,20 @@ def run(args):
             '--workdir', '/tmp', '-e', 'CLAUDE_CODE_SUBAGENT_MODEL=' + args.model, '-e', 'CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1', '-e', 'ANTHROPIC_BASE_URL', '-e', 'ANTHROPIC_AUTH_TOKEN',
             '-e', 'ANTHROPIC_API_KEY', '-e', 'HTTPS_PROXY=http://gateway:8080', '-e', 'HTTP_PROXY=http://gateway:8080',
             '-e', 'NO_PROXY=gateway,worker,localhost,127.0.0.1', '-e', 'CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1', IMAGE]
+    if isolated:
+        # Create then connect the second network before starting the collector.
+        base[0] = 'create'
+        base[-1:-1] = ['--mount', f'type=bind,source={SOURCE / "tests/behavior/host/review-mcp.py"},target=/review-mcp.py,readonly',
+            '--mount', f'type=bind,source={root / "review-evidence"},target=/review-evidence',
+            '-e', 'CLAUDE_AGENT_SDK_DISABLE_BUILTIN_AGENTS=1']
     start = time.monotonic()
     try:
         docker('network', 'create', '--internal', network)
+        if isolated:
+            docker('network', 'create', '--internal', review_net)
+        extra_gateway = ['--mount', f'type=bind,source={root / "review-capsules"},target={root / "review-capsules"}'] if isolated else []
         docker('run', '-d', '--name', gateway, '--user', '1001', '--network', 'bridge', '--cap-drop=ALL',
-               '--security-opt=no-new-privileges',
+               '--security-opt=no-new-privileges', '--memory', '1g', '--pids-limit', '128', *extra_gateway,
                '--mount', f'type=bind,source={root / "repo"},target={root / "repo"},readonly',
                '--mount', f'type=bind,source={root / "remote.git"},target={root / "remote.git"}',
                '--mount', f'type=bind,source={root / "service"},target={root / "service"}',
@@ -121,6 +150,7 @@ def run(args):
                '--mount', f'type=bind,source={SOURCE / "tests/behavior"},target=/harness,readonly',
                '-e', 'ANTHROPIC_BASE_URL', IMAGE, 'python3', '/harness/host/gateway.py', str(root))
         docker('network', 'connect', '--alias', 'gateway', network, gateway)
+        ready(docker, gateway, 8080)
         # Verify actual process isolation before giving an agent tools. No host directories or socket are mounted.
         probe = r'''import socket, urllib.request
 try:
@@ -134,10 +164,17 @@ except urllib.error.HTTPError as e:
  assert e.code == 404 or e.code == 501
 print("ISOLATION_OK")'''
         docker(*worker_args)
-        preflight = docker('exec', worker, 'python3', '-c', probe)
-        if 'ISOLATION_OK' not in preflight.stdout:
+        ready(docker, worker, 8090)
+        author_preflight = docker('exec', worker, 'python3', '-c', probe)
+        if 'ISOLATION_OK' not in author_preflight.stdout:
             raise ValueError('isolation preflight failed')
-        (root / 'isolation.txt').write_text(preflight.stdout)
+        (root / 'isolation.txt').write_text(author_preflight.stdout)
+        if isolated:
+            docker(*worker_arguments(root, SOURCE, IMAGE, reviewer, review_net))
+            ready(docker, reviewer, 8091)
+            forbidden = [[json.loads(docker('inspect', c).stdout)[0]['NetworkSettings']['Networks'][network]['IPAddress'], port] for c, port in ((worker, 8090), (gateway, 8080))]
+            boundary = preflight(docker, reviewer, review_net, network, root, SOURCE, forbidden)
+            dump(root / 'review-boundary.json', boundary)
         methodology = (skills / 'resources/AGENTS.md').read_text()
         system = methodology + '\nEvaluation environment: The primary checkout is ' + str(root / 'repo') + '. '
         system += 'All PARA skills are under /opt/para-instructions/skills. Read the named SKILL.md and applicable resources to carry out requests. '
@@ -145,14 +182,31 @@ print("ISOLATION_OK")'''
         system += 'The gh command is a local substitute; all Git remotes are local fixtures. No services outside this fixture are needed. '
         system += 'Use mcp__fixture__Bash for all shell and file operations; its cwd defaults to the primary checkout. Native Agent delegation remains available. '
         system += 'Native skills discovery and frontmatter model switching are disabled in this fixed-model evaluation. '
+        if isolated:
+            system += 'For independent reviews, use mcp__fixture__PrepareReview with the exact open PR number/full head (mode pr), or active plan paths (mode plan). Delegate only to para-reviewer, passing its returned review_id, target and review request. Its sole tool mcp__review__Bash starts in the immutable capsule source; ../packet contains copied context/plans and ../manifest.json identifies the target. Tests may use /tmp scratch. This host verifies read-only source and separate network enforcement. The author uses fixture tools. A changed PR head requires a new capsule and review. '
         prompt = 'Use mcp__fixture__Bash to print TOOL_OK. Then use an independent Agent subagent to run the same fixture tool printing HOST_OK, and report whether delegation and tool execution succeeded. Do not change files.' if args.probe else initial['prompt']
         manifest['evidence_kind'] = 'host_capability_probe' if args.probe else 'native_agent'
         mcp_config = json.dumps({'mcpServers': {'fixture': {'command': 'python3', 'args': ['/fixture-mcp.py']}}})
+        if isolated:
+            mcp_config = json.dumps({'mcpServers': {'fixture': {'command': 'python3', 'args': ['/fixture-mcp.py', '--author']}, 'review': {'command': 'python3', 'args': ['/review-mcp.py']}}})
+        role_args = ['--agents', json.dumps(role_definitions()), '--agent', 'para-author'] if isolated else []
+        allowed = ['mcp__fixture__Bash', 'mcp__fixture__PrepareReview', 'mcp__review__Bash'] if isolated else ['mcp__fixture__Bash']
         command = ['docker', *base, 'claude', '--disable-slash-commands', '--setting-sources', '', '--strict-mcp-config', '--mcp-config', mcp_config,
-                   '--tools', 'Task', '--allowedTools', 'mcp__fixture__Bash', '--no-session-persistence', '--dangerously-skip-permissions', '--model', args.model, '--effort', 'low',
+                   '--tools', 'Task', *role_args, '--allowedTools', *allowed, '--no-session-persistence', '--dangerously-skip-permissions', '--model', args.model, '--effort', 'low',
                    '--print', '--output-format', 'stream-json', '--verbose', '--forward-subagent-text',
                    '--append-system-prompt', system, prompt]
-        observed = capture_and_stop(command, root / 'transcript.jsonl', limits, agent, worker)
+        if isolated:
+            docker(*command[1:])
+            docker('network', 'connect', review_net, agent)
+            collector_info = json.loads(docker('inspect', agent).stdout)[0]
+            if set(collector_info['NetworkSettings']['Networks']) != {network, review_net}:
+                raise ValueError('collector network attachment mismatch')
+            command = ['docker', 'start', '-a', agent]
+        manifest['setup_seconds'] = time.monotonic() - start
+        observed = capture_and_stop(command, root / 'transcript.jsonl', limits, agent, worker, *([reviewer] if isolated else []))
+        if isolated:
+            boundary['cleanup_confirmed'] = True
+            dump(root / 'review-boundary.json', boundary)
         manifest.update(observed)
         inits, native_events = [], []
         for line in (root / 'transcript.jsonl').read_bytes().splitlines():
@@ -165,7 +219,8 @@ print("ISOLATION_OK")'''
                 inits.append(event)
         manifest['observed_models'] = validate_model_scope(native_events)
         manifest['native_tool_scopes'] = [e.get('tools', []) for e in inits]
-        if not inits or any(set(e.get('tools', [])) != {'Task', 'mcp__fixture__Bash'} for e in inits):
+        expected_tools = {'Task', *allowed}
+        if not inits or any(set(e.get('tools', [])) != expected_tools for e in inits):
             raise ValueError('collector exposed unexpected native tool scope')
         manifest['builtin_plugins'] = inits[0].get('plugins', [])
         if args.case in ('simple_workflow_no_pr', 'simple_workflow_lifecycle', 'multi_phase_lifecycle', 'resume_after_pr_created', 'stale_review_head', 'resume_after_merge', 'nondefault_base', 'direct_execute_scope') and not args.probe:
@@ -209,9 +264,25 @@ sys.exit(r.returncode)'''
         manifest.update(elapsed_seconds=time.monotonic() - start, termination_reason='harness_error', error=type(exc).__name__ + ': ' + str(exc))
         raise
     finally:
-        # Names are generated by this invocation; never stop unrelated containers.
-        docker('rm', '-f', agent, check=False);docker('rm', '-f', worker, check=False);docker('rm', '-f', gateway, check=False)
-        docker('network', 'rm', network, check=False)
+        # Confirm all owned containers stopped even when setup/capture failed.
+        cleanup_start = time.monotonic()
+        cleanup_errors = []
+        for container in (agent, worker, gateway, *([reviewer] if isolated else [])):
+            try:
+                stop_container(container)
+            except Exception as exc:
+                cleanup_errors.append(str(exc))
+        for owned_network in ([review_net, network] if isolated else [network]):
+            docker('network', 'rm', owned_network, check=False)
+            remaining = docker('network', 'ls', '--filter', 'name=^' + owned_network + '$', '--format', '{{.Name}}', check=False)
+            if remaining.returncode or remaining.stdout.strip():
+                cleanup_errors.append('Could not confirm network removal: ' + owned_network)
+        manifest['cleanup_seconds'] = time.monotonic() - cleanup_start
+        if cleanup_errors:
+            manifest.update(termination_reason='harness_error', error='Cleanup: ' + '; '.join(cleanup_errors))
+        if isolated and (root / 'review-boundary.json').exists():
+            boundary['cleanup_confirmed'] = not cleanup_errors
+            dump(root / 'review-boundary.json', boundary)
         dump(root / 'host.json', manifest)
     return manifest
 
@@ -221,7 +292,10 @@ def main():
     p.add_argument('--case', required=True);p.add_argument('--out', required=True)
     p.add_argument('--revision', required=True);p.add_argument('--trial', type=int, required=True)
     p.add_argument('--probe', action='store_true');p.add_argument('--variant', type=int, default=0);p.add_argument('--model', default='claude-sonnet-5-5')
+    p.add_argument('--isolated-review', action='store_true');p.add_argument('--capability-record')
     args = p.parse_args()
+    if args.isolated_review and not args.capability_record:
+        p.error('--isolated-review requires --capability-record')
     try:
         result = run(args)
         print(json.dumps({k: result.get(k) for k in ('skill_revision', 'elapsed_seconds', 'termination_reason', 'tool_calls', 'exit_code')}))

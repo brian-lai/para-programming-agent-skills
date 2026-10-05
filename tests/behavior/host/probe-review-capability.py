@@ -60,7 +60,7 @@ Report which attempts were actually denied and which could not be attempted. Do 
             runner.IMAGE, 'claude', '--disable-slash-commands', '--setting-sources', '',
             '--strict-mcp-config', '--mcp-config', json.dumps(mcp), '--tools', 'Task',
             '--agents', json.dumps(roles), '--agent', 'para-author',
-            '--allowedTools', 'mcp__fixture__Bash', 'mcp__review__Bash',
+            '--allowedTools', 'mcp__fixture__Bash', 'mcp__fixture__PrepareReview', 'mcp__review__Bash',
             '--no-session-persistence', '--dangerously-skip-permissions', '--model', 'claude-sonnet-5-5',
             '--effort', 'low', '--print', '--output-format', 'stream-json', '--verbose', '--forward-subagent-text', prompt]
         result.update(run_bounded(command, root / 'transcript.jsonl', 180, 40))

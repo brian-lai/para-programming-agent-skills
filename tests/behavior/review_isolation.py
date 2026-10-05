@@ -6,7 +6,7 @@ def role_definitions():
         'para-author': {
             'description': 'Author and orchestrate the fixture task.',
             'prompt': 'Carry out the task using its instructions. Delegate independent reviews to para-reviewer.',
-            'tools': ['Agent(para-reviewer)', 'mcp__fixture__Bash'],
+            'tools': ['Agent(para-reviewer)', 'mcp__fixture__Bash', 'mcp__fixture__PrepareReview'],
         },
         'para-reviewer': {
             'description': 'Independently review a supplied artifact using the isolated review tool.',

@@ -14,6 +14,8 @@ for line in sys.stdin:
     elif method == 'tools/list':
         result = {'tools': [{'name': 'Bash', 'description': 'Dummy role probe; records arguments, executes no command.',
                   'inputSchema': {'type': 'object', 'properties': {'command': {'type': 'string'}}, 'required': ['command']}}]}
+        if role == 'fixture':
+            result['tools'].append({'name': 'PrepareReview', 'description': 'Inert preparation probe.', 'inputSchema': {'type': 'object', 'properties': {}}})
     elif method == 'tools/call' and request.get('params', {}).get('name') == 'Bash':
         result = {'content': [{'type': 'text', 'text': json.dumps({'probe_backend': role,
                   'arguments': request['params'].get('arguments'), 'executed_command': False})}]}

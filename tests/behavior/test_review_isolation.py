@@ -6,7 +6,7 @@ class ReviewIsolationTest(unittest.TestCase):
     def test_role_config_excludes_writer_tools(self):
         roles = role_definitions()
         self.assertEqual(roles['para-reviewer']['tools'], ['mcp__review__Bash'])
-        self.assertEqual(roles['para-author']['tools'], ['Agent(para-reviewer)', 'mcp__fixture__Bash'])
+        self.assertEqual(roles['para-author']['tools'], ['Agent(para-reviewer)', 'mcp__fixture__Bash', 'mcp__fixture__PrepareReview'])
 
     def test_nested_delegation_unavailable(self):
         role = role_definitions()['para-reviewer']
