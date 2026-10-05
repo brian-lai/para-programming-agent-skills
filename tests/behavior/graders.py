@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 import subprocess
 from safe_git import git, ancestor
+from comparison import native_usage
 from review_evidence import independent_approval, isolated_approval, validate_isolation
 
 
@@ -164,11 +165,10 @@ def _grade(root, result):
     result['observed_models'] = sorted({x['message']['model'] for x in lines if x.get('message', {}).get('model')})
     # Parse native telemetry; unavailable data is null, never zero.
     native = [x for x in lines if x.get('type') == 'result']
-    if native and isinstance(native[-1].get('modelUsage'), dict):
-        values = list(native[-1]['modelUsage'].values())
-        if values:
-            result['usage'] = {'input_tokens': sum(v.get('inputTokens', 0) + v.get('cacheReadInputTokens', 0) + v.get('cacheCreationInputTokens', 0) for v in values),
-                               'output_tokens': sum(v.get('outputTokens', 0) for v in values)}
+    result['usage'] = native_usage(lines)
+    if isolated:
+        result['review_telemetry'] = host.get('review_telemetry')
+        result['host_overhead'] = {key: host.get(key) for key in ('setup_seconds', 'cleanup_seconds', 'validation_seconds', 'total_wall_seconds', 'host_instruction_bytes')}
     if host.get('tool_calls') is not None:
         result['tool_calls'] = host['tool_calls']
     elif any(x.get('type') == 'assistant' for x in lines):

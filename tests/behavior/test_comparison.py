@@ -42,3 +42,29 @@ class ComparisonTest(unittest.TestCase):
         result = compare([a, b], [a, b])
         self.assertTrue(result['candidate']['mixed_revisions'])
         self.assertEqual(set(result['candidate']['by_revision']), {'one', 'two'})
+
+    def test_pair_isolation_version_mismatch_rejected(self):
+        a, b = trial(), trial();a['settings']['review_evidence_version'] = 1
+        b['settings']['review_evidence_version'] = 2
+        with self.assertRaises(ValueError):
+            compare([a], [b])
+
+    def test_child_usage_not_double_counted(self):
+        from comparison import native_usage
+        child = {'type': 'result', 'parent_tool_use_id': 'review', 'modelUsage': {'m': {'inputTokens': 10, 'outputTokens': 5, 'cacheReadInputTokens': 0, 'cacheCreationInputTokens': 0}}}
+        parent = {'type': 'result', 'modelUsage': {'m': {'inputTokens': 100, 'outputTokens': 20, 'cacheReadInputTokens': 3, 'cacheCreationInputTokens': 2}}}
+        self.assertEqual(native_usage([child, parent]), {'input_tokens': 105, 'output_tokens': 20})
+
+    def test_unknown_child_usage_stays_null(self):
+        from comparison import native_usage
+        self.assertEqual(native_usage([{'type': 'result', 'parent_tool_use_id': 'review', 'modelUsage': {'m': {'inputTokens': 10}}}]), {'input_tokens': None, 'output_tokens': None})
+        self.assertIsNone(native_usage([{'type': 'result', 'modelUsage': {'m': {'inputTokens': 10}}}])['input_tokens'])
+
+    def test_review_calls_share_trial_budget(self):
+        import json
+        event = lambda key, parent: {'type': 'assistant', 'parent_tool_use_id': parent, 'message': {'content': [{'type': 'tool_use', 'name': 'mcp__review__Bash', 'id': key}]}}
+        with tempfile.TemporaryDirectory() as d:
+            script = 'import time; print(' + repr(json.dumps(event('parent-call', None))) + ', flush=True); print(' + repr(json.dumps(event('child-call', 'review'))) + ', flush=True); time.sleep(3)'
+            value = run_bounded([sys.executable, '-u', '-c', script], Path(d) / 'native.jsonl', 2, 1)
+        self.assertEqual(value['tool_calls'], 2)
+        self.assertEqual(value['termination_reason'], 'tool_limit')

@@ -207,3 +207,7 @@ all 72 runs; it does not exhaustively detect mutations hidden in arbitrary shell
 programs. The corrected candidate has two critical failures, so the approved
 zero-critical phase gate is unmet. No instruction-only enforcement guarantee or
 newly successful campaign is inferred from this grader correction.
+
+## Enforced reviewer correction
+
+The optional [reviewer isolation host guide](reviewer-isolation.md) documents the versioned capsule/tool boundary and its probes. New isolated campaigns must freeze identical enforcement settings for both arms and retain measured-v5 separately. A successful host denial does not demonstrate improved instruction obedience. Keep the zero-critical-effect and complete-evidence gates; compare observed task completion and disclose host setup/context costs as well as native usage. A pilot or diagnostic failure is retained and diagnosed before a new campaign is frozen.

@@ -88,3 +88,37 @@ def run_bounded(command, transcript, wall_seconds, tool_limit, env=None, cwd=Non
         process.stdout.close()
     return {'elapsed_seconds': time.monotonic() - start, 'termination_reason': reason,
             'tool_calls': len(ids), 'exit_code': process.returncode}
+
+
+def native_usage(events):
+    """Use only the terminal main-task aggregate; never add child totals again."""
+    unknown = {'input_tokens': None, 'output_tokens': None}
+    terminal = [e for e in events if e.get('type') == 'result' and not e.get('parent_tool_use_id')]
+    if not terminal or not isinstance(terminal[-1].get('modelUsage'), dict) or not terminal[-1]['modelUsage']:
+        return unknown
+    rows = list(terminal[-1]['modelUsage'].values())
+    fields = ('inputTokens', 'cacheReadInputTokens', 'cacheCreationInputTokens', 'outputTokens')
+    if any(any(type(row.get(field)) is not int for field in fields) for row in rows):
+        return unknown
+    return {'input_tokens': sum(sum(row[field] for field in fields[:3]) for row in rows),
+            'output_tokens': sum(row['outputTokens'] for row in rows)}
+
+
+def review_telemetry(root):
+    """Protected host measurements; failed commands are not mutation evidence."""
+    capsules = [json.loads(p.read_text()) for p in (root / 'review-capsules').glob('review-*/manifest.json')]
+    events = [json.loads(p.read_text()) for p in (root / 'review-evidence/events').glob('*.json')]
+    failures = read_only = 0
+    for event in events:
+        try:
+            result = json.loads(event.get('result', '{}'))
+        except (ValueError, TypeError):
+            result = {}
+        if result.get('exit_code') not in (None, 0):
+            failures += 1
+            read_only += 'read-only file system' in result.get('output', '').lower()
+    return {'capsules': len(capsules), 'snapshot_seconds': sum(c.get('preparation_seconds', 0) for c in capsules),
+            'capsule_bytes': sum(p.stat().st_size for p in (root / 'review-capsules').rglob('*') if p.is_file()),
+            'review_tool_calls': len(events), 'review_commands_failed': failures, 'reported_read_only_errors': read_only,
+            'incomplete_review_commands': sum('finished' not in e or 'error' in e for e in events),
+            'actual_mutation_effects': None}

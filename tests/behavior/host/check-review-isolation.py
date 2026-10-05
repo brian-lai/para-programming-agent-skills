@@ -57,8 +57,8 @@ print(urllib.request.urlopen(r,timeout=20).read().decode())'''
         command('direct_write', 'echo mutation >> greeting.py', 'denied')
         command('python_write_restore', "python3 -c \"from pathlib import Path;p=Path('greeting.py');s=p.read_text();p.write_text('mutation');p.write_text(s)\"", 'denied')
         command('config_write', 'git config core.hooksPath /tmp/hooks', 'denied')
-        command('hook_write', 'echo mutation > .git/hooks/pre-commit', 'denied')
-        command('alternate_write', 'echo /tmp/objects > .git/objects/info/alternates', 'denied')
+        command('hook_write', 'mkdir -p .git/hooks && echo mutation > .git/hooks/pre-commit', 'denied')
+        command('alternate_write', 'mkdir -p .git/objects/info && echo /tmp/objects > .git/objects/info/alternates', 'denied')
         command('symlink_write', 'ln -s /tmp/escape .git/escape', 'denied')
         command('source_read', 'git rev-parse HEAD && git diff ' + capsule['base_sha'] + ' HEAD && cat greeting.py')
         command('scratch_tests', 'cp -R . /tmp/review-test && cd /tmp/review-test && python3 -m unittest discover -p "test_*.py"')
@@ -70,7 +70,7 @@ print(urllib.request.urlopen(r,timeout=20).read().decode())'''
         command('timeout_descendants', 'sleep 60 & wait', 124, timeout=1)
         command('no_surviving_child', "python3 -c \"from pathlib import Path;assert not any(p.read_bytes().startswith(b'sleep\\0') for p in Path('/proc').glob('[0-9]*/cmdline'))\"")
         command('scratch_quota', 'python3 -c "open(\'/tmp/too-large\',\'wb\').write(b\'x\' * (257*1024*1024))"', 'denied')
-        command('root_read_only', 'touch /home/agent/mutation', 'denied')
+        command('root_read_only', 'touch /home/trial/mutation', 'denied')
         after = {name: file_manifest(root / name) for name in before}
         if before != after:
             raise ValueError('author state or capsule changed')

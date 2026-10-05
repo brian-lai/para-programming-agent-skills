@@ -74,6 +74,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
 import uuid
 from safe_git import directory, read_file, snapshot, git
 
@@ -172,6 +173,7 @@ def _identity(root, request):
 
 
 def prepare_review(service_root, request):
+    started = time.monotonic()
     root = Path(service_root).resolve()
     if not isinstance(request, dict):
         raise ValueError('request must be an object')
@@ -217,7 +219,7 @@ def prepare_review(service_root, request):
             'pr_number': request.get('pr_number'), 'source_head': head, 'base_sha': base,
             'capsule_digest': hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest(),
             'context_digest': digests['context/context.md'], 'packet_digests': digests, 'files': files,
-            'capsule_path': '/review-capsules/' + review_id, 'bytes': size}
+            'capsule_path': '/review-capsules/' + review_id, 'bytes': size, 'preparation_seconds': time.monotonic() - started}
         manifest['manifest_digest'] = hashlib.sha256(json.dumps(manifest, sort_keys=True).encode()).hexdigest()
         encoded = (json.dumps(manifest, indent=2) + '\n').encode()
         if size + len(encoded) > CAPSULE_LIMIT or current_size + size + len(encoded) > TRIAL_CAPSULE_LIMIT:

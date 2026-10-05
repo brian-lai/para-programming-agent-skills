@@ -14,7 +14,7 @@ import time
 import uuid
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tests/behavior'))
 from fixtures import prepare, dump
-from comparison import run_bounded
+from comparison import run_bounded, review_telemetry
 from safe_git import snapshot, git
 from graders import read_context, SUPPORTED
 from review_isolation import role_definitions, assess_role_probe, validate_review_capability
@@ -59,6 +59,7 @@ def validate_model_scope(events):
 
 
 def run(args):
+    trial_start = time.monotonic()
     if not os.environ.get('ANTHROPIC_BASE_URL', '').startswith('https://'):
         raise ValueError('Set the authorized HTTPS model endpoint before running trials')
     if args.case not in SUPPORTED:
@@ -210,11 +211,14 @@ print("ISOLATION_OK")'''
             if set(collector_info['NetworkSettings']['Networks']) != {network, review_net}:
                 raise ValueError('collector network attachment mismatch')
             command = ['docker', 'start', '-a', agent]
-        manifest['setup_seconds'] = time.monotonic() - start
+        manifest['setup_seconds'] = time.monotonic() - trial_start
+        manifest['host_instruction_bytes'] = len(system.encode())
+        capture_start = time.monotonic()
         observed = capture_and_stop(command, root / 'transcript.jsonl', limits, agent, worker, *([reviewer] if isolated else []))
         if isolated:
             boundary['cleanup_confirmed'] = True
             dump(root / 'review-boundary.json', boundary)
+        capture_cleanup_seconds = max(0, time.monotonic() - capture_start - observed['elapsed_seconds'])
         manifest.update(observed)
         inits, native_events = [], []
         for line in (root / 'transcript.jsonl').read_bytes().splitlines():
@@ -231,6 +235,7 @@ print("ISOLATION_OK")'''
         if not inits or any(set(e.get('tools', [])) != expected_tools for e in inits):
             raise ValueError('collector exposed unexpected native tool scope')
         manifest['builtin_plugins'] = inits[0].get('plugins', [])
+        validation_start = time.monotonic()
         if args.case in ('simple_workflow_no_pr', 'simple_workflow_lifecycle', 'multi_phase_lifecycle', 'resume_after_pr_created', 'stale_review_head', 'resume_after_merge', 'nondefault_base', 'direct_execute_scope') and not args.probe:
             validator = name + '-validator'
             validation_repo = root / 'remote.git'
@@ -267,6 +272,7 @@ sys.exit(r.returncode)'''
                     'isolation': 'fresh container, no network or credentials, read-only bare remote', 'base': initial['base'], 'head': validation_head})
             finally:
                 docker('rm', '-f', validator, check=False)
+        manifest['validation_seconds'] = time.monotonic() - validation_start
         manifest['isolation_sha256'] = hashlib.sha256((root / 'isolation.txt').read_bytes()).hexdigest()
     except Exception as exc:
         manifest.update(elapsed_seconds=time.monotonic() - start, termination_reason='harness_error', error=type(exc).__name__ + ': ' + str(exc))
@@ -285,7 +291,7 @@ sys.exit(r.returncode)'''
             remaining = docker('network', 'ls', '--filter', 'name=^' + owned_network + '$', '--format', '{{.Name}}', check=False)
             if remaining.returncode or remaining.stdout.strip():
                 cleanup_errors.append('Could not confirm network removal: ' + owned_network)
-        manifest['cleanup_seconds'] = time.monotonic() - cleanup_start
+        manifest['cleanup_seconds'] = time.monotonic() - cleanup_start + locals().get('capture_cleanup_seconds', 0)
         if cleanup_errors:
             manifest.update(termination_reason='harness_error', error='Cleanup: ' + '; '.join(cleanup_errors))
         if isolated and (root / 'review-boundary.json').exists():
@@ -295,6 +301,8 @@ sys.exit(r.returncode)'''
         if isolated:
             protected = [root / 'review-policy.json', root / 'review-boundary.json', *(root / 'review-evidence').rglob('*.json'), *(root / 'review-evidence').rglob('*.jsonl'), *(root / 'review-capsules').glob('review-*/manifest.json')]
             manifest['review_artifacts'] = {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest() for p in protected}
+            manifest['review_telemetry'] = review_telemetry(root)
+        manifest['total_wall_seconds'] = time.monotonic() - trial_start
         dump(root / 'host.json', manifest)
     return manifest
 

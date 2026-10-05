@@ -50,12 +50,14 @@ def preflight(docker, reviewer, network, author_network, root, source, forbidden
     if not all(n['Internal'] for n in networks):
         raise ValueError('review and author networks must be internal')
     # Test direct addresses as well as aliases: DNS separation alone is insufficient.
-    code = '''import socket, sys
-for host, port in __import__('json').loads(sys.argv[1]):
+    code = '''import json, subprocess, sys
+probe = 'import socket,sys;socket.create_connection((sys.argv[1],int(sys.argv[2])),timeout=.5).close()'
+for host, port in json.loads(sys.argv[1]):
  try:
-  socket.create_connection((host, port), timeout=.5).close()
- except OSError: continue
- raise SystemExit('Unexpected reviewer network access: ' + host)
+  result = subprocess.run([sys.executable, '-c', probe, host, str(port)], capture_output=True, timeout=2)
+ except subprocess.TimeoutExpired: continue  # Bound DNS resolution too.
+ if result.returncode == 0:
+  raise SystemExit('Unexpected reviewer network access: ' + host)
 print('REVIEW_NETWORK_OK')'''
     addresses = [['gateway', 8080], ['worker', 8090], ['1.1.1.1', 443], *forbidden]
     result = docker('exec', reviewer, 'python3', '-c', code, json.dumps(addresses))
