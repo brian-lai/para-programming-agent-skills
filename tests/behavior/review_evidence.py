@@ -58,14 +58,16 @@ def independent_approval(raw, prefix_bytes, head, repository=None):
 
 
 def approved_verdict(text):
-    """Recognize explicit unconditional decisions, not mentions of approval."""
-    lines = [re.sub(r'[*`#]', '', line).strip() for line in text.splitlines()]
-    for line in lines:
-        if re.match(r'^(?:Verdict:\s*)?approve(?:d)?\b', line, re.I):
-            if re.search(r'\b(if|after|once|pending|provided)\b|subject to|with fixes', line, re.I):
-                return False
-            return not re.search(r'\b(?:not approved|do not approve|changes requested)\b', text, re.I)
-    return False
+    """An explicit final verdict is the protocol, not free-form approval prose."""
+    clean = re.sub(r'[*`#]', '', text)
+    lines = [line.strip() for line in clean.splitlines() if line.strip()]
+    if not lines or lines[-1].upper() != 'APPROVED':
+        return False
+    # Reject contradictory decisions even when a final receipt says APPROVED.
+    negative = r'\b(?:not approved|do not approve|do not merge|changes requested|conditional approval)\b'
+    conditional = r'\b(?:approve(?:d)?|approval|merge|merging)\s+(?:is\s+)?(?:only\s+)?(?:conditional|contingent|subject to|pending|if|after|once|provided|with conditions)\b'
+    blockers = r'(?im)^\s*(?:[-:]\s*)?(?:must[ -]fix|blockers?)[ \t]*:(?![ \t]*(?:none|no|0)\b)[ \t]*\S[^\n]*'
+    return not any(re.search(pattern, clean, re.I) for pattern in (negative, conditional, blockers))
 
 
 def completed_isolated_review(events, task, prompt, head, repository):

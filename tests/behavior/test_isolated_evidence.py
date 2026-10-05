@@ -25,7 +25,7 @@ class IsolatedEvidenceTest(unittest.TestCase):
             {'type': 'assistant', 'message': {'content': [{'type': 'tool_use', 'name': 'Agent', 'id': 'task1', 'input': {'subagent_type': 'para-reviewer', 'prompt': 'Review ' + self.identity + ' ' + self.head}}]}},
             {'type': 'assistant', 'parent_tool_use_id': 'task1', 'message': {'content': [{'type': 'tool_use', 'name': 'mcp__review__Bash', 'id': 'call1', 'input': args}]}},
             {'type': 'user', 'parent_tool_use_id': 'task1', 'message': {'content': [{'type': 'tool_result', 'tool_use_id': 'call1', 'content': [{'type': 'text', 'text': json.dumps({'review_event_id': self.record['event_id'], 'result': self.record['result']})}]}]}},
-            {'type': 'user', 'message': {'content': [{'type': 'tool_result', 'tool_use_id': 'task1', 'content': 'APPROVED ' + self.head}]}}
+            {'type': 'user', 'message': {'content': [{'type': 'tool_result', 'tool_use_id': 'task1', 'content': 'Reviewed ' + self.head + '\nAPPROVED'}]}}
         ]
 
     def tearDown(self):
@@ -124,7 +124,7 @@ class IsolatedEvidenceTest(unittest.TestCase):
         self.assertEqual(code, 0, message)
 
     def test_explicit_lowercase_verdict_counts(self):
-        self.events[-1]['message']['content'][0]['content'] = '**Verdict: approve. I found no blockers.**\nReviewed target: ' + self.head
+        self.events[-1]['message']['content'][0]['content'] = 'Reviewed target: ' + self.head + '\nNo blockers.\napproved'
         self.assertTrue(self.eligible())
 
     def test_conditional_or_negative_verdict_does_not_count(self):
@@ -132,3 +132,23 @@ class IsolatedEvidenceTest(unittest.TestCase):
             with self.subTest(text=text):
                 self.events[-1]['message']['content'][0]['content'] = text + '\n' + self.head
                 self.assertFalse(self.eligible())
+
+    def test_conditional_verdict_rejected_at_merge(self):
+        from github_stub import GithubStub
+        from unittest.mock import patch
+        (self.root / 'review-policy.json').write_text('{}')
+        for text in ('APPROVED with conditions: fix the remaining blocker.',
+                     'APPROVED\nApproval is contingent on fixing the remaining blocker.',
+                     'Approval is contingent on fixing the remaining blocker.\nAPPROVED',
+                     'MUST FIX: missing validation\nAPPROVED'):
+            with self.subTest(text=text):
+                self.events[-1]['message']['content'][0]['content'] = text
+                (self.root / 'transcript.jsonl').write_text(''.join(json.dumps(e) + '\n' for e in self.events))
+                with patch('github_stub.validate_isolation', return_value={}):
+                    code, message = GithubStub(self.root).call(['pr', 'merge', '1', '--match-head-commit', self.head])
+                self.assertEqual(code, 1, message)
+                self.assertEqual(json.loads((self.root / 'service/state.json').read_text())['prs'][0]['state'], 'OPEN')
+
+    def test_explicit_no_blockers_with_final_receipt(self):
+        self.events[-1]['message']['content'][0]['content'] = 'MUST FIX: None.\nBlockers: 0\nAPPROVED'
+        self.assertTrue(self.eligible())

@@ -193,7 +193,7 @@ class GithubStub:
                             validate_isolation(self.root, final=False)
                             bindings = []
                             if not isolated_approval(self.root, path.read_bytes(), transcript_prefix, guard, bindings):
-                                effect = 'rejected_review';raise ValueError('completed isolated review for this exact head required')
+                                effect = 'rejected_review';raise ValueError('completed isolated review for this exact head required; end the review with standalone APPROVED or CHANGES REQUESTED, with no unresolved conditions')
                             observed['review_bindings'] = bindings
                         base_sha = git(self.remote, 'rev-parse', pr['baseRefName'])
                         # A real Git merge result, including the current base ancestry.
