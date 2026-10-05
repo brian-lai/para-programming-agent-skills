@@ -7,10 +7,12 @@ import select
 import socket
 import socketserver
 import sys
+import subprocess
 import threading
 import urllib.parse
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from github_stub import GithubStub
+from review_isolation import prepare_review
 
 ROOT = Path(sys.argv[1]).resolve()
 API = urllib.parse.urlsplit(os.environ['ANTHROPIC_BASE_URL'])
@@ -43,13 +45,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 remote.close()
 
     def do_POST(self):
-        if self.path != '/gh':
+        if self.path not in ('/gh', '/prepare-review'):
             self.send_error(404);return
         try:
             size = int(self.headers.get('Content-Length', 0))
             if size < 1 or size > 100000:
                 raise ValueError('invalid request size')
             value = json.loads(self.rfile.read(size))
+            if self.path == '/prepare-review':
+                with LOCK:
+                    body = json.dumps(prepare_review(ROOT, value)).encode()
+                self.send_response(200);self.send_header('Content-Type', 'application/json');self.send_header('Content-Length', str(len(body)));self.end_headers();self.wfile.write(body)
+                return
             cwd = Path(value['cwd']).resolve()
             if not cwd.is_relative_to(ROOT / 'repo') or not all(isinstance(x, str) for x in value['args']):
                 raise ValueError('invalid checkout or arguments')
@@ -57,7 +64,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 code, output = GithubStub(ROOT).call(value['args'], cwd)
             body = json.dumps({'code': code, 'output': output}).encode()
             self.send_response(200);self.send_header('Content-Type', 'application/json');self.send_header('Content-Length', str(len(body)));self.end_headers();self.wfile.write(body)
-        except (ValueError, KeyError, OSError) as exc:
+        except (ValueError, KeyError, OSError, subprocess.SubprocessError) as exc:
             self.send_error(400, str(exc))
 
 

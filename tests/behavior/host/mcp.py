@@ -13,6 +13,18 @@ TOOL = {'name': 'Bash', 'description': 'Run a shell command in the isolated fixt
             'command': {'type': 'string'}, 'cwd': {'type': 'string', 'description': 'Optional absolute working directory.'},
             'timeout': {'type': 'integer', 'description': 'Command timeout in seconds, at most 120.'}}, 'required': ['command']}}
 
+PREPARE = {'name': 'PrepareReview', 'description': 'Create an immutable review capsule for the current PR head or active plans. Pass the returned review_id to the independent reviewer.',
+           'inputSchema': {'type': 'object', 'properties': {'mode': {'enum': ['pr', 'plan']},
+               'pr_number': {'type': 'integer'}, 'expected_head': {'type': 'string'},
+               'plan_paths': {'type': 'array', 'items': {'type': 'string'}}}, 'required': ['mode']}}
+
+
+def prepare_call(arguments):
+    request = urllib.request.Request('http://gateway:8080/prepare-review', data=json.dumps(arguments).encode(), headers={'Content-Type': 'application/json'})
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    with opener.open(request, timeout=135) as response:
+        return response.read(2100000).decode('utf-8', errors='replace')
+
 
 def worker_call(arguments):
     request = urllib.request.Request('http://worker:8090/execute', data=json.dumps(arguments).encode(), headers={'Content-Type': 'application/json'})
@@ -22,7 +34,7 @@ def worker_call(arguments):
         return response.read(2100000).decode('utf-8', errors='replace')
 
 
-def handle(message):
+def handle(message, role='legacy'):
     method = message.get('method')
     if 'id' not in message:
         return None
@@ -32,7 +44,12 @@ def handle(message):
     elif method == 'ping':
         result = {}
     elif method == 'tools/list':
-        result = {'tools': [TOOL]}
+        result = {'tools': [TOOL, PREPARE] if role == 'author' else [TOOL]}
+    elif method == 'tools/call' and role == 'author' and message.get('params', {}).get('name') == 'PrepareReview':
+        try:
+            result = {'content': [{'type': 'text', 'text': prepare_call(message['params'].get('arguments', {}))}]}
+        except (OSError, ValueError) as exc:
+            result = {'content': [{'type': 'text', 'text': str(exc)}], 'isError': True}
     elif method == 'tools/call' and message.get('params', {}).get('name') == 'Bash':
         try:
             payload = worker_call(message['params'].get('arguments', {}))
@@ -47,7 +64,7 @@ def handle(message):
 def main():
     for line in sys.stdin:
         try:
-            response = handle(json.loads(line))
+            response = handle(json.loads(line), 'author' if '--author' in sys.argv else 'legacy')
         except (ValueError, KeyError, TypeError) as exc:
             response = {'jsonrpc': '2.0', 'id': None, 'error': {'code': -32600, 'message': str(exc)}}
         if response is not None:

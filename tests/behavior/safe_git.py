@@ -22,18 +22,23 @@ def directory(path):
         os.close(fd)
 
 
-def read_file(fd, name):
+def read_file(fd, name, max_bytes=None):
     source = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=fd)
     try:
         if not stat.S_ISREG(os.fstat(source).st_mode):
             raise ValueError('nonregular Git data')
+        if max_bytes is not None and os.fstat(source).st_size > max_bytes:
+            raise ValueError('Git snapshot exceeds byte limit')
         with os.fdopen(os.dup(source), 'rb') as stream:
-            return stream.read()
+            data = stream.read() if max_bytes is None else stream.read(max_bytes + 1)
+        if max_bytes is not None and len(data) > max_bytes:
+            raise ValueError('Git snapshot exceeds byte limit')
+        return data
     finally:
         os.close(source)
 
 
-def collect(fd, prefix=''):
+def collect(fd, prefix='', budget=None):
     result = {}
     for name in os.listdir(fd):
         rel = prefix + name
@@ -41,13 +46,15 @@ def collect(fd, prefix=''):
         if stat.S_ISDIR(info.st_mode):
             child = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
             try:
-                result.update(collect(child, rel + '/'))
+                result.update(collect(child, rel + '/', budget))
             finally:
                 os.close(child)
         elif stat.S_ISREG(info.st_mode):
             # Object alternates can refer outside the fixture; never load them.
             if rel not in ('objects/info/alternates', 'objects/info/http-alternates'):
-                result[rel] = read_file(fd, name)
+                result[rel] = read_file(fd, name, None if budget is None else budget[0])
+                if budget is not None:
+                    budget[0] -= len(result[rel])
         else:
             raise ValueError('nonregular Git data: ' + rel)
     return result
@@ -77,9 +84,10 @@ def git_paths(repo):
     return repo, local, common
 
 
-def snapshot(repo, target):
+def snapshot(repo, target, max_bytes=None):
     repo, local, common = git_paths(repo)
     data = {}
+    budget = None if max_bytes is None else [max_bytes]
     with directory(common) as root:
         for name in ('objects', 'refs', 'worktrees'):
             try:
@@ -87,18 +95,22 @@ def snapshot(repo, target):
             except FileNotFoundError:
                 continue
             try:
-                data.update(collect(child, name + '/'))
+                data.update(collect(child, name + '/', budget))
             finally:
                 os.close(child)
         for name in ('packed-refs',):
             try:
-                data[name] = read_file(root, name)
+                data[name] = read_file(root, name, None if budget is None else budget[0])
+                if budget is not None:
+                    budget[0] -= len(data[name])
             except FileNotFoundError:
                 pass
     with directory(local) as root:
         for name in ('HEAD', 'index'):
             try:
-                data[name] = read_file(root, name)
+                data[name] = read_file(root, name, None if budget is None else budget[0])
+                if budget is not None:
+                    budget[0] -= len(data[name])
             except FileNotFoundError:
                 pass
     for name, content in data.items():

@@ -27,3 +27,9 @@ class McpBoundaryTest(unittest.TestCase):
     def test_only_shell_worker_tool_is_exposed(self):
         response = mcp.handle({'id': 2, 'method': 'tools/list'})
         self.assertEqual([t['name'] for t in response['result']['tools']], ['Bash'])
+
+    def test_prepare_review_has_fixed_endpoint_and_no_shell_execution(self):
+        with patch.object(mcp, 'prepare_call', return_value='{"review_id":"review-1"}') as prepare, patch.object(mcp, 'worker_call') as shell:
+            result = mcp.handle({'id': 7, 'method': 'tools/call', 'params': {'name': 'PrepareReview', 'arguments': {'mode': 'pr', 'pr_number': 1, 'expected_head': 'a' * 40}}}, role='author')
+        prepare.assert_called_once();shell.assert_not_called()
+        self.assertIn('review-1', result['result']['content'][0]['text'])
