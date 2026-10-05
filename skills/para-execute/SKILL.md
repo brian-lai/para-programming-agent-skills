@@ -21,7 +21,7 @@ para-execute --no-worktree
 2. For phased work, resolve the requested/current phase and verify prerequisite merges are included in the selected base. For simple plans, reject `--phase` rather than inventing phases.
 3. Resolve the repository remote and base branch; fetch it and record its starting SHA. Preserve unrelated dirty files. Reuse an existing matching branch/worktree after checking identity; otherwise create `.para-worktrees/{task-name}` on `para/{task-name}` from the resolved base (append `-phase-N` for phases).
 4. With `--no-worktree`, create/reuse the execution branch in the current checkout only when switching preserves existing work. Ensure `.para-worktrees/` is ignored before creating a worktree.
-5. Extract only Implementation Steps checkboxes as todos. Preserve metadata and record branch/path/base evidence. No active plan: recommend the `para-plan` skill. Missing or ambiguous steps/contracts: resolve the gap before implementing.
+5. Extract only Implementation Steps checkboxes as todos. Preserve metadata. Simple tasks use `execution_branch`, `worktree_path` and `execution.base`; phased tasks use the selected phase’s `branch`, `worktree_path` and `execution.base`. No active plan: recommend the `para-plan` skill. Missing or ambiguous steps/contracts: resolve the gap before implementing.
 
 See `../para-init/references/context-schema.md` for root resolution, fields and lifecycle evidence.
 

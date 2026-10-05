@@ -24,3 +24,5 @@ command -v shellcheck >/dev/null 2>&1 || echo "WARN: shellcheck not found — sk
 export STRICT=1
 cd "$REPO_ROOT"
 bash "$REPO_ROOT/tests/conformance/run_all.sh"
+
+bash "$REPO_ROOT/tests/behavior/run_all.sh"

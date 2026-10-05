@@ -7,5 +7,7 @@ r=Path('skills/para-review/SKILL.md').read_text()
 assert '--match-head-commit' in s
 assert 'reviewed head' in r and 'self-review' in r
 assert 'queued' in s.lower()
+assert 'persist and reread' in s and 'Do not defer' in s
+assert 'missing or stale records block merge' in s
 print('PASS documented guarded merge and review identity')
 PY
