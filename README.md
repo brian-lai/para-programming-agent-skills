@@ -1,14 +1,44 @@
 # PARA-Programming Agent Skills
 
-Cross-client Agent Skills package for the PARA-Programming methodology.
+Cross-client development workflows and file-based agent memory, packaged as Agent Skills.
 
 **Research -> Plan -> Review -> Execute -> Review -> Summarize -> Archive**
 
 ## What Is This?
 
-PARA-Programming is a structured workflow for AI-assisted development. It keeps plans, research, execution state, reviews, summaries, and archives in a project-local `context/` directory so long-running work can survive context resets and client changes.
+PARA-Programming combines a structured development workflow with a file-based agent memory system. It preserves plans, decisions, research, progress, and outcomes in readable project-local files. Skills consult that memory to guide execution and resume interrupted work across sessions and clients.
 
 This repository packages the methodology as open-standard Agent Skills. The skill layout follows the emerging portable `SKILL.md` convention promoted by agentskills.io: each skill lives in its own directory, the directory basename matches frontmatter `name`, and assets/references stay beside the skill that owns them.
+
+## How Agent Memory Works
+
+Memory lives in the project's `context/` directory, using Markdown documents and structured progress metadata:
+
+```text
+context/
+├── context.md
+├── plans/
+├── summaries/
+├── archives/
+├── data/
+└── servers/
+```
+
+| Location | What it remembers |
+|---|---|
+| `context/context.md` | Active plan and research references, summary references, todos, blockers, and execution evidence |
+| `context/plans/` | Agreed scope, decisions, acceptance criteria, and implementation steps |
+| `context/data/` | Research findings and supporting evidence, including uncertainties and freshness notes |
+| `context/summaries/` | Changes, outcomes, lessons, and remaining work |
+| `context/archives/` | Recoverable snapshots of previous working context |
+
+These records steer work: execution follows the active plan, review checks its requirements, workflow consults recorded evidence before advancing, and status identifies the next action.
+
+Agents read the active index and retrieve supporting files as needed. Summaries retain outcomes and lessons. After verified completion, archival saves the working state and starts fresh context, retaining summary references by default. Detailed history stays available without loading it all into every task.
+
+Resuming after a reset or client change requires the agent to load relevant records and recheck facts that may have changed, such as PR heads and merge status. A summary alone does not establish that work has merged.
+
+See the [context contract](skills/para-init/references/context-schema.md) for fields and recovery rules, and the [methodology](docs/METHODOLOGY.md) for the lifecycle. [resources/AGENTS.md](resources/AGENTS.md) supplies the shared workflow guidance.
 
 ## Supported Clients
 
@@ -76,22 +106,6 @@ Preview the install without writes:
 ```bash
 ./scripts/install.sh --dry-run
 ```
-
-## Project Context
-
-The workflow creates project-local context files:
-
-```text
-context/
-├── context.md
-├── plans/
-├── summaries/
-├── archives/
-├── data/
-└── servers/
-```
-
-`resources/AGENTS.md` contains the global PARA workflow methodology template. `docs/METHODOLOGY.md` explains the rationale and lifecycle in detail.
 
 ## Adapted From
 
