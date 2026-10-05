@@ -14,6 +14,16 @@ This repository packages the methodology as open-standard Agent Skills. The skil
 
 Memory lives in the project's `context/` directory, using Markdown documents and structured progress metadata:
 
+```text
+context/
+├── context.md
+├── plans/
+├── summaries/
+├── archives/
+├── data/
+└── servers/
+```
+
 | Location | What it remembers |
 |---|---|
 | `context/context.md` | Active plan and research references, summary references, todos, blockers, and execution evidence |
