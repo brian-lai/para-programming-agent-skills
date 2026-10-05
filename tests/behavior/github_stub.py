@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 import time
 from fixtures import dump
+from review_evidence import isolated_approval, validate_isolation
 from safe_git import git, ancestor
 
 
@@ -188,6 +189,12 @@ class GithubStub:
                             effect = 'rejected_stale';raise ValueError('head changed; re-establish review/check eligibility')
                         if not state['checks_pass']:
                             effect = 'rejected_checks';raise ValueError('required checks failed')
+                        if (self.root / 'review-policy.json').exists():
+                            validate_isolation(self.root, final=False)
+                            bindings = []
+                            if not isolated_approval(self.root, path.read_bytes(), transcript_prefix, guard, bindings):
+                                effect = 'rejected_review';raise ValueError('completed isolated review for this exact head required')
+                            observed['review_bindings'] = bindings
                         base_sha = git(self.remote, 'rev-parse', pr['baseRefName'])
                         # A real Git merge result, including the current base ancestry.
                         if ancestor(self.remote, base_sha, guard):

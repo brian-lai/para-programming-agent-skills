@@ -5,6 +5,7 @@ import hashlib
 import io
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -91,7 +92,11 @@ def run(args):
     if isolated:
         for folder in ('review-capsules', 'review-evidence'):
             (root / folder).mkdir();(root / folder).chmod(0o777)
-        dump(root / 'review-capability.json', capability)
+        copied = root / 'review-evidence/capability';copied.mkdir()
+        for filename in ('probe.json', 'transcript.jsonl', 'model-events.jsonl'):
+            shutil.copyfile(probe_root / filename, copied / filename)
+        dump(root / 'review-policy.json', {'version': 1, 'roles': role_definitions(), 'image_id': capability['image_id']})
+        dump(root / 'review-boundary.json', {'status': 'pending'})
     (root / 'transcript.jsonl').touch()
     (root / 'service').chmod(0o777)
     for p in (root / 'service').iterdir():
@@ -140,7 +145,10 @@ def run(args):
         docker('network', 'create', '--internal', network)
         if isolated:
             docker('network', 'create', '--internal', review_net)
-        extra_gateway = ['--mount', f'type=bind,source={root / "review-capsules"},target={root / "review-capsules"}'] if isolated else []
+        extra_gateway = []
+        if isolated:
+            for path, readonly in (('review-capsules', False), ('review-evidence', True), ('review-policy.json', True), ('review-boundary.json', True)):
+                extra_gateway += ['--mount', f'type=bind,source={root / path},target={root / path}' + (',readonly' if readonly else '')]
         docker('run', '-d', '--name', gateway, '--user', '1001', '--network', 'bridge', '--cap-drop=ALL',
                '--security-opt=no-new-privileges', '--memory', '1g', '--pids-limit', '128', *extra_gateway,
                '--mount', f'type=bind,source={root / "repo"},target={root / "repo"},readonly',
@@ -219,7 +227,7 @@ print("ISOLATION_OK")'''
                 inits.append(event)
         manifest['observed_models'] = validate_model_scope(native_events)
         manifest['native_tool_scopes'] = [e.get('tools', []) for e in inits]
-        expected_tools = {'Task', *allowed}
+        expected_tools = {'Task', 'mcp__fixture__Bash', 'mcp__fixture__PrepareReview'} if isolated else {'Task', 'mcp__fixture__Bash'}
         if not inits or any(set(e.get('tools', [])) != expected_tools for e in inits):
             raise ValueError('collector exposed unexpected native tool scope')
         manifest['builtin_plugins'] = inits[0].get('plugins', [])
@@ -281,8 +289,12 @@ sys.exit(r.returncode)'''
         if cleanup_errors:
             manifest.update(termination_reason='harness_error', error='Cleanup: ' + '; '.join(cleanup_errors))
         if isolated and (root / 'review-boundary.json').exists():
+            boundary = json.loads((root / 'review-boundary.json').read_text())
             boundary['cleanup_confirmed'] = not cleanup_errors
             dump(root / 'review-boundary.json', boundary)
+        if isolated:
+            protected = [root / 'review-policy.json', root / 'review-boundary.json', *(root / 'review-evidence').rglob('*.json'), *(root / 'review-evidence').rglob('*.jsonl'), *(root / 'review-capsules').glob('review-*/manifest.json')]
+            manifest['review_artifacts'] = {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest() for p in protected}
         dump(root / 'host.json', manifest)
     return manifest
 

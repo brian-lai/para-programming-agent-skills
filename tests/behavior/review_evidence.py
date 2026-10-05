@@ -54,3 +54,108 @@ def independent_approval(raw, prefix_bytes, head, repository=None):
                re.search(r'\bAPPROVED\b', answers.get(key, '')) and
                not re.search(r'\b(?:NOT APPROVED|CHANGES REQUESTED)\b', answers.get(key, ''))
                for key, prompt in tasks.items())
+
+
+def isolated_approval(root, raw, prefix_bytes, head, bindings=None):
+    """Require protected adapter events from a completed target-bound native reviewer.
+
+    Missing/corrupt host artifacts raise ValueError (incomplete evidence). A
+    captured but absent/mismatched review returns False (ineligible approval).
+    Caller separately validates role capability and container boundary records.
+    """
+    import hashlib
+    from review_isolation import file_manifest
+    if prefix_bytes is None:
+        return False
+    events = []
+    for line in raw[:prefix_bytes].splitlines():
+        try:
+            events.append(json.loads(line))
+        except ValueError:
+            pass
+    tasks, calls, responses = {}, {}, {}
+    for event in events:
+        parent = event.get('parent_tool_use_id')
+        for part in event.get('message', {}).get('content', []):
+            if part.get('type') == 'tool_use':
+                if not parent and part.get('name') in ('Agent', 'Task') and part.get('input', {}).get('subagent_type') == 'para-reviewer':
+                    tasks[part['id']] = event
+                if parent:
+                    calls[part['id']] = (parent, part)
+            if part.get('type') == 'tool_result' and parent:
+                responses[part['tool_use_id']] = (parent, part)
+    for task, spawn in tasks.items():
+        subset = [spawn] + [e for e in events if e.get('parent_tool_use_id') == task or
+            e.get('subtype') == 'task_notification' and e.get('tool_use_id') == task or
+            any(p.get('type') == 'tool_result' and p.get('tool_use_id') == task for p in e.get('message', {}).get('content', []))]
+        packet = b''.join(json.dumps(e).encode() + b'\n' for e in subset)
+        if not independent_approval(packet, len(packet), head, root / 'remote.git'):
+            continue
+        task_calls = [(key, part) for key, (parent, part) in calls.items() if parent == task]
+        if not task_calls or any(p.get('name') != 'mcp__review__Bash' for _, p in task_calls):
+            continue
+        useful, valid, associated = 0, True, []
+        for key, part in task_calls:
+            response = responses.get(key)
+            if not response or response[0] != task:
+                valid = False;break
+            if response[1].get('is_error'):
+                continue  # A captured rejected call grants no evidence of inspection.
+            content = response[1].get('content')
+            try:
+                text = content if isinstance(content, str) else '\n'.join(p['text'] for p in content if p.get('type') == 'text')
+                wrapper = json.loads(text)
+                identity = wrapper.get('review_event_id', '')
+                review_id = part.get('input', {}).get('review_id', '')
+                if not re.fullmatch('event-[0-9a-f]{32}', identity) or not re.fullmatch('review-[0-9a-f]{32}', review_id):
+                    valid = False;break
+                path = root / 'review-evidence/events' / (identity + '.json')
+                record = json.loads(path.read_text())
+                if (record.get('version') != 1 or record.get('event_id') != identity or record.get('input') != part['input']
+                        or record.get('result') != wrapper.get('result') or 'finished' not in record or record.get('error')):
+                    valid = False;break
+                capsule_path = root / 'review-capsules' / review_id
+                capsule = json.loads((capsule_path / 'manifest.json').read_text())
+                if capsule.get('mode') != 'pr' or capsule.get('target') != head or capsule.get('review_id') != review_id:
+                    valid = False;break
+                original_digest = capsule.pop('manifest_digest')
+                if hashlib.sha256(json.dumps(capsule, sort_keys=True).encode()).hexdigest() != original_digest:
+                    raise ValueError('capsule manifest hash mismatch')
+                files = file_manifest(capsule_path);files.pop('manifest.json')
+                if files != capsule['files'] or hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest() != capsule['capsule_digest']:
+                    raise ValueError('capsule content hash mismatch')
+                worker = json.loads(record['result'])
+                if worker.get('exit_code') == 0:
+                    useful += 1
+                    associated.append({'version': 1, 'trial_id': root.name, 'review_id': review_id, 'native_task_id': task,
+                        'native_tool_id': key, 'event_id': identity, 'target': head, 'manifest_digest': original_digest,
+                        'event_sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
+            except (OSError, KeyError, TypeError) as exc:
+                raise ValueError('missing or invalid isolated review evidence: ' + str(exc)) from exc
+        if valid and useful:
+            if bindings is not None:
+                bindings.extend(associated)
+            return True
+    return False
+
+
+def validate_isolation(root, final=True):
+    """Validate protected trial records; absence never upgrades a legacy capture."""
+    from review_isolation import role_definitions, validate_review_capability, assess_role_probe
+    try:
+        policy = json.loads((root / 'review-policy.json').read_text())
+        boundary = json.loads((root / 'review-boundary.json').read_text())
+        capability_root = root / 'review-evidence/capability'
+        capability = json.loads((capability_root / 'probe.json').read_text())
+        events = [json.loads(line) for line in (capability_root / 'transcript.jsonl').read_text().splitlines()]
+        pools = [json.loads(line) for line in (capability_root / 'model-events.jsonl').read_text().splitlines()]
+        validate_review_capability(assess_role_probe(events, pools))
+        if (policy.get('version') != 1 or policy.get('roles') != role_definitions()
+                or capability.get('status') != 'verified' or capability.get('roles') != policy['roles']
+                or capability.get('image_id') != policy.get('image_id')
+                or boundary.get('version') != 1 or boundary.get('status') != 'verified'
+                or final and boundary.get('cleanup_confirmed') is not True):
+            raise ValueError('unverified or inconsistent reviewer boundary')
+        return policy
+    except (OSError, KeyError, TypeError) as exc:
+        raise ValueError('missing isolation evidence: ' + str(exc)) from exc

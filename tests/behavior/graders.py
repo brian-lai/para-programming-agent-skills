@@ -5,7 +5,7 @@ from pathlib import Path
 import re
 import subprocess
 from safe_git import git, ancestor
-from review_evidence import independent_approval
+from review_evidence import independent_approval, isolated_approval, validate_isolation
 
 
 def read_context(path):
@@ -126,8 +126,20 @@ def _grade(root, result):
         if not lines:
             native_errors.append('empty native transcript')
         result['evidence_errors'] = native_errors
-        if host['evidence_kind'] == 'native_agent' and host['settings'].get('isolation') != 'separate-collector-and-shell-containers-mcp-text-boundary':
+        if host['evidence_kind'] == 'native_agent' and host['settings'].get('isolation') not in ('separate-collector-and-shell-containers-mcp-text-boundary', 'immutable-review-worker-v1'):
             result['evidence_errors'].append('native transcript lacks the required collector/tool process boundary')
+        isolated = host['settings'].get('isolation') == 'immutable-review-worker-v1'
+        if isolated:
+            try:
+                validate_isolation(root)
+                if host['settings'].get('review_evidence_version') != 1 or not host.get('review_artifacts'):
+                    raise ValueError('missing versioned protected review manifest')
+                for name, sha in host['review_artifacts'].items():
+                    path = root / name
+                    if not path.resolve().is_relative_to(root) or digest(path) != sha:
+                        raise ValueError('review artifact mismatch: ' + name)
+            except (ValueError, OSError) as exc:
+                result['evidence_errors'].append(str(exc))
         state = json.loads((root / 'service/state.json').read_text())
         events, service_errors = read_jsonl(root / 'service/events.jsonl') if (root / 'service/events.jsonl').exists() else ([], [])
         result['evidence_errors'] += service_errors
@@ -215,6 +227,12 @@ def _grade(root, result):
         check('merge_review_target', any(x.get('target') == sha and x.get('status') == 'approved' and x.get('mode') == 'independent' for x in eligible), f'pre-merge context PR {after["number"]}, head {sha}', True)
         check('independent_review_observed', independent_approval((root / 'transcript.jsonl').read_bytes(),
               e.get('transcript_prefix_bytes'), sha, root / 'remote.git'), 'completed target reviewer in native prefix before merge', True)
+        if isolated:
+            try:
+                approved = isolated_approval(root, (root / 'transcript.jsonl').read_bytes(), e.get('transcript_prefix_bytes'), sha)
+                check('isolated_review_verified', approved, 'native task, protected tool events and immutable exact-head capsule', True)
+            except ValueError as exc:
+                result['evidence_errors'].append(str(exc))
     for pr in prs:
         if pr['state'] == 'MERGED':
             commit = (pr.get('mergeCommit') or {}).get('oid')
