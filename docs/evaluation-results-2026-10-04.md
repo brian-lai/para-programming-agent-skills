@@ -2,6 +2,8 @@
 
 ## Status
 
+Historical measured-v5 campaign. Its failures remain retained below. The [subsequent enforced-review campaign](evaluation-results-isolated-2026-10-04.md) evaluates the approved correction separately.
+
 All 72 frozen trials were collected (60 core, 12 previously exposed regression cases). The user confirmed the reference scoring labels; an independent agent scored all 18 planning/review/status outputs against them. **The zero-critical acceptance gate is unmet.** Corrected grading yields candidate **34/36 passes, two critical failures**, and baseline **13/36 passes**. Both candidate failures are restored primary-checkout mutations by reviewers. Both arms pass all 18 independently checked implementations; no baseline-pass/candidate-fail pair was observed. PR merge is on hold pending an explicit disposition of the unmet gate.
 
 ## Protocol

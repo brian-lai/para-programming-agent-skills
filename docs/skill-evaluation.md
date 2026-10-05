@@ -2,7 +2,7 @@
 
 These development tools evaluate instructions; installed skills do not depend on them. Structural tests check packaging and declared contracts. Fixture/grader tests exercise the evaluation machinery. Only recorded runs of an actual agent host count as behavioral trials.
 
-See the [dated results report](evaluation-results-2026-10-04.md) for the measured regression campaign, costs and limitations.
+See the [enforced-review results](evaluation-results-isolated-2026-10-04.md) for the latest regression campaign, costs and limitations. The [original shared-tool results](evaluation-results-2026-10-04.md) retain the two reviewer checkout failures that prompted the correction.
 
 ## Inputs and evidence
 
