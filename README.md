@@ -4,6 +4,8 @@ Cross-client development workflows and file-based agent memory, packaged as Agen
 
 **Research -> Plan -> Review -> Execute -> Review -> Summarize -> Archive**
 
+Read the [PARA loop walkthrough](docs/METHODOLOGY.md#the-para-loop-step-by-step) for what each step does, when the worktree is created, and how phased work and merge authorization work.
+
 ## What Is This?
 
 PARA-Programming combines a structured development workflow with a file-based agent memory system. It preserves plans, decisions, research, progress, and outcomes in readable project-local files. Skills consult that memory to guide execution and resume interrupted work across sessions and clients.
