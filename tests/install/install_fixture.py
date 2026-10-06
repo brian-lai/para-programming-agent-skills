@@ -46,7 +46,8 @@ class InstallFixture(unittest.TestCase):
         env = {k: v for k, v in os.environ.items() if not k.startswith('GIT_')}
         env.update(GIT_AUTHOR_NAME='Fixture', GIT_AUTHOR_EMAIL='fixture@example.test',
                    GIT_COMMITTER_NAME='Fixture', GIT_COMMITTER_EMAIL='fixture@example.test')
-        return subprocess.run(['git', '-c', 'commit.gpgsign=false', '-c', 'core.hooksPath=/dev/null', *args], cwd=cwd, env=env, check=True,
+        return subprocess.run(['git', '-c', 'commit.gpgsign=false', '-c', 'core.hooksPath=/dev/null',
+                               '-c', 'core.excludesFile=/dev/null', *args], cwd=cwd, env=env, check=True,
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
     def install(self, *args, ok=True, env=None, source=None):

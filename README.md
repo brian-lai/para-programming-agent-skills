@@ -44,11 +44,11 @@ See the [context contract](skills/para-init/references/context-schema.md) for fi
 
 | Client | Status | Install path |
 |--------|--------|--------------|
-| OpenAI Codex | Supported out of the box | `scripts/install.sh` installs to `~/.agents/skills` and mirrors to `~/.codex/skills` |
-| Gemini CLI | Supported out of the box | Uses the same `~/.agents/skills` install written by `scripts/install.sh` |
-| Pi | Supported out of the box | Uses the same `~/.agents/skills` install written by `scripts/install.sh` |
-| OpenCode | Supported out of the box | Uses the same `~/.agents/skills` install written by `scripts/install.sh` |
-| Cursor | Supported out of the box | Uses the same `~/.agents/skills` install written by `scripts/install.sh` |
+| OpenAI Codex | Shared discovery layout | `scripts/install.sh` links into `~/.agents/skills` and `~/.codex/skills` |
+| Gemini CLI | Shared discovery layout | Uses the same `~/.agents/skills` install written by `scripts/install.sh` |
+| Pi | Shared discovery layout | Uses the same `~/.agents/skills` install written by `scripts/install.sh` |
+| OpenCode | Shared discovery layout | Uses the same `~/.agents/skills` install written by `scripts/install.sh` |
+| Cursor | Shared discovery layout | Uses the same `~/.agents/skills` install written by `scripts/install.sh` |
 | Claude Code | Use the Claude plugin | Use `github.com/brian-lai/para-programming-plugin` |
 
 For Claude Code, use the original PARA-Programming plugin: `https://github.com/brian-lai/para-programming-plugin`. This repository is the open-standard/Codex-oriented Agent Skills package.
@@ -93,19 +93,24 @@ Management commands list, reload, enable, or inspect skills; they are not portab
 
 See [INSTALL.md](INSTALL.md) for client-specific installation paths and support notes.
 
-For Codex local skill installation from a checkout:
-
-```bash
-./scripts/install.sh
-```
-
-The installer follows the current Codex Skills guide by installing user skills into `~/.agents/skills`. It also mirrors into `~/.codex/skills` for older local runtimes.
-
-Preview the install without writes:
+Run once from a **permanent Git checkout** (requires Bash, Git and `jq`):
 
 ```bash
 ./scripts/install.sh --dry-run
+./scripts/install.sh
 ```
+
+The installer creates individual symlinks for PARA skills, docs, and supporting resources in `~/.agents` and `~/.codex`. Existing copies or conflicting links are preserved in dated `para-install-backups/` directories before replacement. Unrelated skills and active global `AGENTS.md` files stay intact.
+
+After that, update the permanent checkout:
+
+```bash
+git pull --ff-only
+```
+
+Changes to existing linked entries—including new files inside a skill—are immediately visible through installed paths. Reload or restart your client as needed. New or renamed top-level skills/docs need another installer run to create their links; deleted entries leave stale links to inspect and remove manually.
+
+Keep the checkout at a stable path. Edits through installed links, including uncommitted edits, change the source checkout. Installation from disposable execution worktrees is rejected. These links do not update separately installed Claude plugin caches or active global guidance. Filesystem tests cover propagation and recovery; verify discovery in your actual client.
 
 ## Adapted From
 
