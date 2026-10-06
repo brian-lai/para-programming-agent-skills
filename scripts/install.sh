@@ -160,12 +160,13 @@ if [ -e "$REGISTRY" ] || [ -L "$REGISTRY" ]; then
 else
     OLD_JSON='{"name":"personal-plugins","interface":{"displayName":"Personal Plugins"},"plugins":[]}'
 fi
-printf '%s\n' "$OLD_JSON" | jq -e '
+printf '%s\n' "$OLD_JSON" | jq -es '
+    length == 1 and (.[0] |
     type == "object" and (.plugins | type == "array") and
     all(.plugins[]; type == "object") and
     ([.plugins[] | select(.name == "para-programming")] | length <= 1) and
     all(.plugins[] | select(.name == "para-programming");
-        .source.source == "local" and (.source.path | type == "string") and (.source.path | length > 0))
+        .source.source == "local" and (.source.path | type == "string") and (.source.path | length > 0)))
 ' >/dev/null || fail "Malformed, ambiguous or nonlocal PARA registry: $REGISTRY"
 NEW_JSON=$(printf '%s\n' "$OLD_JSON" | jq --arg path "$SOURCE" '
     if any(.plugins[]; .name == "para-programming") then

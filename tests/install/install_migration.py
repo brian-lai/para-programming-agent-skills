@@ -56,6 +56,15 @@ class Migration(InstallFixture):
             self.install(ok=False)
             self.assertEqual(snapshot(self.base), before)
 
+    def test_multiple_registry_documents_write_nothing(self):
+        for text in ('{"plugins":[]}\n{"plugins":[]}', '{"plugins":[]}\ntrue'):
+            with self.subTest(registry=text):
+                self.write(self.registry, text)
+                self.write(self.agents / 'skills/para-init/local.txt', 'preserve local copy')
+                before = snapshot(self.base)
+                self.install(ok=False)
+                self.assertEqual(snapshot(self.base), before)
+
     def test_missing_jq_writes_nothing(self):
         bin_dir = self.base / 'minimal-bin'
         bin_dir.mkdir()
