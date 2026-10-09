@@ -23,7 +23,7 @@ para-review --approve
 2. Spawn a fresh subagent with a small packet: requirements, artifact/diff, relevant source/check evidence and prior issue ledger. Exclude author conversation when the host supports it; report capability limits. A fresh context reduces shared assumptions but does not guarantee correctness or eliminate anchoring from the ledger; never continue a previous reviewer as a new independent round.
 3. If independent review is unavailable, report it. A disclosed self-review can provide feedback but cannot satisfy the independent gate without an explicit user override. Do not fabricate a reviewer or approval.
 
-Keep source, context and Git metadata read-only; run write-requiring tests in disposable scratch. Record host isolation as verified, unavailable or unknown. A prompt, fresh agent or worktree does not enforce this boundary. If required enforcement is unavailable, report the limitation and leave that gate unsatisfied. Host setup is documented separately.
+Keep source, context and Git metadata read-only; run write-requiring tests in disposable scratch. This is an instruction to the reviewer. Host-enforced read-only access is optional: its absence must not block approval, downgrade a review to advisory, or require a user override. Ordinary reviews need no host-isolation capability report. Return the findings and target-bound verdict without claiming technical enforcement.
 
 ## Evidence rubric
 
