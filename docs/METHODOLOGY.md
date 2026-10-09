@@ -44,7 +44,7 @@ Default workflow mode asks before merging or advancing to the next phase unless 
 
 Independent review checks artifacts against requirements and evidence. A fresh reviewer may still be influenced by its input packet; no persona guarantees correctness. Record the reviewed head, distinguish user override/skip from approval, and retain required check gates. Use an expected-head merge guard so a concurrent push cannot silently substitute an unreviewed commit. A queued request is not yet a merge.
 
-Each correction loop escalates unresolved blockers after five rounds, or sooner if two consecutive rounds produce the same MUST FIX issues. Every independent round uses a fresh reviewer. Review reports host isolation as verified, unavailable or unknown; a separate conversation or worktree alone does not enforce read-only access. If required enforcement is unavailable, that gate remains unsatisfied. See [reviewer isolation](reviewer-isolation.md) for the evaluation host's enforced boundary.
+Each correction loop escalates unresolved blockers after five rounds, or sooner if two consecutive rounds produce the same MUST FIX issues. Every independent round uses a fresh reviewer. Reviewers are instructed to leave source, context and Git metadata unchanged and use disposable scratch for tests needing writes. Approval depends on the independent review findings and reviewed target; it does not require host-enforced read-only permissions. Write-capable tools alone do not make a review advisory or require an override or capability report. The [reviewer isolation host](reviewer-isolation.md) is optional evaluation infrastructure, not a prerequisite for ordinary PARA review.
 
 ## Interruption and recovery
 
