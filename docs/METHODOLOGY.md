@@ -26,7 +26,7 @@ The complete sequence is:
 | 6. Review PR | [`para-review --pr`](../skills/para-review/SKILL.md) checks actual changes against the plan and evidence. Supported fixes are applied, affected checks rerun, and changes pushed. Approval belongs to a specific head SHA; a changed head needs renewed review eligibility. |
 | 7. Summarize | [`para-summarize`](../skills/para-summarize/SKILL.md) inspects committed changes against the base and writes a dated report under `context/summaries/`, covering changes, rationale, observed validation and remaining work. A summary alone does not establish completion. |
 | 8. Merge | `para-workflow` verifies saved PR identity, review eligibility for the current head, the summary, successful required checks and authorization. It submits a merge guarded by the validated head SHA, then verifies that the remote merge actually happened. A queued merge remains pending. |
-| 9. Cleanup / archive | [`para-archive`](../skills/para-archive/SKILL.md) removes only clean, verified task worktrees after merge and summary. Final archival saves a recoverable context snapshot and creates fresh context, retaining summary references by default. Dirty or unfinished work is preserved. |
+| 9. Cleanup / archive | [`para-archive`](../skills/para-archive/SKILL.md) archives completed plan files and a recoverable context snapshot after verified merge and summary, then removes only clean, verified task worktrees. It creates fresh context only after cleanup succeeds, retaining summary references by default. Dirty or unfinished work is preserved and blocks a completed workflow result. |
 
 For testable behavior, execution observes a meaningful failing test before implementing the fix. Required checks pass before committing each todo. Documentation and configuration changes without meaningful behavioral tests use structural or manual validation. A commit's existence does not prove the order in which tests were authored.
 
@@ -36,7 +36,7 @@ Research, plans, progress and summaries continue to use the **primary checkout's
 
 Use `para-workflow` after planning and plan review to run execution through PR preparation, review, summary, merge and archival. Direct skills perform their own operation and return: standalone `para-execute` does not push or create a PR; standalone review and summary do not launch the rest of the lifecycle.
 
-A simple plan runs the execution-to-cleanup sequence once. A phased plan repeats it for each independently mergeable phase. Each phase gets its own branch/worktree with a `-phase-N` suffix, PR, review, summary and verified merge. The next dependent phase starts from an updated base containing its prerequisite merges. Phase cleanup retains pending plans and evidence; one final archive closes the whole task.
+A simple plan runs the execution-to-cleanup sequence once. A phased plan repeats it for each independently mergeable phase. Each phase gets its own branch/worktree with a `-phase-N` suffix, PR, review, summary and verified merge. The workflow removes and verifies each phase worktree before advancing to the next dependent phase, which starts from an updated base containing its prerequisite merges. Phase cleanup retains pending plans and evidence; one final archive moves all completed task plans to a collision-safe archive location and closes the whole task.
 
 Default workflow mode asks before merging or advancing to the next phase unless those actions are already authorized. `para-workflow --auto` authorizes those transitions for the run while retaining review and required-check gates. Existing authorization is preserved, so it should not prompt repeatedly for the same permission.
 
@@ -50,7 +50,7 @@ Each correction loop escalates unresolved blockers after five rounds, or sooner 
 
 Context records intent and observed results. On resume, query Git/GitHub before repeating side effects. Reuse existing PRs, reconcile commits that preceded failed metadata writes, and verify remote merges before advancement. Legacy completion strings without evidence do not authorize new actions.
 
-Archive only merged/summarized work. Phase cleanup preserves other phases; final archival reserves a unique destination, saves a snapshot, and initializes fresh context. Dirty worktrees, uncertain identity and missing merge evidence block dependent cleanup. Archives and branches support recovery.
+Archive only merged/summarized work. Phase cleanup preserves other phases and records removed-path evidence. Final archival reserves collision-safe snapshot and plan destinations, records a receipt with plan hashes and the complete task-worktree inventory, and initializes fresh context only after every task worktree is verified absent. The workflow independently checks the receipt, archived plan files, fresh active references and Git's worktree list before reporting completion. Dirty worktrees, uncertain identity and missing merge evidence block dependent cleanup. Archives and branches support recovery.
 
 ## Context cost and validation
 
