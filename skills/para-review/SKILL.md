@@ -1,8 +1,6 @@
 ---
 name: para-review
 description: Independently review a plan or existing PR against requirements and evidence, with target-bound results and a capped correction loop.
-model: opus
-effort: high
 ---
 
 Review the requested artifact for consequential defects. Return the result to the caller; workflow owns subsequent lifecycle steps.

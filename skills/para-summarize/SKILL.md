@@ -1,8 +1,6 @@
 ---
 name: para-summarize
 description: Summarize actual branch changes and validation for a task or phase, preserving unmerged work and returning the report to its caller.
-model: sonnet
-effort: medium
 ---
 
 Record the actual changes, rationale, validation and remaining work for a task or phase.

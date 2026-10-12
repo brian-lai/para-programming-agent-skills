@@ -1,8 +1,6 @@
 ---
 name: para-plan
 description: Plan a repository change using inspected evidence and focused clarification; produce a simple or phased plan with concrete acceptance criteria before execution.
-model: opus
-effort: high
 ---
 
 Create an implementation-ready plan proportional to the requested change. Planning writes primary-context artifacts; source changes begin during execution.

@@ -1,8 +1,6 @@
 ---
 name: para-init
 description: Initialize PARA-Programming structure in the current project. Use when setting up a new repo for PARA workflow, creating context/ directory, or bootstrapping AGENTS.md.
-model: haiku
-effort: low
 ---
 
 Initialize only missing PARA structure, preserving existing context and project guidance.

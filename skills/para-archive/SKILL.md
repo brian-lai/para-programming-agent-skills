@@ -1,8 +1,6 @@
 ---
 name: para-archive
 description: Archive completed plans and context, remove verified worktrees, and reset context while preserving summaries and recoverable state.
-model: haiku
-effort: low
 ---
 
 Archive completed plans and context, and clean up verified completed work without losing pending tasks or user changes. Final archival is complete only when its receipt and task-worktree removals are verified.

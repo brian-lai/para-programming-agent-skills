@@ -1,8 +1,6 @@
 ---
 name: para-workflow
 description: Orchestrate simple or phased plans through execution, PR preparation, review, summary, merge and archival, with resumable evidence and optional auto mode.
-model: sonnet
-effort: medium
 ---
 
 Run the lifecycle for an active simple or phased plan: execute → prepare PR → review → summarize → merge → archive and cleanup. A successful merge does not complete the workflow until final archival and eligible task-worktree cleanup are verified.

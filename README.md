@@ -12,6 +12,8 @@ PARA-Programming combines a structured development workflow with a file-based ag
 
 This repository packages the methodology as open-standard Agent Skills. The skill layout follows the emerging portable `SKILL.md` convention promoted by agentskills.io: each skill lives in its own directory, the directory basename matches frontmatter `name`, and assets/references stay beside the skill that owns them.
 
+Skills do not select a model or effort level in frontmatter. The active agent host controls those settings, so the same skill content can run across supported providers.
+
 ## How Agent Memory Works
 
 Memory lives in the project's `context/` directory, using Markdown documents and structured progress metadata:

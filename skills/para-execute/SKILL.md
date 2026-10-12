@@ -1,8 +1,6 @@
 ---
 name: para-execute
 description: Execute the active plan by creating an isolated git worktree and tracking todos. Supports simple and phased plans with TDD-first commit-per-todo discipline.
-model: sonnet
-effort: medium
 ---
 
 Implement the active plan in an isolated checkout. Direct execution returns implementation results; use the `para-workflow` skill to prepare a PR and complete the lifecycle.
