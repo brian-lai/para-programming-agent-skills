@@ -1,8 +1,6 @@
 ---
 name: para-help
 description: Display the PARA-Programming quick-reference guide with all 11 skills and the Research→Plan→Review→Execute→Review→Summarize→Archive workflow.
-model: haiku
-effort: low
 ---
 
 Display the PARA-Programming quick-reference guide.

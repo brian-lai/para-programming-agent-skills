@@ -1,8 +1,6 @@
 ---
 name: para-check
 description: Decision helper to determine if PARA workflow should be used for a given request. Triages tasks into PARA-worthy vs direct-answer categories.
-model: haiku
-effort: low
 ---
 
 Triage the request against the project's branch/PR policy.

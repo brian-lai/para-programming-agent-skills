@@ -1,8 +1,6 @@
 ---
 name: para-execute
 description: Execute the active plan by creating an isolated git worktree and tracking todos. Supports simple and phased plans with TDD-first commit-per-todo discipline.
-model: sonnet
-effort: medium
 ---
 
 Implement the active plan in an isolated checkout. Direct execution returns implementation results; use the `para-workflow` skill to prepare a PR and complete the lifecycle.
@@ -17,7 +15,7 @@ para-execute --no-worktree
 
 ## Prepare
 
-1. Read the active plan and relevant contract/research from the primary checkout's `context/context.md`. Resolve the context root using Git worktree metadata, not a possibly stale worktree-local copy. Ask only when task/root identity is ambiguous.
+1. Read the selected plan and relevant contract/research from the primary checkout's `context/context.md`. Resolve the context root using Git worktree metadata, not a possibly stale worktree-local copy. For simple tasks, follow `../para-init/references/simple-plan-binding.md` and persist/reread `execution.plan` before implementation. If ../para-init/references/simple-plan-binding.md is not available in this install, stop unless an exact binding is already recorded. Phased work uses explicit master/phase records and does not set `execution.plan`.
 2. For phased work, resolve the requested/current phase and verify prerequisite merges are included in the selected base. For simple plans, reject `--phase` rather than inventing phases.
 3. Resolve the repository remote and base branch; fetch it and record its starting SHA. Preserve unrelated dirty files. Reuse an existing matching branch/worktree after checking identity; otherwise create `.para-worktrees/{task-name}` on `para/{task-name}` from the resolved base (append `-phase-N` for phases).
 4. With `--no-worktree`, create/reuse the execution branch in the current checkout only when switching preserves existing work. Ensure `.para-worktrees/` is ignored before creating a worktree.

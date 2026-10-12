@@ -34,12 +34,14 @@
         "skills/para-summarize/assets/summary-template.md",
         "skills/para-archive/SKILL.md",
         "skills/para-init/assets/context-template.md",
-        "skills/para-init/references/context-schema.md"
+        "skills/para-init/references/context-schema.md",
+        "skills/para-init/references/simple-plan-binding.md"
       ],
       "required_resources": [
         "skills/para-summarize/assets/summary-template.md",
         "skills/para-init/assets/context-template.md",
-        "skills/para-init/references/context-schema.md"
+        "skills/para-init/references/context-schema.md",
+        "skills/para-init/references/simple-plan-binding.md"
       ]
     },
     "status": {

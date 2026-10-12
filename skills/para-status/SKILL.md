@@ -1,8 +1,6 @@
 ---
 name: para-status
 description: Display the current state of PARA context and workflow progress. Detects no-context, idle, planning, executing, and summarized states with next-step guidance.
-model: haiku
-effort: low
 ---
 
 Report workflow state and the next step without modifying files or removing worktrees.

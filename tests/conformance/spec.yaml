@@ -36,22 +36,14 @@ skill_file:
         type: object
         constraints:
           - "string keys, string values"
-          - "use for client-specific hints (e.g. model, effort for Claude Code)"
+          - "use only for portable skill metadata; do not include provider-specific model or effort routing"
       - field: allowed-tools
         type: string
         constraints: ["space-separated tool names", "experimental; client support varies"]
 
     client_specific_fields:
-      # These are client-recognized top-level keys NOT in the core agentskills.io spec.
-      # The spec ignores unknown top-level keys (does not forbid them). Other clients tolerate them.
-      - field: model
-        type: string
-        readers: [claude-code]
-        notes: "Top-level key. Claude Code reads this to set the model used when the skill is active. Values: opus, sonnet, haiku, or 'inherit'. NOT under metadata."
-      - field: effort
-        type: string
-        readers: [claude-code]
-        notes: "Top-level key. Claude Code reads this to set effort level. Values: low, medium, high, xhigh, max. NOT under metadata."
+      # Client-specific keys remain documented when needed for distribution, but
+      # provider-specific model and effort routing is prohibited below.
       - field: disable-model-invocation
         type: boolean
         readers: [cursor, claude-code]
@@ -60,6 +52,14 @@ skill_file:
         type: string
         readers: [claude-code, agentskills-experimental]
         notes: "Space-separated tool names. Claude Code pre-approves these without prompting when skill is active."
+
+    package_policy:
+      forbidden_fields:
+        - model
+        - effort
+        - metadata.model
+        - metadata.effort
+      rationale: "Portable skills do not select a provider-specific model or effort level; the active agent host controls those settings."
 
   body:
     format: "Markdown, no format restrictions"
@@ -294,6 +294,7 @@ validation:
     - "frontmatter.name matches parent directory basename"
     - "frontmatter.name matches regex ^[a-z0-9]+(-[a-z0-9]+)*$"
     - "frontmatter.description length in [1, 1024]"
+    - "all current and future skills omit top-level and nested model/effort selectors"
     - "SKILL.md body length <= 500 lines"
     - "All references to bundled files (scripts/, references/, assets/) resolve"
     - "No orphaned top-level templates/ or references/ files"
@@ -321,6 +322,8 @@ bundled_resource_placement:
       to: skills/para-init/assets/agents-full-template.md
     - from: (new) context-schema.md
       to: skills/para-init/references/context-schema.md
+    - from: (new) simple-plan-binding.md
+      to: skills/para-init/references/simple-plan-binding.md
     - from: (new file — stub landed phase 1, populated phase 7)
       to: docs/METHODOLOGY.md
       note: "Kept at repo root as methodology reference. Not loaded by any skill. Stubbed in phase 1 (so test_references_resolve.sh stays green from phase 1 onwards) and fully populated in phase 7."
@@ -337,15 +340,24 @@ cross_skill_references:
     - from: skills/para-execute/SKILL.md
       to: ../para-init/references/context-schema.md
       reason: "phased_execution field shape reference"
+    - from: skills/para-execute/SKILL.md
+      to: ../para-init/references/simple-plan-binding.md
+      reason: "simple task plan selection and archive source binding"
     - from: skills/para-workflow/SKILL.md
       to: ../para-init/references/context-schema.md
       reason: "workflow field shape reference"
+    - from: skills/para-workflow/SKILL.md
+      to: ../para-init/references/simple-plan-binding.md
+      reason: "simple task plan selection and archive source binding"
     - from: skills/para-archive/SKILL.md
       to: ../para-init/assets/context-template.md
       reason: "seed fresh context.md from canonical template"
     - from: skills/para-archive/SKILL.md
       to: ../para-init/references/context-schema.md
       reason: "schema pointer instead of inline JSON"
+    - from: skills/para-archive/SKILL.md
+      to: ../para-init/references/simple-plan-binding.md
+      reason: "simple task receipt source invariant"
     - from: skills/para-status/SKILL.md
       to: ../para-init/references/context-schema.md
       reason: "field meaning lookup"
@@ -407,7 +419,7 @@ content_parity_baseline:
   source_of_truth: "Frozen snapshot at context/data/plugin-v2.2.2-snapshot/ (from para-programming-plugin v2.2.2, commit 0adb0e7, 2026-04-30). All phase subagents read from this in-repo snapshot, NOT from any sibling plugin checkout."
   unported_plugin_deltas:
     - "v2.1.0 content: canonical context-schema, METHODOLOGY.md, Spec+Stubs sections, phase-split triggers, workflow/summarize PR handoff, 5-round review cap, spec-first TDD default, Round 3 self-review"
-    - "v2.2.0 content: top-level model/effort/allowed-tools frontmatter keys (Claude Code reads these top-level; NOT under metadata:)"
+    - "v2.2.0 content: top-level model/effort/allowed-tools frontmatter keys (Claude Code reads these top-level; NOT under metadata:) — historical source detail; model and effort routing is not adopted in this portable package"
     - "v2.2.1: context-aware disable-model-invocation (don't port; see v2.2.2)"
     - "v2.2.2: disable-model-invocation removed entirely (adopt this decision — don't add the flag)"
   rewrite_approach: "Start fresh from spec using plugin v2.2.2 as source material. Restructure for progressive disclosure. Adapt branding (CLAUDE.md → AGENTS.md, /para: → /para-, ~/.claude/ → ~/.agents/)."

@@ -16,21 +16,12 @@ Use dated files in context/data, context/plans, context/summaries and context/ar
 
 ## Lifecycle
 
-Use the `para-research` skill when exploration is needed, then the `para-plan` skill to capture scope, contracts and validation. Use the `para-review` skill with `--plan` for independent review.
+Use `para-research` when needed, then `para-plan` and independent `para-review --plan` before execution. Use `para-workflow` for simple or phased work. It owns execute → PR → current-head review → summary → authorized guarded merge → archive. Commit validated todos; verify the remote merge. After each phase merge and summary, clean and verify that phase before advancing. After all task merges and summaries, archive all completed plans plus context and verify the receipt, hashes, fresh references and removed task worktrees. Dirty, unmerged or unverifiable work blocks completion. The `para-init` simple-plan-binding reference defines simple plan selection and receipt identity.
 
-Use the `para-workflow` skill for either a simple or phased plan:
-
-1. Execute behavior-sized todos in the identified execution checkout. Reuse existing contracts; create necessary stubs there. Observe meaningful failures before implementation when applicable, pass required checks, commit, then record completion and SHA.
-2. Prepare/reuse the matching PR after pushing the execution branch.
-3. Review requirements, diff and check evidence; bind the result to the reviewed head. An explicit override is distinct from independent approval.
-4. Summarize actual committed changes and observed validation. A summary does not establish merge.
-5. Verify authorization, current-head review eligibility and required checks; issue a guarded merge and confirm the remote result.
-6. Clean up only the merged phase; retain pending work. Start dependent phases from a base containing predecessor merges. Archive the entire task once after all merges/summaries.
-
-Direct skills perform only their named operation. Workflow owns sequencing, PR preparation, retries and advancement. Auto mode carries the user's authorization through these transitions while retaining gates.
+Direct skills perform only their named operation. Auto mode carries the user's authorization through workflow transitions without skipping review or required checks.
 
 ## Recovery
 
-Before retrying an effect, reconcile actual Git/GitHub results. A changed head invalidates transferable approval; queued merge is pending. Never force-remove a dirty worktree, overwrite another archive, or replace unrelated context. Preserve recoverable branches and record archive destination before reset.
+Before retrying, reconcile Git/GitHub state; a changed head needs fresh eligibility and a queued merge remains pending. Preserve dirty/unmerged work, unrelated context and recoverable branches. Never force-remove a dirty worktree or overwrite an archive. Missing evidence is unknown and cannot authorize cleanup or completion.
 
 The installed para-init skill's references/context-schema.md is the canonical field and transition contract. Missing evidence is unknown; it cannot authorize a destructive cleanup or falsely complete work.

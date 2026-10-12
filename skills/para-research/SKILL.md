@@ -1,8 +1,6 @@
 ---
 name: para-research
 description: Investigate relevant code, contracts and uncertainties before planning; produce a compact research snapshot with evidence and freshness guidance.
-model: opus
-effort: high
 ---
 
 Investigate the facts needed to plan the requested change. Research is read-only except for primary-context artifacts.
