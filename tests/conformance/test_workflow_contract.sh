@@ -27,7 +27,7 @@ assert 'simple-plan-binding.md' in execute and 'before implementation' in execut
 assert 'simple-plan-binding.md' in workflow and 'before execution' in workflow, 'workflow must load binding rules before execution'
 assert 'simple-plan-binding.md' in archive and 'before any move or cleanup' in archive, 'archive must load binding rules before mutation'
 assert 'If multiple plans remain ambiguous, ask before' in binding, 'ambiguous plan selection must stop before writes'
-assert 'never overwrite its binding' in binding, 'a different active binding must be preserved'
+assert 'never overwrite the binding' in binding, 'a different active binding must be preserved'
 assert '`execution.plan` before implementation' in binding, 'simple execution must bind before implementation'
 assert 'source equals `execution.plan`' in binding, 'receipt must bind to selected simple plan'
 assert 'one exact `active_context` match' in binding, 'simple plan binding must match one active plan'
