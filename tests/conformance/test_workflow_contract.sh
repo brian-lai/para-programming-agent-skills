@@ -23,9 +23,9 @@ execute=Path('skills/para-execute/SKILL.md').read_text()
 workflow=Path('skills/para-workflow/SKILL.md').read_text()
 archive=Path('skills/para-archive/SKILL.md').read_text()
 binding=Path('skills/para-init/references/simple-plan-binding.md').read_text()
-assert '`simple-plan-binding.md`' in execute and 'before implementation' in execute, 'direct execute must load binding rules before implementation'
-assert '`simple-plan-binding.md`' in workflow and 'before execution' in workflow, 'workflow must load binding rules before execution'
-assert '`simple-plan-binding.md`' in archive and 'before any move or cleanup' in archive, 'archive must load binding rules before mutation'
+assert 'simple-plan-binding.md' in execute and 'before implementation' in execute, 'direct execute must load binding rules before implementation'
+assert 'simple-plan-binding.md' in workflow and 'before execution' in workflow, 'workflow must load binding rules before execution'
+assert 'simple-plan-binding.md' in archive and 'before any move or cleanup' in archive, 'archive must load binding rules before mutation'
 assert 'If multiple plans remain ambiguous, ask before' in binding, 'ambiguous plan selection must stop before writes'
 assert 'never overwrite its binding' in binding, 'a different active binding must be preserved'
 assert '`execution.plan` before implementation' in binding, 'simple execution must bind before implementation'
