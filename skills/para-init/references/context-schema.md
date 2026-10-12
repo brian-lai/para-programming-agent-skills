@@ -35,9 +35,7 @@ Evidence belongs in top-level `execution` for a simple task or the active phase'
 | `execution.summary` | Summary path |
 | `execution.merge` | `{commit}` after remote confirms merge |
 | `execution.cleanup` | Phase cleanup evidence: `{worktree_path, verified_removed:true, verified_at}`; preserve this after clearing `worktree_path` so final archival can inventory every task worktree |
-| `execution.plan` | Simple task's immutable project-relative selected plan source path. Set before implementation and match exactly one `active_context` entry at selection time; retain as provenance through archival and require it to equal the archived receipt's plan source. Absent for phased tasks |
-
-For a simple task, reuse an existing `execution.plan` on resume. An existing binding owns the active task; if a new request identifies a different plan, stop and ask to complete/archive or reconcile the active task rather than overwriting its binding. Otherwise select the exact plan named by the invocation/user request; if none is named and `active_context` has one entry, select that entry. If multiple active plans remain and the request does not resolve exactly one, ask before writing context, creating/switching a checkout or implementing. Never select by array order or treat all active plans as belonging to one task. Persist and reread `execution.plan` before implementation; it must match exactly one active plan entry. During archive retries, the original source path remains in `execution.plan`; `archive_plan_targets` binds it to the archived destination even after `active_context` is rewritten.
+| `execution.plan` | Simple task's immutable selected plan source path; set before implementation and matched to its sole receipt plan source. Absent for phased tasks; see `simple-plan-binding.md` |
 
 Plan approval records plan paths/content digests in progress notes separately. A legacy `staff_review` string cannot approve a new target. Recover legacy missing fields from unambiguous Git/GitHub facts; preserve history and report unknowns when remote verification is unavailable.
 
@@ -61,7 +59,7 @@ Keep command/results, commit IDs, PR identity and blockers in progress notes. Mi
 
 ## Archive recovery
 
-Never force-remove dirty worktrees or archive open/unverified work as finished. For simple tasks, resolve the plan only from `execution.plan`; at archive start it must match exactly one active plan entry. On retry, require the immutable source binding to match exactly one `archive_plan_targets[].source` entry. The archived receipt must include exactly that selected plan source, not an inferred subset or unrelated active plan. Reserve a unique `archive_target` and paired plan destinations before copying; persist the source/destination/hash manifest. Preserve plan sources until archived files and rewritten snapshot references verify. Reconcile partial copies from the manifest on retry and never overwrite another archive. Final workflow completion requires a complete receipt, matching archived plan hashes, a receipt plan source equal to the archived snapshot's `execution.plan`, fresh context with no completed task plans active, and absence of every task worktree recorded in simple/phase execution evidence. Dirty/unmerged task work or unverifiable cleanup blocks completion. Already-removed worktrees are reconciled, not errors requiring destructive recreation. Fresh context without active work is a no-op only when no archive is pending. Phase cleanup does not reset context and retains removed-path evidence.
+See `para-archive` for archive reservations, receipts, worktree recovery and cleanup. Simple plan selection and receipt identity are defined in `simple-plan-binding.md`.
 
 ## Fresh context example
 

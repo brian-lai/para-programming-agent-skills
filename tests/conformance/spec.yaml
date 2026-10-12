@@ -322,6 +322,8 @@ bundled_resource_placement:
       to: skills/para-init/assets/agents-full-template.md
     - from: (new) context-schema.md
       to: skills/para-init/references/context-schema.md
+    - from: (new) simple-plan-binding.md
+      to: skills/para-init/references/simple-plan-binding.md
     - from: (new file — stub landed phase 1, populated phase 7)
       to: docs/METHODOLOGY.md
       note: "Kept at repo root as methodology reference. Not loaded by any skill. Stubbed in phase 1 (so test_references_resolve.sh stays green from phase 1 onwards) and fully populated in phase 7."
@@ -338,15 +340,24 @@ cross_skill_references:
     - from: skills/para-execute/SKILL.md
       to: ../para-init/references/context-schema.md
       reason: "phased_execution field shape reference"
+    - from: skills/para-execute/SKILL.md
+      to: ../para-init/references/simple-plan-binding.md
+      reason: "simple task plan selection and archive source binding"
     - from: skills/para-workflow/SKILL.md
       to: ../para-init/references/context-schema.md
       reason: "workflow field shape reference"
+    - from: skills/para-workflow/SKILL.md
+      to: ../para-init/references/simple-plan-binding.md
+      reason: "simple task plan selection and archive source binding"
     - from: skills/para-archive/SKILL.md
       to: ../para-init/assets/context-template.md
       reason: "seed fresh context.md from canonical template"
     - from: skills/para-archive/SKILL.md
       to: ../para-init/references/context-schema.md
       reason: "schema pointer instead of inline JSON"
+    - from: skills/para-archive/SKILL.md
+      to: ../para-init/references/simple-plan-binding.md
+      reason: "simple task receipt source invariant"
     - from: skills/para-status/SKILL.md
       to: ../para-init/references/context-schema.md
       reason: "field meaning lookup"

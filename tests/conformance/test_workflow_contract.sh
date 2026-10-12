@@ -8,9 +8,7 @@ schema=Path('skills/para-init/references/context-schema.md').read_text()
 for key in ['execution.base','execution.pr','execution.review','execution.merge','archive_target']:
     assert f'`{key}`' in schema, f'missing evidence field {key}'
 assert '`execution.plan`' in schema, 'missing simple-task plan binding'
-assert 'match exactly one `active_context` entry' in schema, 'simple plan binding must match one active plan'
-assert 'ask before writing context' in schema, 'ambiguous simple plan selection must stop before writes'
-assert 'receipt plan source equal to the archived snapshot\'s `execution.plan`' in schema, 'receipt must bind to selected simple plan'
+assert '`simple-plan-binding.md`' in schema, 'schema must point to the detailed simple-plan contract'
 for raw in re.findall(r'```json\n(.*?)\n```',schema,re.S):
     value=json.loads(raw)
     assert isinstance(value['active_context'],list)
@@ -24,14 +22,17 @@ assert '**Work Complete:**' not in Path('skills/para-summarize/assets/summary-te
 execute=Path('skills/para-execute/SKILL.md').read_text()
 workflow=Path('skills/para-workflow/SKILL.md').read_text()
 archive=Path('skills/para-archive/SKILL.md').read_text()
-assert '`execution.plan`' in execute and 'Persist and reread' in execute, 'direct execute must bind plan before implementation'
-assert 'ask before writing context' in execute, 'direct execute must stop on ambiguous plan selection'
-assert 'do not overwrite its binding' in execute, 'direct execute must preserve a different active binding'
-assert '`execution.plan`' in workflow and 'Persist and reread' in workflow, 'workflow must bind plan before execution'
+binding=Path('skills/para-init/references/simple-plan-binding.md').read_text()
+assert '`simple-plan-binding.md`' in execute and 'before implementation' in execute, 'direct execute must load binding rules before implementation'
+assert '`simple-plan-binding.md`' in workflow and 'before execution' in workflow, 'workflow must load binding rules before execution'
+assert '`simple-plan-binding.md`' in archive and 'before any move or cleanup' in archive, 'archive must load binding rules before mutation'
+assert 'If multiple plans remain ambiguous, ask before' in binding, 'ambiguous plan selection must stop before writes'
+assert 'never overwrite its binding' in binding, 'a different active binding must be preserved'
+assert '`execution.plan` before implementation' in binding, 'simple execution must bind before implementation'
+assert 'source equals `execution.plan`' in binding, 'receipt must bind to selected simple plan'
+assert 'one exact `active_context` match' in binding, 'simple plan binding must match one active plan'
 assert 'exactly one receipt plan source equals' in workflow and '`execution.plan`' in workflow, 'workflow must verify receipt against selected plan'
-assert 'do not overwrite its binding' in workflow, 'workflow must preserve a different active binding'
-assert 'Never infer the plan from the whole active-plan array' in archive, 'archive must not guess the selected plan'
-assert 'exactly one receipt plan source' in archive and '`execution.plan`' in archive, 'archive receipt must match simple plan binding'
+assert 'never choose by array order' in binding, 'simple plan selection must not depend on active_context ordering'
 assert {'malformed_metadata','ambiguous_checkout_identity'} <= {c['id'] for c in cases}
 print('PASS documented evidence schema and acceptance matrix')
 PY

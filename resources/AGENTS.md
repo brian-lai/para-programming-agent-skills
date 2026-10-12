@@ -16,23 +16,12 @@ Use dated files in context/data, context/plans, context/summaries and context/ar
 
 ## Lifecycle
 
-Use the `para-research` skill when exploration is needed, then the `para-plan` skill to capture scope, contracts and validation. Use the `para-review` skill with `--plan` for independent review.
+Use `para-research` when needed, then `para-plan` and independent `para-review --plan` before execution. Use `para-workflow` for simple or phased work. It owns execute → PR → current-head review → summary → authorized guarded merge → archive. Commit validated todos; verify the remote merge. After each phase merge and summary, clean and verify that phase before advancing. After all task merges and summaries, archive all completed plans plus context and verify the receipt, hashes, fresh references and removed task worktrees. Dirty, unmerged or unverifiable work blocks completion. The `para-init` simple-plan-binding reference defines simple plan selection and receipt identity.
 
-Use the `para-workflow` skill for either a simple or phased plan:
-
-For a simple task, bind one selected plan as `execution.plan` before implementation. Reuse that binding on resume; if a new request selects another plan while it exists, stop and ask to complete/archive or reconcile the active task instead of overwriting its binding. Otherwise use the exact plan identified by the request, default only when `active_context` contains one plan, and ask before writes if multiple plans remain ambiguous. Final archive receipt plan sources must match the immutable `execution.plan` source. Phased work uses explicit master/phase plan records.
-
-1. Execute behavior-sized todos in the identified execution checkout. Reuse existing contracts; create necessary stubs there. Observe meaningful failures before implementation when applicable, pass required checks, commit, then record completion and SHA.
-2. Prepare/reuse the matching PR after pushing the execution branch.
-3. Review requirements, diff and check evidence; bind the result to the reviewed head. An explicit override is distinct from independent approval.
-4. Summarize actual committed changes and observed validation. A summary does not establish merge.
-5. Verify authorization, current-head review eligibility and required checks; issue a guarded merge and confirm the remote result.
-6. After each phase merge and summary, invoke `para-archive --phase=N` and verify its recorded worktree is absent before advancing; retain pending plans and unrelated work. Start dependent phases from a base containing predecessor merges. After all task merges/summaries, invoke final `para-archive` in the same workflow run. It must move completed plan files to the reserved archive location, save a recoverable context snapshot and remove every clean task worktree. Independently verify the task-bound archive receipt, archived plan hashes, fresh active references and Git worktree list before reporting completion. Dirty/unmerged task work or unverifiable cleanup leaves the workflow incomplete and recoverable.
-
-Direct skills perform only their named operation. Workflow owns sequencing, PR preparation, retries and advancement. Auto mode carries the user's authorization through these transitions while retaining gates.
+Direct skills perform only their named operation. Auto mode carries the user's authorization through workflow transitions without skipping review or required checks.
 
 ## Recovery
 
-Before retrying an effect, reconcile actual Git/GitHub results. A changed head invalidates transferable approval; queued merge is pending. Never force-remove a dirty worktree, overwrite another archive, or replace unrelated context. Preserve recoverable branches, persist the plan archive mapping before moving files, and retain partial archive evidence until cleanup is verified.
+Before retrying, reconcile Git/GitHub state; a changed head needs fresh eligibility and a queued merge remains pending. Preserve dirty/unmerged work, unrelated context and recoverable branches. Never force-remove a dirty worktree or overwrite an archive. Missing evidence is unknown and cannot authorize cleanup or completion.
 
 The installed para-init skill's references/context-schema.md is the canonical field and transition contract. Missing evidence is unknown; it cannot authorize a destructive cleanup or falsely complete work.
