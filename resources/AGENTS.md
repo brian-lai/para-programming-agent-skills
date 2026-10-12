@@ -20,6 +20,8 @@ Use the `para-research` skill when exploration is needed, then the `para-plan` s
 
 Use the `para-workflow` skill for either a simple or phased plan:
 
+For a simple task, bind one selected plan as `execution.plan` before implementation. Reuse that binding on resume; if a new request selects another plan while it exists, stop and ask to complete/archive or reconcile the active task instead of overwriting its binding. Otherwise use the exact plan identified by the request, default only when `active_context` contains one plan, and ask before writes if multiple plans remain ambiguous. Final archive receipt plan sources must match the immutable `execution.plan` source. Phased work uses explicit master/phase plan records.
+
 1. Execute behavior-sized todos in the identified execution checkout. Reuse existing contracts; create necessary stubs there. Observe meaningful failures before implementation when applicable, pass required checks, commit, then record completion and SHA.
 2. Prepare/reuse the matching PR after pushing the execution branch.
 3. Review requirements, diff and check evidence; bind the result to the reviewed head. An explicit override is distinct from independent approval.
