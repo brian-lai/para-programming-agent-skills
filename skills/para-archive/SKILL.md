@@ -31,4 +31,6 @@ If ../para-init/assets/context-template.md is not available in this install, cre
 
 If ../para-init/references/context-schema.md is not available in this install, preserve unknown state and require observed merge/summary/clean-worktree evidence; never infer completion. Keep archive_target, archive_plan_targets and partial archive_receipt for interrupted archive recovery.
 
+If ../para-init/references/simple-plan-binding.md is not available in this install, preserve context and stop simple-task archival before moving plans or removing worktrees; require exact `execution.plan` and receipt-source evidence.
+
 Archives and branches remain available for recovery. Inspect the saved snapshot before restoring context; do not overwrite active work. A removed worktree can be reattached with `git worktree add <path> <existing-branch>` after checking the destination.

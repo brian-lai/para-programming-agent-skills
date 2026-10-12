@@ -14,7 +14,7 @@ para-workflow --phase=N
 para-workflow --skip-review
 ```
 
-Read primary `context/context.md`, the selected plan and `../para-init/references/context-schema.md`. Resolve any ambiguous task/root before writing. For a simple task, apply `../para-init/references/simple-plan-binding.md`, persist/reread `execution.plan` before execution, and require `para-execute` to verify it before implementation. If the binding reference is unavailable, stop simple execution until an exact binding is reconciled. A simple plan uses top-level execution evidence and null current_phase, without synthetic phases; reject `--phase` for it. Phased work uses its explicit master/phase plan records and verifies predecessor merges before starting the selected phase.
+Read primary `context/context.md`, the selected plan and `../para-init/references/context-schema.md`. Resolve any ambiguous task/root before writing. For a simple task, apply `../para-init/references/simple-plan-binding.md`, persist/reread `execution.plan` before execution, and require `para-execute` to verify it before implementation. If ../para-init/references/simple-plan-binding.md is not available in this install, stop simple execution until an exact binding is reconciled. A simple plan uses top-level execution evidence and null current_phase, without synthetic phases; reject `--phase` for it. Phased work uses its explicit master/phase plan records and verifies predecessor merges before starting the selected phase.
 
 If ../para-init/references/context-schema.md is not available in this install, preserve context and record plan/branch/base, PR identity, reviewed head, summary and verified merge evidence. Missing evidence is unknown, never completion; stop dependent operations when it cannot be recovered.
 
