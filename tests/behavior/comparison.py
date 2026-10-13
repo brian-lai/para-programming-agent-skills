@@ -2,6 +2,8 @@
 from collections import Counter
 import json
 import os
+import re
+from handoff import HANDOFF_CASES
 from pathlib import Path
 import selectors
 import signal
@@ -27,20 +29,44 @@ def compare(baseline, candidate):
         for field in ('host', 'host_version', 'model', 'settings', 'evidence_kind', 'observed_models'):
             if a[key].get(field) != b[key].get(field):
                 raise ValueError(f'pair mismatch: {key} {field}')
+    for key in a:
+        left, right = a[key], b[key]
+        if left['case_id'] in HANDOFF_CASES:
+            if left['skill_revision'] != right['skill_revision']:
+                raise ValueError('artifact comparison requires fixed skill revision')
+            for row, arm in ((left, 'baseline'), (right, 'candidate')):
+                record = row.get('handoff', {})
+                if not isinstance(record, dict) or not isinstance(record.get('bundle_hashes'), dict):
+                    raise ValueError('invalid artifact metadata shape')
+                sha = record.get('bundle_sha256', '')
+                if (record.get('arm') != arm or record.get('origin') != 'authored-fixture'
+                        or not isinstance(sha, str) or not re.fullmatch('[0-9a-f]{64}', sha)
+                        or record.get('bundle_hashes', {}).get(row['case_id'] + '/' + arm + '.json') != sha):
+                    raise ValueError('missing or invalid artifact identity')
+            if left['handoff']['bundle_hashes'] != right['handoff']['bundle_hashes']:
+                raise ValueError('bundle set mismatch')
+        elif left.get('handoff') or right.get('handoff'):
+            raise ValueError('artifact identity on a non-handoff case')
     added = {'simple_workflow_no_pr', 'simple_workflow_lifecycle', 'resume_after_pr_created', 'stale_review_head', 'partial_archive'}
     def summary(rows):
         revisions = sorted({r['skill_revision'] for r in rows})
         def total(field):
             values = [r.get('usage', {}).get(field) for r in rows]
             return sum(values) if all(v is not None for v in values) else None
-        return {'trials': len(rows), 'outcomes': dict(Counter(r['outcome'] for r in rows)),
+        completed = sum(r['outcome'] == 'pass' for r in rows)
+        totals = {'input_tokens': total('input_tokens'), 'output_tokens': total('output_tokens')}
+        for field in ('tool_calls', 'elapsed_seconds'):
+            values = [r.get(field) for r in rows]
+            totals[field] = sum(values) if all(v is not None for v in values) else None
+        per_completed = {k: v / completed if completed and v is not None else None for k, v in totals.items()}
+        return {'per_completed_case': per_completed, 'trials': len(rows), 'outcomes': dict(Counter(r['outcome'] for r in rows)),
                 'critical_failures': sum(len(r['critical_failures']) for r in rows) if all(r.get('critical_failures') is not None for r in rows) else None,
                 'incomplete_critical_evidence': sum(r.get('critical_evidence_complete') is not True for r in rows),
                 'input_tokens': total('input_tokens'), 'output_tokens': total('output_tokens'),
                 'tool_calls': sum(r['tool_calls'] for r in rows) if all(r.get('tool_calls') is not None for r in rows) else None,
                 'questions': sum(r['questions'] for r in rows) if all(r.get('questions') is not None for r in rows) else None,
                 'unsupported_findings': sum(r['unsupported_findings'] for r in rows) if all(r.get('unsupported_findings') is not None for r in rows) else None,
-                'elapsed_seconds': sum(r.get('elapsed_seconds', 0) for r in rows),
+                'elapsed_seconds': totals['elapsed_seconds'],
                 'mixed_revisions': len(revisions) > 1,
                 'by_revision': {rev: {'trials': sum(r['skill_revision'] == rev for r in rows),
                     'outcomes': dict(Counter(r['outcome'] for r in rows if r['skill_revision'] == rev))} for rev in revisions}}
