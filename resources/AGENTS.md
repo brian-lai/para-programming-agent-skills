@@ -12,7 +12,7 @@ Read-only questions can be answered directly. Research, plans and progress files
 
 Primary checkout `context/context.md` records active plans, research, summary paths, todos and verified execution evidence. Preserve unrelated/unknown metadata. Source edits/tests/commits happen in the execution checkout. Resolve roots from Git worktree metadata, not a stale local context copy.
 
-Use dated files in context/data, context/plans, context/summaries and context/archives. Keep only decision-relevant evidence active; retrieve supporting files when needed. Initialization preserves existing context and guidance.
+Use dated files in context/data, context/plans, context/summaries and context/archives. Keep decision-relevant evidence active; retrieve supporting files when needed. Handoffs must work without planner conversation; preserve settled decisions, validation and material prerequisites. Initialization preserves existing context and guidance.
 
 ## Lifecycle
 

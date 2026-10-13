@@ -12,8 +12,9 @@ Existing contract: {path/symbol and relevant behavior}. Add a spec only when a n
 ## Implementation Steps
 
 - [ ] {Behavior-sized change phrased as a commit message}
-  - Files: {affected paths}
-  - Validation: {specific failure/edge cases and check commands; observe failure then fix for testable behavior}
+  - Change: {verified paths/symbols; intended behavior and edge cases; useful nearby pattern}
+  - Validation: {command, working directory and expected outcome; observe failure then fix for testable behavior}
+  - Dependencies/recovery: {needed prior results; consequential prerequisites with observed/assumed availability; mismatch requiring investigation. Omit when immaterial.}
   - Required checks pass before committing this item; record commit before marking complete.
 
 ## Risks
@@ -23,3 +24,7 @@ Existing contract: {path/symbol and relevant behavior}. Add a spec only when a n
 ## Success Criteria
 
 {Observable behavior/artifact and required validation. Unmeasured metrics remain unknown.}
+
+## Step example (omit from generated plans)
+
+For the calculator fixture: change `calculator.py:ratio(total, count)` to preserve `total / count` for nonzero count; validate `ratio(10, 2) == 5` and the existing zero-count contract with `python3 -m unittest discover -p "test_*.py"` from the execution root. Confirm the actual source contract before using this example; do not infer a new zero-count behavior.

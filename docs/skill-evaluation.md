@@ -211,3 +211,13 @@ newly successful campaign is inferred from this grader correction.
 ## Enforced reviewer correction
 
 The optional [reviewer isolation host guide](reviewer-isolation.md) documents the versioned capsule/tool boundary and its probes. New isolated campaigns must freeze identical enforcement settings for both arms and retain measured-v5 separately. A successful host denial does not demonstrate improved instruction obedience. Keep the zero-critical-effect and complete-evidence gates; compare observed task completion and disclose host setup/context costs as well as native usage. A pilot or diagnostic failure is retained and diagnosed before a new campaign is frozen.
+
+## Artifact handoff comparisons
+
+Three authored-artifact cases (`handoff_contract`, `handoff_dependency`, `handoff_stale`) accept `--handoff-arm baseline|candidate` in both prepare and the native runner. They use fresh direct-execution sessions without a planner conversation. The source task and contract remain identical across arms; artifact hashes differ and both bundles enter the shared case version. The grader requires matching host/initial artifact identity and independent validation at the committed execution head.
+
+Comparisons require baseline and candidate arms with the same skill revision, fixture version, executor settings, host/harness and limits. The candidate skill body is common to both arms, so this isolates artifact content, not the overall rewrite. `per_completed_case` divides total observed usage/time/calls across all attempts by successful runs; it is null for zero successes or missing telemetry. Failures and incomplete rows remain in totals. Dollar costs need separately recorded rates; authored bundles have unmeasured planner cost.
+
+The legacy generator and catalog retain their original bytes in `tests/behavior/legacy_fixtures.py` and `tests/fixtures/legacy-workflow-cases.json`. The dispatcher routes old cases there, preserving existing case identities; a regression check keeps their catalog aligned with the full acceptance matrix. Intentional changes to legacy inputs still change their versions. New handoff bundles/generation have independent case versions, and changed harness hashes identify a new campaign; historical captures are never rewritten or pooled as if host settings were identical. Offline captures test evaluation machinery only, not model quality.
+
+The [handoff pilot protocol](handoff-evaluation.md) records the NOT RUN status, collection prerequisites and subsequent generated-plan/full-auto evidence gate.

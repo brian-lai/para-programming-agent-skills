@@ -17,6 +17,7 @@ def main():
     p.add_argument('--case', required=True)
     p.add_argument('--out', required=True)
     p.add_argument('--variant', type=int, default=0)
+    p.add_argument('--handoff-arm', choices=('baseline', 'candidate'))
     g = commands.add_parser('grade')
     g.add_argument('--case', required=True)
     g.add_argument('--run', required=True)
@@ -28,7 +29,7 @@ def main():
     args = parser.parse_args()
     try:
         if args.command == 'prepare':
-            value = prepare(args.case, args.out, args.variant)
+            value = prepare(args.case, args.out, args.variant, handoff_arm=args.handoff_arm)
             print(json.dumps({'case_id': value['case_id'], 'case_version': value['case_version'], 'root': str(Path(args.out).resolve())}))
         elif args.command == 'grade':
             value = grade(args.run)

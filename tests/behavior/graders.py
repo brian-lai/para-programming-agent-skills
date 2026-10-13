@@ -6,6 +6,7 @@ import re
 import subprocess
 from safe_git import git, ancestor
 from comparison import native_usage
+from handoff import HANDOFF_CASES
 from review_evidence import independent_approval, isolated_approval, validate_isolation
 
 
@@ -26,7 +27,7 @@ def digest(path):
 SUPPORTED = {'docs_only', 'simple_workflow_no_pr', 'simple_workflow_lifecycle', 'multi_phase_lifecycle',
              'resume_after_pr_created', 'commit_failure', 'partial_archive', 'stale_review_head',
              'committed_branch_summary', 'review_defect_vs_preference', 'nondefault_base', 'status_modes',
-             'direct_execute_scope', 'dirty_worktree', 'legacy_completed_without_evidence', 'resume_after_merge'}
+             'direct_execute_scope', 'dirty_worktree', 'legacy_completed_without_evidence', 'resume_after_merge'} | set(HANDOFF_CASES)
 
 
 def grade(root):
@@ -158,6 +159,10 @@ def _grade(root, result):
             raise ValueError('out-of-fixture evidence path')
         return target
     case, repo, prs = initial['case_id'], root / 'repo', state['prs']
+    if case in HANDOFF_CASES:
+        if not initial.get('handoff') or host.get('handoff') != initial['handoff']:
+            raise ValueError('missing or mismatched handoff manifest')
+        result['handoff'] = initial['handoff']
     if case not in SUPPORTED:
         result['error'] = 'case has no validated fixture/grader coverage';return result
     def check(name, passed, evidence, critical=False):
@@ -270,17 +275,21 @@ def _grade(root, result):
         summaries = '\n'.join(local_path(repo, p).read_text() for p in paths if local_path(repo, p).is_file())
         check('committed_change_summary', 'greeting' in summaries.lower(), paths)
         check('unmerged_stays_active', bool(ctx.get('active_context')) and not any(e.get('merge') for e in evidence) and not list((repo / 'context/archives').glob('*.md')), 'unmerged task active', True)
-    if case in ('nondefault_base', 'direct_execute_scope'):
+    if case in ('nondefault_base', 'direct_execute_scope') or case in HANDOFF_CASES:
         branch = ctx.get('execution_branch')
         work = local_path(repo, ctx['worktree_path']) if ctx.get('worktree_path') else repo
         head = git(work, 'rev-parse', 'HEAD')
         check('implementation_committed', head != initial['initial_head'], 'execution commit')
+        if case in HANDOFF_CASES:
+            check('implementation_changed', bool(git(work, 'diff', '--name-only', initial['initial_head'], head)), 'nonempty committed source diff')
         check('canonical_execution_branch', bool(branch) and branch == git(work, 'branch', '--show-current'), 'execution_branch matches execution checkout')
         check('selected_base_ancestry', ancestor(work, initial['initial_head'], head), 'initial selected base is ancestor')
         validation = root / 'validation.json'
         if not validation.exists():
             result['error'] = 'missing independent implementation validation';return result
         observed = json.loads(validation.read_text())
+        if case in HANDOFF_CASES and (not isinstance(observed, dict) or type(observed.get('returncode')) is not int or not isinstance(observed.get('head'), str) or observed.get('case_id') != case or observed.get('validator_version') != 'handoff-v1'):
+            raise ValueError('missing or mismatched handoff validator identity')
         check('implementation_contract', observed.get('returncode') == 0 and observed.get('head') == head, 'isolated committed-code validation at execution head')
         check('direct_scope', not prs and not list((repo / 'context/archives').glob('*.md')), 'no publishing or archive', True)
         check('resolved_base', ctx.get('execution', {}).get('base', {}).get('branch') == initial['base'], 'recorded base')

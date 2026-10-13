@@ -20,7 +20,7 @@ If ../para-init/references/context-schema.md is not available in this install, p
 
 ## Run or resume
 
-Before advancing, persist and reread the completed step’s evidence in primary `context/context.md`: for simple tasks preserve `execution.plan`; then branch/base/commit, PR identity, review `{status,target,mode}`, and summary path. Record workflow mode/current_step/current_phase/started; preserve unrelated fields. Do not defer these writes until merge/archive. Reconcile actual Git/GitHub state and reuse verified effects, including direct skill results. Apply the shared binding reference before recovering a legacy simple execution without `execution.plan`; ambiguity blocks progress.
+Before advancing, persist and reread the completed step’s evidence in primary `context/context.md`: for simple tasks preserve `execution.plan`; then branch/base/commit, PR identity, review `{status,target,mode}`, and summary path. Record workflow mode/current_step/current_phase/started; preserve unrelated fields. Do not defer these writes until merge/archive. Reconcile actual Git/GitHub state and reuse verified effects, including direct skill results and existing authorization. Read the current step and needed evidence; do not reload all history routinely. Design evidence can remain valid while merge eligibility must be freshly verified. Apply the shared binding reference before recovering a legacy simple execution without `execution.plan`; ambiguity blocks progress.
 
 1. **Execute:** Use the `para-execute` skill for the selected task/phase. Wait for its commits and required validation.
 2. **Prepare PR:** This step owns PR creation for workflow runs, both simple and phased. Push the execution branch. Query the selected repository/head/base for a matching PR; reuse it, create only if absent, and reconcile ambiguous responses before retrying. Record PR identity. Describe the problem, outcome, validation and plan objective in its body; do not link to local-only plan files as though published.
@@ -33,5 +33,7 @@ Before advancing, persist and reread the completed step’s evidence in primary 
 ## Authorization and failures
 
 Default mode asks before merge and before advancing to the next phase unless already authorized. `--auto` authorizes those transitions for this run; continue without redundant permission prompts. It does not waive review/check gates. Record explicit user overrides rather than inventing them.
+
+Repeated unsuccessful repairs/searches need new evidence or a changed hypothesis. Otherwise preserve progress and the unresolved fact, then direct focused investigation or consequential replanning; retain direct-skill boundaries. Pending CI/merge or transient failures can justify bounded polling/backoff, not rapid identical calls.
 
 A failed or uncertain step blocks its dependents. Fix recoverable errors within scope, reconcile conflicts and resume from verified state; ask only for unresolved authorization or design choices. Never use a generic skip to bypass a downstream invariant. A verified merge with pending/failed archive or cleanup is not a completed workflow. Return phase results, merged PR links, validation, archive receipt and remaining blockers. Preserve pending work if interrupted.

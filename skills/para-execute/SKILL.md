@@ -15,7 +15,7 @@ para-execute --no-worktree
 
 ## Prepare
 
-1. Read the selected plan and relevant contract/research from the primary checkout's `context/context.md`. Resolve the context root using Git worktree metadata, not a possibly stale worktree-local copy. For simple tasks, follow `../para-init/references/simple-plan-binding.md` and persist/reread `execution.plan` before implementation. If ../para-init/references/simple-plan-binding.md is not available in this install, stop unless an exact binding is already recorded. Phased work uses explicit master/phase records and does not set `execution.plan`.
+1. Start with the selected step and shared constraints; load linked research for needed facts. Inspect named source and material prerequisites, distinguishing environment failures from code defects. Read the selected plan and relevant contract/research from the primary checkout's `context/context.md`. Resolve the context root using Git worktree metadata, not a possibly stale worktree-local copy. For simple tasks, follow `../para-init/references/simple-plan-binding.md` and persist/reread `execution.plan` before implementation. If ../para-init/references/simple-plan-binding.md is not available in this install, stop unless an exact binding is already recorded. Phased work uses explicit master/phase records and does not set `execution.plan`.
 2. For phased work, resolve the requested/current phase and verify prerequisite merges are included in the selected base. For simple plans, reject `--phase` rather than inventing phases.
 3. Resolve the repository remote and base branch; fetch it and record its starting SHA. Preserve unrelated dirty files. Reuse an existing matching branch/worktree after checking identity; otherwise create `.para-worktrees/{task-name}` on `para/{task-name}` from the resolved base (append `-phase-N` for phases).
 4. With `--no-worktree`, create/reuse the execution branch in the current checkout only when switching preserves existing work. Ensure `.para-worktrees/` is ignored before creating a worktree.
@@ -36,5 +36,7 @@ The checkbox text from the plan IS the commit message: use it verbatim, with for
 5. Mark the todo complete only after the commit succeeds; record its SHA and validation in primary context. If a context write failed after commit, inspect history and reconcile rather than committing twice.
 
 For documentation/configuration with no meaningful behavioral test, use structural/manual validation and record that choice. Future acceptance coverage belongs in pending plan work, not a failing required suite. Stop dependent work on failed checks/commit; fix recoverable failures within scope. Reconcile changed context before writing and retain unrelated fields.
+
+Reuse settled decisions until source contradicts them, a required contract is missing or validation exposes an unexplained failure. Record resolved gaps once. Repeating a failed repair/search requires new evidence or a changed hypothesis. Otherwise preserve the last verified state, failed action/result and unresolved fact; return the gap to the caller for targeted investigation or consequential replanning. Continue independent work. Transient failures may justify bounded waiting/backoff; avoid rapid identical calls.
 
 Return commits, validation and remaining gaps to the caller. Do not push/create a PR or implicitly invoke review, merge or archive.

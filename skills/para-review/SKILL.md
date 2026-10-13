@@ -30,11 +30,11 @@ For each finding provide location, trigger, violated requirement, impact and sup
 - **SHOULD FIX:** a supported improvement with concrete benefit, without a blocking violation.
 - **NIT:** an optional preference; never block for style alone.
 
-Check applicable boundaries, failure/recovery paths, scope, acceptance criteria, validation and maintainability. Plan reviews verify implementation readiness and mergeable phases. PR reviews check actual changes against the plan and meaningful regression coverage. Command/result evidence can support RED→GREEN; commit order alone cannot prove TDD. No persona/title is evidence of review quality. Return APPROVED when no MUST FIX remains; do not invent changes to make the review appear useful.
+Check applicable boundaries, failure/recovery paths, scope, acceptance criteria, validation and maintainability. Plan reviews check whether an executor without the planning conversation can locate changes, follow decided behavior, validate results and recognize material mismatches; name concrete missing information. Verify implementation readiness and mergeable phases. PR reviews check actual changes against the plan and meaningful regression coverage. Command/result evidence can support RED→GREEN; commit order alone cannot prove TDD. No persona/title is evidence of review quality. Return APPROVED when no MUST FIX remains; do not invent changes to make the review appear useful.
 
 ## Correction loop and convergence
 
-Present findings with stable issue IDs. Apply supported fixes, record disposition and relevant checks in the issue ledger, then spawn a fresh reviewer. Recheck affected parts and interactions after material fixes, with the original requirements available. Resolve unsupported findings explicitly with evidence.
+Present findings with stable issue IDs. Apply supported fixes, record disposition and relevant checks in the issue ledger, then spawn a fresh reviewer. Focus subsequent investigation on corrections and affected interactions, retaining original requirements and still-valid evidence. Recheck after material fixes; a changed target still needs fresh approval. Resolve unsupported findings explicitly with evidence.
 
 **5-round maximum:** Escalate unresolved blockers after five rounds. If two consecutive rounds produce the same MUST FIX issues, escalate immediately with the remaining evidence and options to revise, continue, or explicitly override. Never silently skip a failed gate.
 

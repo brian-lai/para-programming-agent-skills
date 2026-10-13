@@ -17,6 +17,8 @@ from fixtures import prepare, dump
 from comparison import run_bounded, review_telemetry
 from safe_git import snapshot, git
 from graders import read_context, SUPPORTED
+from handoff import HANDOFF_CASES, validate_arm
+from handoff_validation import validation_code as handoff_validation_code
 from review_isolation import role_definitions, assess_role_probe, validate_review_capability
 from review_host import worker_arguments, ready, preflight
 
@@ -59,6 +61,8 @@ def validate_model_scope(events):
 
 
 def run(args):
+    arm = getattr(args, "handoff_arm", None)
+    validate_arm(args.case, arm)
     trial_start = time.monotonic()
     if not os.environ.get('ANTHROPIC_BASE_URL', '').startswith('https://'):
         raise ValueError('Set the authorized HTTPS model endpoint before running trials')
@@ -77,7 +81,7 @@ def run(args):
             raise ValueError('capability probe does not match current roles/image')
     revision = subprocess.check_output(['git', '-C', str(SOURCE), 'rev-parse', args.revision], text=True).strip()
     root = Path(args.out).resolve()
-    initial = prepare(args.case, root, args.variant)
+    initial = prepare(args.case, root, args.variant, handoff_arm=arm)
     skills = root / 'instructions';skills.mkdir()
     raw = subprocess.check_output(['git', '-C', str(SOURCE), 'archive', revision, 'skills', 'resources/AGENTS.md'])
     with tarfile.open(fileobj=io.BytesIO(raw)) as archive:
@@ -119,6 +123,8 @@ def run(args):
                 'skill_revision': revision, 'trial': args.trial, 'case_version': initial['case_version'],
                 'evidence_kind': 'native_agent', 'elapsed_seconds': 0, 'termination_reason': 'harness_error',
                 'installed_resources': {str(p.relative_to(skills)): hashlib.sha256(p.read_bytes()).hexdigest() for p in skills.rglob('*') if p.is_file()}}
+    if args.case in HANDOFF_CASES:
+        manifest['handoff'] = initial['handoff']
     common = ['--network', network, '--cap-drop=ALL', '--security-opt=no-new-privileges',
               '--pids-limit', '256', '--memory', '2g', '--cpus', '2']
     worker_args = ['run', '-d', '--name', worker, '--network-alias', 'worker', *common,
@@ -236,11 +242,11 @@ print("ISOLATION_OK")'''
             raise ValueError('collector exposed unexpected native tool scope')
         manifest['builtin_plugins'] = inits[0].get('plugins', [])
         validation_start = time.monotonic()
-        if args.case in ('simple_workflow_no_pr', 'simple_workflow_lifecycle', 'multi_phase_lifecycle', 'resume_after_pr_created', 'stale_review_head', 'resume_after_merge', 'nondefault_base', 'direct_execute_scope') and not args.probe:
+        if (args.case in ('simple_workflow_no_pr', 'simple_workflow_lifecycle', 'multi_phase_lifecycle', 'resume_after_pr_created', 'stale_review_head', 'resume_after_merge', 'nondefault_base', 'direct_execute_scope') or args.case in HANDOFF_CASES) and not args.probe:
             validator = name + '-validator'
             validation_repo = root / 'remote.git'
             validation_head = git(validation_repo, 'rev-parse', initial['base'])
-            if args.case in ('nondefault_base', 'direct_execute_scope'):
+            if args.case in ('nondefault_base', 'direct_execute_scope') or args.case in HANDOFF_CASES:
                 ctx = read_context(root / 'repo/context/context.md')
                 validation_repo = (root / 'repo' / (ctx.get('worktree_path') or '')).resolve()
                 if not validation_repo.is_relative_to(root / 'repo'):
@@ -262,6 +268,8 @@ if sys.argv[3] == 'multi_phase_lifecycle':
 r = subprocess.run([sys.executable, '-m', 'unittest', 'discover', '-p', 'test_*.py'], cwd='/tmp/validate-code', capture_output=True, text=True)
 print(json.dumps({'returncode': r.returncode, 'output': r.stdout + r.stderr}))
 sys.exit(r.returncode)'''
+            if args.case in HANDOFF_CASES:
+                validation_code = handoff_validation_code(args.case)
             try:
                 check = subprocess.run(['docker', 'run', '--rm', '--name', validator, '--network', 'none',
                     '--cap-drop=ALL', '--security-opt=no-new-privileges', '--memory', '512m', '--pids-limit', '64',
@@ -269,7 +277,7 @@ sys.exit(r.returncode)'''
                     IMAGE, 'python3', '-c', validation_code, '/fixture.git', validation_head, args.case],
                     capture_output=True, text=True, timeout=30)
                 dump(root / 'validation.json', {'returncode': check.returncode, 'stdout': check.stdout, 'stderr': check.stderr,
-                    'isolation': 'fresh container, no network or credentials, read-only bare remote', 'base': initial['base'], 'head': validation_head})
+                    'isolation': 'fresh container, no network or credentials, read-only bare remote', 'base': initial['base'], 'head': validation_head, **({'case_id': args.case, 'validator_version': 'handoff-v1'} if args.case in HANDOFF_CASES else {})})
             finally:
                 docker('rm', '-f', validator, check=False)
         manifest['validation_seconds'] = time.monotonic() - validation_start
@@ -312,6 +320,7 @@ def main():
     p.add_argument('--case', required=True);p.add_argument('--out', required=True)
     p.add_argument('--revision', required=True);p.add_argument('--trial', type=int, required=True)
     p.add_argument('--probe', action='store_true');p.add_argument('--variant', type=int, default=0);p.add_argument('--model', default='claude-sonnet-5-5')
+    p.add_argument('--handoff-arm', choices=('baseline', 'candidate'))
     p.add_argument('--isolated-review', action='store_true');p.add_argument('--capability-record')
     args = p.parse_args()
     if args.isolated_review and not args.capability_record:

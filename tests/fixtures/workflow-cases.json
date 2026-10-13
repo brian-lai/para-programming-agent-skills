@@ -211,6 +211,27 @@
       "expected_outcome": "Ask which context root owns this task before writing; preserve both checkouts",
       "evaluation_set": "regression",
       "assertion_id": "ambiguous_checkout_identity_outcome"
+    },
+    {
+      "id": "handoff_contract",
+      "initial_condition": "Fix calculator.ratio(total, count) to return total / count for every nonzero count, including negative counts. Preserve ValueError for count zero.",
+      "expected_outcome": "Committed correct behavior from an authored artifact handoff; direct execution only; preserve unrelated state.",
+      "evaluation_set": "pilot",
+      "assertion_id": "handoff_contract_outcome"
+    },
+    {
+      "id": "handoff_dependency",
+      "initial_condition": "Fix pricing.subtotal(items) to sum price * quantity for nonnegative prices and integer quantities. Then implement invoice.total(items): subtotal plus 5 only when 0 < subtotal < 50. Empty input and zero subtotal return 0; subtotal >= 50 has no fee.",
+      "expected_outcome": "Committed correct behavior from an authored artifact handoff; direct execution only; preserve unrelated state.",
+      "evaluation_set": "pilot",
+      "assertion_id": "handoff_dependency_outcome"
+    },
+    {
+      "id": "handoff_stale",
+      "initial_condition": "Correct the average calculation to total / count for nonzero counts, including negatives; count zero raises ValueError. Prior research located calculator.ratio, but the API was renamed since research: inspect current README and preserve the current API rather than restoring the removed one.",
+      "expected_outcome": "Committed correct behavior from an authored artifact handoff; direct execution only; preserve unrelated state.",
+      "evaluation_set": "pilot",
+      "assertion_id": "handoff_stale_outcome"
     }
   ]
 }

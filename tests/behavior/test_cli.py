@@ -21,3 +21,17 @@ class CliTest(unittest.TestCase):
             process = subprocess.run([sys.executable, str(SCRIPT), 'prepare', '--case', 'not-a-case', '--out', str(Path(d) / 'fixture')], capture_output=True)
             self.assertEqual(process.returncode, 2)
             self.assertFalse((Path(d) / 'fixture').exists())
+
+    def test_handoff_prepare_explicit_arm(self):
+        with tempfile.TemporaryDirectory() as d:
+            out=Path(d)/'fixture'
+            process=subprocess.run([sys.executable,str(SCRIPT),'prepare','--case','handoff_contract','--handoff-arm','candidate','--out',str(out)],capture_output=True)
+            self.assertEqual(process.returncode,0,process.stderr)
+            self.assertEqual(json.loads((out/'initial.json').read_text())['handoff']['arm'],'candidate')
+
+    def test_handoff_prepare_missing_arm_has_no_effect(self):
+        with tempfile.TemporaryDirectory() as d:
+            out=Path(d)/'fixture'
+            process=subprocess.run([sys.executable,str(SCRIPT),'prepare','--case','handoff_contract','--out',str(out)],capture_output=True)
+            self.assertEqual(process.returncode,2)
+            self.assertFalse(out.exists())
