@@ -27,7 +27,11 @@ def context(path, value, progress='- [ ] Add greeting behavior'):
     path.write_text('# Current work\n\n' + progress + '\n\n```json\n' + json.dumps(value, indent=2) + '\n```\n')
 
 
-def prepare(case_id, out, variant=0):
+def prepare(case_id, out, variant=0, handoff_arm=None):
+    from handoff import HANDOFF_CASES, validate_arm, prepare_handoff
+    validate_arm(case_id, handoff_arm)
+    if case_id in HANDOFF_CASES:
+        return prepare_handoff(case_id, out, variant, handoff_arm)
     cases = {c['id']: c for c in json.loads(CASES.read_text())['cases']}
     if case_id not in cases:
         raise ValueError('unknown case: ' + case_id)
