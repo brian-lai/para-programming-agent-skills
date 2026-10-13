@@ -11,8 +11,9 @@
 ## Implementation Steps
 
 - [ ] {Behavior-sized change phrased as a commit message}
-  - Files: {paths}
-  - Validation: {concrete cases/commands; observe failure before fix for testable behavior}
+  - Change: {verified paths/symbols; intended behavior and edge cases; useful nearby pattern}
+  - Validation: {command, working directory and expected outcome; observe failure before fix for testable behavior}
+  - Dependencies/recovery: {needed prior results; consequential prerequisites with observed/assumed availability; mismatch requiring investigation. Omit when immaterial.}
   - Required checks pass before commit; mark complete only after commit succeeds.
 
 ## Phase Gate and Recovery

@@ -5,7 +5,7 @@
 
 ## Shared decisions
 
-{Only cross-phase decisions, scope, contracts and failure/recovery requirements. No implementation checklist here.}
+{Only cross-phase decisions/rationale, scope, contracts and failure/recovery requirements. Sub-plans contain the actionable subset needed without planner conversation; link shared evidence instead of duplicating research. No implementation checklist here.}
 
 ## Phases
 
