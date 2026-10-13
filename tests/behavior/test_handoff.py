@@ -101,3 +101,15 @@ class HandoffTest(unittest.TestCase):
     def test_legacy_case_has_no_handoff_metadata(self):
         data=prepare('direct_execute_scope',self.root/'legacy')
         self.assertNotIn('handoff',data)
+
+    def test_legacy_fixture_versions_remain_compatible(self):
+        expected='5d7a399123b8ea11045281de4bcc72eb3c7b1c9dc5124c32cf093bde031791a2'
+        for case in ('direct_execute_scope','docs_only','nondefault_base'):
+            data=prepare(case,self.root/case)
+            self.assertEqual(data['case_version'],expected)
+
+    def test_legacy_catalog_stays_consistent_with_acceptance_matrix(self):
+        from fixtures import CASES
+        legacy=json.loads(CASES.with_name('legacy-workflow-cases.json').read_text())['cases']
+        current=json.loads(CASES.read_text())['cases']
+        self.assertEqual(legacy,[c for c in current if c['id'] not in ('handoff_contract','handoff_dependency','handoff_stale')])

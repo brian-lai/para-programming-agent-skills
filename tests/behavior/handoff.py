@@ -60,7 +60,8 @@ def prepare_handoff(case, out, variant, arm):
     ctx['research_docs']=[research];ctx['execution']['base']['start_sha']=head
     context(ctx_path,ctx,'Pending handoff task; implementation not started.')
     hashes = {str(p.relative_to(BUNDLES)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted((BUNDLES/case).glob('*.json'))}
-    version = hashlib.sha256((initial['case_version']+Path(__file__).read_text()+json.dumps(hashes,sort_keys=True)).encode()).hexdigest()
+    case_record = next(c for c in json.loads((BUNDLES.parent/'workflow-cases.json').read_text())['cases'] if c['id'] == case)
+    version = hashlib.sha256((initial['case_version']+Path(__file__).read_text()+Path(__file__).with_name('fixtures.py').read_text()+json.dumps(hashes,sort_keys=True)+json.dumps(case_record,sort_keys=True)).encode()).hexdigest()
     initial.update(case_id=case,case_version=version,initial_head=head,initial_execution_head=head,
         initial_context=ctx_path.read_text(),
         prompt='Use the para-execute skill to complete the approved active plan. Read its research and current source. Implement only; do not publish a PR, merge or archive.',
