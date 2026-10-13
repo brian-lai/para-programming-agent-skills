@@ -65,3 +65,9 @@ This workflow adopts software engineering practices and context-management techn
 - [Anthropic agent evaluation guidance](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents): distinguishes agent trajectories and environment outcomes. PARA evaluates recorded effects with deterministic checks plus calibrated judgment for subjective quality.
 
 Branch policy, todo-sized commits and the review cap are project choices. Neither prestige personas nor fixed reread counts establish correctness. Current text savings are static bytes; live success, latency and usage require paired runs on pinned revisions.
+
+## Efficient handoffs
+
+Research resolves consequential uncertainty and records verified locations, patterns and decisions. Plans carry the actionable subset for an executor without the planning conversation: intended behavior, dependencies, validation and mismatch triggers. Record material environment prerequisites as observed or assumed; omit boilerplate for trivial work.
+
+Execution reuses decisions and verifies current source. A repeated unsuccessful repair/search needs new evidence or a changed hypothesis; preserve the checkpoint and route unresolved facts to focused investigation or replanning. Transient failures and pending CI can warrant bounded polling. Reviews identify supported defects and concrete handoff gaps, accepting no-findings outcomes. Fresh target-bound approval and lifecycle evidence remain required.
