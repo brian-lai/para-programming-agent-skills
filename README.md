@@ -83,8 +83,8 @@ Management commands list, reload, enable, or inspect skills; they are not portab
 |-------|---------|
 | `para-init` | Initialize PARA structure in a project |
 | `para-research <task>` | Deep codebase research before planning |
-| `para-plan <task>` | Create a planning document with self-review |
-| `para-review --plan\|--pr` | Review a plan or PR with Staff+ criteria |
+| `para-plan <task>` | Create an actionable plan with evidence and validation |
+| `para-review --plan\|--pr` | Review a plan or PR against requirements and evidence |
 | `para-execute` | Create a worktree and execute one checklist item per commit |
 | `para-workflow` | Orchestrate simple/phased execution, PR, review, summary, verified merge and archive |
 | `para-status` | Check current workflow state |
@@ -92,6 +92,8 @@ Management commands list, reload, enable, or inspect skills; they are not portab
 | `para-archive` | Archive context and start fresh |
 | `para-check` | Decide whether a request needs the PARA workflow |
 | `para-help` | Show quick reference |
+
+See [planning handoffs](docs/planning-handoffs.md) for stronger-planner/cheaper-executor use, recovery and migration of existing global guidance. Model selection remains in host configuration.
 
 ## Installation
 

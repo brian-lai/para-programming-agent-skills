@@ -3,7 +3,7 @@ name: para-help
 description: Display the PARA-Programming quick-reference guide with all 11 skills and the Research→Plan→Review→Execute→Review→Summarize→Archive workflow.
 ---
 
-Display the PARA-Programming quick-reference guide.
+For a focused question, show the relevant skill, inputs, output and next action. For a general help request, display the PARA-Programming quick-reference guide.
 
 ## Usage
 
@@ -33,7 +33,7 @@ Determine how to render user-facing skill requests before displaying the referen
 | Unknown client | `natural-language` — `Use the para-<skill> skill <intent-and-arguments>.` |
 <!-- para-client-invocation-map:end -->
 
-Display the reference below. Keep the skill identifiers canonical. In the Typical Flow, render each request using the selected client form; when using natural language, include both the exact skill name and its intent/arguments.
+For general help, display the reference below; focused help uses only its relevant entries. Keep the skill identifiers canonical. In the Typical Flow, render each request using the selected client form; when using natural language, include both the exact skill name and its intent/arguments.
 
 For natural-language clients, render the Typical Flow with this exact request sequence:
 
