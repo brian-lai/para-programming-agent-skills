@@ -219,3 +219,5 @@ Three authored-artifact cases (`handoff_contract`, `handoff_dependency`, `handof
 Comparisons require baseline and candidate arms with the same skill revision, fixture version, executor settings, host/harness and limits. The candidate skill body is common to both arms, so this isolates artifact content, not the overall rewrite. `per_completed_case` divides total observed usage/time/calls across all attempts by successful runs; it is null for zero successes or missing telemetry. Failures and incomplete rows remain in totals. Dollar costs need separately recorded rates; authored bundles have unmeasured planner cost.
 
 New fixture/harness hashes identify a new campaign; historical captures and hashes are never rewritten or presented as identical current fixtures. Existing legacy case behavior and grading remain unchanged. Offline captures test evaluation machinery only, not model quality.
+
+The [handoff pilot protocol](handoff-evaluation.md) records the NOT RUN status, collection prerequisites and subsequent generated-plan/full-auto evidence gate.
